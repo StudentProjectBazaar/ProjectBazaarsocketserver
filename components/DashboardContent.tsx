@@ -1,0 +1,370 @@
+import React, { useState } from 'react';
+import DashboardHeader from './DashboardHeader';
+import BuyerProjectCard from './BuyerProjectCard';
+import type { BuyerProject } from './BuyerProjectCard';
+import ProjectDashboardCard from './ProjectDashboardCard';
+import type { DashboardView } from './DashboardPage';
+import BuyerAnalyticsPage from './BuyerAnalyticsPage';
+import SettingsPage from './SettingsPage';
+import PurchasesPage from './PurchasesPage';
+import WishlistPage from './WishlistPage';
+import SellerDashboard from './SellerDashboard';
+import MyProjectsPage from './MyProjectsPage';
+import EarningsPage from './EarningsPage';
+import PayoutsPage from './PayoutsPage';
+import SellerAnalyticsPage from './SellerAnalyticsPage';
+import DashboardFilters from './DashboardFilters';
+import ProjectDetailsPage from './ProjectDetailsPage';
+import CartPage from './CartPage';
+import SellerProfilePage from './SellerProfilePage';
+import HelpCenterPage from './HelpCenterPage';
+
+
+const buyerProjects: BuyerProject[] = [
+    {
+      id: 'proj-1',
+      imageUrl: 'https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop',
+      category: 'Web Development',
+      title: 'E-commerce Platform',
+      description: 'A full-stack e-commerce solution built with MERN stack, including payment integration.',
+      tags: ['React', 'Node.js', 'MongoDB'],
+      price: 49.99,
+      isPremium: true,
+      hasDocumentation: true,
+      hasExecutionVideo: false,
+    },
+    {
+      id: 'proj-2',
+      imageUrl: 'https://images.unsplash.com/photo-1611162617213-6d22e4f13374?q=80&w=1974&auto=format&fit=crop',
+      category: 'Mobile App',
+      title: 'Social Media App',
+      description: 'Feature-rich social media app clone using React Native and Firebase for a seamless experience.',
+      tags: ['React Native', 'Firebase'],
+      price: 59.99,
+      hasDocumentation: true,
+      hasExecutionVideo: true,
+    },
+    {
+      id: 'proj-3',
+      imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
+      category: 'Data Science',
+      title: 'Sales Prediction AI',
+      description: 'A machine learning model to predict future sales data with high accuracy using Python.',
+      tags: ['Python', 'Scikit-learn', 'Pandas'],
+      price: 79.99,
+      isPremium: true,
+      hasExecutionVideo: true,
+    },
+    {
+      id: 'proj-4',
+      imageUrl: 'https://images.unsplash.com/photo-1555099962-4199c345e546?q=80&w=1974&auto=format&fit=crop',
+      category: 'Web Development',
+      title: 'Portfolio Template',
+      description: 'A sleek, modern, and responsive portfolio template for developers and designers.',
+      tags: ['HTML5', 'CSS3', 'JavaScript'],
+      price: 19.99,
+      hasDocumentation: true,
+    },
+    {
+      id: 'proj-5',
+      imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop',
+      category: 'DevOps',
+      title: 'CI/CD Pipeline Automation',
+      description: 'Automate your deployment process with this CI/CD pipeline using Jenkins and Docker.',
+      tags: ['Jenkins', 'Docker', 'CI/CD'],
+      price: 69.99,
+      isPremium: true,
+      hasDocumentation: true,
+    },
+    {
+      id: 'proj-6',
+      imageUrl: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?q=80&w=2070&auto=format&fit=crop',
+      category: 'UI/UX Design',
+      title: 'Fintech App UI Kit',
+      description: 'A complete UI kit for a modern fintech application, designed in Figma with reusable components.',
+      tags: ['Figma', 'UI Kit', 'Design System'],
+      price: 29.99,
+      hasExecutionVideo: true,
+    },
+    {
+      id: 'proj-7',
+      imageUrl: 'https://images.unsplash.com/photo-1607799279861-4d521203fb8d?q=80&w=2070&auto=format&fit=crop',
+      category: 'Game Development',
+      title: '2D Platformer Game',
+      description: 'An engaging 2D platformer game built with Unity engine and C#. Includes all assets.',
+      tags: ['Unity', 'C#', 'Game Design'],
+      price: 39.99,
+    },
+    {
+      id: 'proj-8',
+      imageUrl: 'https://images.unsplash.com/photo-1547658719-da2b51169166?q=80&w=1964&auto=format&fit=crop',
+      category: 'Web Application',
+      title: 'Task Management Tool',
+      description: 'A Kanban-style task management application to organize and track your team\'s workflow.',
+      tags: ['Vue.js', 'Firebase', 'TailwindCSS'],
+      price: 44.99,
+      isPremium: true,
+      hasDocumentation: true,
+      hasExecutionVideo: true,
+    },
+  ];
+
+const activatedProjects = [
+  {
+    name: 'Zapier',
+    domain: 'zapier.com',
+    description: 'Automation: No-code tool that connects your CRM to 5,000+ other apps, instantly automating...',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Zapier_logo.svg',
+    tags: ['Automation', 'No-code', 'Integration'],
+  },
+  {
+    name: 'Slack',
+    domain: 'slack.com',
+    description: 'A messaging app for businesses that connects people to the information they need.',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg',
+    tags: ['Communication', 'Teamwork', 'Productivity'],
+  },
+  {
+    name: 'Figma',
+    domain: 'figma.com',
+    description: 'The collaborative interface design tool. Create, test, and ship better designs from start to finish.',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg',
+    tags: ['Design', 'UI/UX', 'Collaboration'],
+  },
+  {
+    name: 'Notion',
+    domain: 'notion.so',
+    description: 'The all-in-one workspace for your notes, tasks, wikis, and databases.',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e9/Notion-logo.svg',
+    tags: ['Productivity', 'Notes', 'Workspace'],
+  },
+];
+
+
+interface DashboardContentProps {
+    dashboardMode: 'buyer' | 'seller';
+    setDashboardMode: (mode: 'buyer' | 'seller') => void;
+    activeView: DashboardView;
+    isSidebarOpen: boolean;
+    toggleSidebar: () => void;
+    setActiveView: (view: DashboardView) => void;
+}
+
+const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setDashboardMode, activeView, isSidebarOpen, toggleSidebar, setActiveView }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [buyerProjectView, setBuyerProjectView] = useState<'all' | 'activated' | 'disabled'>('all');
+    const [filteredProjects, setFilteredProjects] = useState<BuyerProject[]>(buyerProjects);
+    const [selectedProject, setSelectedProject] = useState<BuyerProject | null>(null);
+    const [selectedSeller, setSelectedSeller] = useState<any>(null);
+
+    // Apply search filter
+    const searchFilteredProjects = filteredProjects.filter(project => {
+        const query = searchQuery.toLowerCase();
+        return (
+            project.title.toLowerCase().includes(query) ||
+            project.description.toLowerCase().includes(query) ||
+            project.category.toLowerCase().includes(query) ||
+            project.tags.some(tag => tag.toLowerCase().includes(query))
+        );
+    });
+    
+    const renderBuyerContent = () => {
+        switch (activeView) {
+            case 'dashboard':
+                return (
+                     <div className="mt-8">
+                        {buyerProjectView === 'all' && (
+                            <div className="flex flex-col lg:flex-row gap-6">
+                                {/* Filters Sidebar */}
+                                <div className="lg:w-80 flex-shrink-0">
+                                    <DashboardFilters 
+                                        projects={buyerProjects} 
+                                        onFilterChange={setFilteredProjects}
+                                    />
+                                </div>
+
+                                {/* Projects Grid */}
+                                <div className="flex-1">
+                                    {searchFilteredProjects.length > 0 ? (
+                                        <>
+                                            <div className="mb-4 text-sm text-gray-600">
+                                                Showing <span className="font-semibold text-gray-900">{searchFilteredProjects.length}</span> project{searchFilteredProjects.length !== 1 ? 's' : ''}
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+                                                {searchFilteredProjects.map((project) => (
+                                                    <BuyerProjectCard 
+                                                        key={project.id} 
+                                                        project={project}
+                                                        onViewDetails={(proj) => {
+                                                            setSelectedProject(proj);
+                                                            setActiveView('project-details');
+                                                        }}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <p className="text-gray-500 text-lg font-medium">No projects found</p>
+                                            <p className="text-gray-400 text-sm mt-2">
+                                                {searchQuery ? `No projects match "${searchQuery}"` : 'Try adjusting your filters'}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                        {buyerProjectView === 'activated' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {activatedProjects.map((project) => (
+                                    <ProjectDashboardCard 
+                                        key={project.name} 
+                                        name={project.name}
+                                        domain={project.domain}
+                                        description={project.description}
+                                        logo={project.logo}
+                                        tags={project.tags}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        {buyerProjectView === 'disabled' && (
+                            <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                                <p className="text-gray-500">You have no disabled projects.</p>
+                            </div>
+                        )}
+                    </div>
+                );
+            case 'purchases':
+                return <PurchasesPage />;
+            case 'wishlist':
+                return (
+                    <WishlistPage 
+                        allProjects={buyerProjects}
+                        onViewDetails={(proj) => {
+                            setSelectedProject(proj);
+                            setActiveView('project-details');
+                        }}
+                    />
+                );
+            case 'cart':
+                return <CartPage allProjects={buyerProjects} />;
+            case 'analytics':
+                return <BuyerAnalyticsPage />;
+            case 'help-center':
+                return <HelpCenterPage />;
+            case 'settings':
+                return <SettingsPage />;
+            case 'project-details':
+                if (!selectedProject) return null;
+                // Extend project with additional details
+                const extendedProject = {
+                    ...selectedProject,
+                    likes: Math.floor(Math.random() * 500) + 50,
+                    purchases: Math.floor(Math.random() * 200) + 10,
+                    seller: {
+                        name: 'John Developer',
+                        email: 'john.developer@example.com',
+                        avatar: '',
+                        rating: 4.8,
+                        totalSales: Math.floor(Math.random() * 1000) + 100,
+                    },
+                    originalPrice: selectedProject.price * 1.1,
+                    discount: 4,
+                    promoCode: '444555',
+                    demoVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+                    features: [
+                        'Real-time collaboration',
+                        'Live code editing',
+                        'Integrated chat system',
+                        'Drawing/paint board',
+                        'Multiple user support',
+                        'Code sharing capabilities'
+                    ],
+                    supportInfo: 'For any questions or support regarding this project, please contact the seller directly through their profile or email.',
+                    images: [
+                        selectedProject.imageUrl,
+                        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
+                    ],
+                };
+                return (
+                    <ProjectDetailsPage
+                        project={extendedProject}
+                        onBack={() => setActiveView('dashboard')}
+                        onViewSeller={(seller) => {
+                            setSelectedSeller(seller);
+                            setActiveView('seller-profile');
+                        }}
+                    />
+                );
+            case 'seller-profile':
+                if (!selectedSeller) return null;
+                // Get seller's projects (filter by seller or use all projects for demo)
+                const sellerProjectsList = buyerProjects.filter(p => 
+                    p.id === selectedProject?.id || Math.random() > 0.5
+                ).slice(0, 9);
+                return (
+                    <SellerProfilePage
+                        seller={selectedSeller}
+                        sellerProjects={sellerProjectsList}
+                        onBack={() => setActiveView('project-details')}
+                    />
+                );
+            default:
+                return null;
+        }
+    };
+
+    const renderSellerContent = () => {
+        switch (activeView) {
+            case 'dashboard':
+                return <SellerDashboard />;
+            case 'my-projects':
+                return <MyProjectsPage />;
+            case 'earnings':
+                return <EarningsPage />;
+            case 'payouts':
+                return <PayoutsPage />;
+            case 'analytics':
+                return <SellerAnalyticsPage />;
+            case 'help-center':
+                return <HelpCenterPage />;
+            case 'settings':
+                return <SettingsPage />;
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-white">
+            {activeView === 'help-center' ? (
+                dashboardMode === 'buyer' ? renderBuyerContent() : renderSellerContent()
+            ) : (
+                <div className="container mx-auto px-6 py-8">
+                    {activeView !== 'project-details' && activeView !== 'seller-profile' && (
+                        <DashboardHeader 
+                            dashboardMode={dashboardMode} 
+                            setDashboardMode={setDashboardMode}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            activeView={activeView}
+                            buyerProjectView={buyerProjectView}
+                            setBuyerProjectView={setBuyerProjectView}
+                            isSidebarOpen={isSidebarOpen}
+                            toggleSidebar={toggleSidebar}
+                        />
+                    )}
+                    
+                    {dashboardMode === 'buyer' ? renderBuyerContent() : renderSellerContent()}
+                </div>
+            )}
+        </main>
+    );
+};
+
+export default DashboardContent;
