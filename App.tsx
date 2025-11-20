@@ -11,8 +11,12 @@ import Referral from './components/Referral';
 import Pricing from './components/Pricing';
 import AuthPage from './components/AuthPage';
 import DashboardPage from './components/DashboardPage';
+import AdminDashboard from './components/admin/AdminDashboard';
 
-// --- Premium Context ---
+type Theme = 'light' | 'dark';
+type Page = 'home' | 'auth' | 'dashboard' | 'admin';
+type UserRole = 'user' | 'admin';
+
 interface PremiumContextType {
     isPremium: boolean;
     credits: number;
@@ -20,7 +24,28 @@ interface PremiumContextType {
     setIsPremium: (isPremium: boolean) => void;
 }
 
+interface ThemeContextType {
+  theme: Theme;
+  toggleTheme: () => void;
+}
+
+interface NavigationContextType {
+  page: Page;
+  navigateTo: (page: Page) => void;
+}
+
+interface AuthContextType {
+  isLoggedIn: boolean;
+  userEmail: string | null;
+  userRole: UserRole | null;
+  login: (email: string, role?: UserRole) => void;
+  logout: () => void;
+}
+
 export const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const usePremium = (): PremiumContextType => {
     const context = useContext(PremiumContext);
@@ -30,8 +55,31 @@ export const usePremium = (): PremiumContextType => {
     return context;
 };
 
+export const useTheme = (): ThemeContextType => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};
+
+export const useNavigation = (): NavigationContextType => {
+  const context = useContext(NavigationContext);
+  if (context === undefined) {
+    throw new Error('useNavigation must be used within a NavigationProvider');
+  }
+  return context;
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
 const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    // Load from localStorage or default values
     const [isPremium, setIsPremiumState] = useState<boolean>(() => {
         const stored = localStorage.getItem('isPremium');
         return stored === 'true';
@@ -45,7 +93,6 @@ const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const setIsPremium = (premium: boolean) => {
         setIsPremiumState(premium);
         localStorage.setItem('isPremium', premium.toString());
-        // When upgrading to premium, give initial credits
         if (premium && credits === 0) {
             setCreditsState(100);
             localStorage.setItem('premiumCredits', '100');
@@ -62,23 +109,6 @@ const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
             {children}
         </PremiumContext.Provider>
     );
-};
-// --- End Premium Context ---
-
-// --- Theme Context ---
-type Theme = 'light' | 'dark';
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-}
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export const useTheme = (): ThemeContextType => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
 };
 
 const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -112,49 +142,16 @@ const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     </ThemeContext.Provider>
   );
 };
-// --- End Theme Context ---
-
-// --- Navigation Context ---
-type Page = 'home' | 'auth' | 'dashboard';
-interface NavigationContextType {
-  page: Page;
-  navigateTo: (page: Page) => void;
-}
-export const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
-
-export const useNavigation = (): NavigationContextType => {
-  const context = useContext(NavigationContext);
-  if (context === undefined) {
-    throw new Error('useNavigation must be used within a NavigationProvider');
-  }
-  return context;
-};
-
-// --- Auth Context ---
-interface AuthContextType {
-  isLoggedIn: boolean;
-  userEmail: string | null;
-  login: (email: string) => void;
-  logout: () => void;
-}
-
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
 
 const AppContent: React.FC = () => {
   const { page } = useNavigation();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, userRole } = useAuth();
 
   switch (page) {
     case 'auth':
       return <AuthPage />;
+    case 'admin':
+      return isLoggedIn && userRole === 'admin' ? <AdminDashboard /> : <AuthPage />;
     case 'dashboard':
       return isLoggedIn ? <DashboardPage /> : <AuthPage />;
     case 'home':
@@ -182,20 +179,27 @@ const App: React.FC = () => {
   const [page, setPage] = useState<Page>('home');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
 
   const navigateTo = (targetPage: Page) => {
     setPage(targetPage);
     window.scrollTo(0, 0);
   };
   
-  const login = (email: string) => {
+  const login = (email: string, role: UserRole = 'user') => {
     setUserEmail(email);
+    setUserRole(role);
     setIsLoggedIn(true);
-    navigateTo('dashboard');
+    if (role === 'admin') {
+      navigateTo('admin');
+    } else {
+      navigateTo('dashboard');
+    }
   };
 
   const logout = () => {
     setUserEmail(null);
+    setUserRole(null);
     setIsLoggedIn(false);
     navigateTo('home');
   };
@@ -203,7 +207,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <PremiumProvider>
-        <AuthContext.Provider value={{ isLoggedIn, userEmail, login, logout }}>
+        <AuthContext.Provider value={{ isLoggedIn, userEmail, userRole, login, logout }}>
           <NavigationContext.Provider value={{ page, navigateTo }}>
             <AppContent />
           </NavigationContext.Provider>
