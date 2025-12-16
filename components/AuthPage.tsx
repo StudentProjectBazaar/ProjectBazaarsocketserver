@@ -4,35 +4,175 @@ import AuthIllustration from './AuthIllustration';
 
 const EmailIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>;
 const PasswordIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
-const PhoneIcon = () => <svg xmlns="
-http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>;
+const PhoneIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>;
 
+const API_ENDPOINT = 'https://xlxus7dr78.execute-api.ap-south-2.amazonaws.com/User_login_signup';
 
 type AuthMode = 'login' | 'signup';
+
+interface ApiResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    userId: string;
+    email: string;
+    role: 'user' | 'admin';
+    isPremium?: boolean;
+    credits?: number;
+    status?: string;
+    profilePictureUrl?: string | null;
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+}
 
 const AuthPage: React.FC = () => {
   const { navigateTo } = useNavigation();
   const { login } = useAuth();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isLogin = authMode === 'login';
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email && password) {
-      // Check for admin credentials
-      if (email === 'saimanee@gmail.com' && password === 'saimanee') {
-        login(email, 'admin');
+  const handleSignup = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'signup',
+          email: email.trim(),
+          phoneNumber: phoneNumber.trim(),
+          password: password,
+          confirmPassword: confirmPassword,
+        }),
+      });
+
+      const data: ApiResponse = await response.json();
+
+      if (data.success && data.data) {
+        // Signup successful, now login the user
+        await handleLoginAfterSignup();
       } else {
-        login(email, 'user');
+        setError(data.error?.message || 'Signup failed. Please try again.');
       }
+    } catch (err) {
+      setError('Network error. Please check your connection and try again.');
+      console.error('Signup error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'login',
+          email: email.trim(),
+          password: password,
+        }),
+      });
+
+      const data: ApiResponse = await response.json();
+
+      if (data.success && data.data) {
+        // Determine role - check if admin (you can modify this logic)
+        const userRole = data.data.email === 'saimanee@gmail.com' ? 'admin' : (data.data.role || 'user');
+        
+        // Call the login function with user data
+        login(data.data.email, userRole);
+        
+        // Store user data in localStorage if rememberMe is checked
+        if (rememberMe) {
+          localStorage.setItem('userData', JSON.stringify(data.data));
+        }
+      } else {
+        setError(data.error?.message || 'Login failed. Please check your credentials.');
+      }
+    } catch (err) {
+      setError('Network error. Please check your connection and try again.');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoginAfterSignup = async () => {
+    try {
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'login',
+          email: email.trim(),
+          password: password,
+        }),
+      });
+
+      const data: ApiResponse = await response.json();
+
+      if (data.success && data.data) {
+        const userRole = data.data.email === 'saimanee@gmail.com' ? 'admin' : (data.data.role || 'user');
+        login(data.data.email, userRole);
+      }
+    } catch (err) {
+      console.error('Auto-login after signup error:', err);
+      setError('Account created but login failed. Please try logging in manually.');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (isLogin) {
+      if (!email || !password) {
+        setError('Please fill in all required fields.');
+        return;
+      }
+      await handleLogin();
+    } else {
+      if (!email || !phoneNumber || !password || !confirmPassword) {
+        setError('Please fill in all required fields.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+      await handleSignup();
     }
   };
   
   const toggleAuthMode = () => {
     setAuthMode(isLogin ? 'signup' : 'login');
+    setError(null);
+    // Clear form fields when switching modes
+    setPassword('');
+    setConfirmPassword('');
   }
 
   return (
@@ -55,6 +195,12 @@ const AuthPage: React.FC = () => {
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
               {isLogin ? 'Welcome Back' : 'Create an Account'}
             </h2>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="relative">
@@ -68,6 +214,7 @@ const AuthPage: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-900"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -79,8 +226,11 @@ const AuthPage: React.FC = () => {
                     <input
                       type="tel"
                       placeholder="Phone Number"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-900"
                       required
+                      disabled={loading}
                     />
                 </div>
               )}
@@ -96,6 +246,7 @@ const AuthPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-900"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -107,8 +258,11 @@ const AuthPage: React.FC = () => {
                     <input
                       type="password"
                       placeholder="Confirm Password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-100 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-gray-900"
                       required
+                      disabled={loading}
                     />
                 </div>
               )}
@@ -116,7 +270,14 @@ const AuthPage: React.FC = () => {
               {isLogin && (
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center">
-                    <input id="remember" type="checkbox" className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded bg-gray-100" />
+                    <input 
+                      id="remember" 
+                      type="checkbox" 
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded bg-gray-100" 
+                      disabled={loading}
+                    />
                     <label htmlFor="remember" className="ml-2 block text-gray-600">Keep me logged in</label>
                   </div>
                   <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
@@ -126,8 +287,22 @@ const AuthPage: React.FC = () => {
               )}
               
               <div>
-                <button type="submit" className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
-                  {isLogin ? 'Log In' : 'Register'}
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {isLogin ? 'Logging in...' : 'Registering...'}
+                    </span>
+                  ) : (
+                    isLogin ? 'Log In' : 'Register'
+                  )}
                 </button>
               </div>
             </form>
