@@ -36,9 +36,10 @@ interface NavigationContextType {
 
 interface AuthContextType {
   isLoggedIn: boolean;
+  userId: string | null;
   userEmail: string | null;
   userRole: UserRole | null;
-  login: (email: string, role?: UserRole) => void;
+  login: (userId: string, email: string, role?: UserRole) => void;
   logout: () => void;
 }
 
@@ -178,6 +179,7 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   const [page, setPage] = useState<Page>('home');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
 
@@ -186,7 +188,8 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   };
   
-  const login = (email: string, role: UserRole = 'user') => {
+  const login = (id: string, email: string, role: UserRole = 'user') => {
+    setUserId(id);
     setUserEmail(email);
     setUserRole(role);
     setIsLoggedIn(true);
@@ -198,6 +201,7 @@ const App: React.FC = () => {
   };
 
   const logout = () => {
+    setUserId(null);
     setUserEmail(null);
     setUserRole(null);
     setIsLoggedIn(false);
@@ -207,7 +211,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <PremiumProvider>
-        <AuthContext.Provider value={{ isLoggedIn, userEmail, userRole, login, logout }}>
+        <AuthContext.Provider value={{ isLoggedIn, userId, userEmail, userRole, login, logout }}>
           <NavigationContext.Provider value={{ page, navigateTo }}>
             <AppContent />
           </NavigationContext.Provider>

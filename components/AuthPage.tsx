@@ -101,7 +101,7 @@ const AuthPage: React.FC = () => {
         const userRole = data.data.email === 'saimanee@gmail.com' ? 'admin' : (data.data.role || 'user');
         
         // Call the login function with user data
-        login(data.data.email, userRole);
+        login(data.data.userId, data.data.email, userRole);
         
         // Store user data in localStorage if rememberMe is checked
         if (rememberMe) {
@@ -136,7 +136,7 @@ const AuthPage: React.FC = () => {
 
       if (data.success && data.data) {
         const userRole = data.data.email === 'saimanee@gmail.com' ? 'admin' : (data.data.role || 'user');
-        login(data.data.email, userRole);
+        login(data.data.userId, data.data.email, userRole);
       }
     } catch (err) {
       console.error('Auto-login after signup error:', err);
