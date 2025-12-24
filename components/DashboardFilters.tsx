@@ -11,7 +11,7 @@ type SortOption = 'price-low' | 'price-high' | 'name-asc' | 'name-desc' | 'newes
 
 const DashboardFilters: React.FC<DashboardFiltersProps> = ({ projects, onFilterChange }) => {
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 200]);
+    const [priceRange, setPriceRange] = useState<[number, number]>([0, 9000]);
     const [premiumFilter, setPremiumFilter] = useState<'all' | 'premium' | 'regular'>('all');
     const [hasDocumentation, setHasDocumentation] = useState(false);
     const [hasVideo, setHasVideo] = useState(false);
@@ -95,7 +95,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ projects, onFilterC
 
     const clearFilters = () => {
         setSelectedCategories([]);
-        setPriceRange([0, 200]);
+        setPriceRange([0, 9000]);
         setPremiumFilter('all');
         setHasDocumentation(false);
         setHasVideo(false);
@@ -103,7 +103,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ projects, onFilterC
     };
 
     const hasActiveFilters = selectedCategories.length > 0 || 
-        priceRange[0] > 0 || priceRange[1] < 200 || 
+        priceRange[0] > 0 || priceRange[1] < 9000 || 
         premiumFilter !== 'all' || 
         hasDocumentation || 
         hasVideo;
@@ -189,7 +189,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ projects, onFilterC
                         <input
                             type="range"
                             min="0"
-                            max="200"
+                            max="9000"
                             value={priceRange[0]}
                             onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
@@ -197,7 +197,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ projects, onFilterC
                         <input
                             type="range"
                             min="0"
-                            max="200"
+                            max="9000"
                             value={priceRange[1]}
                             onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
                             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
@@ -206,7 +206,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ projects, onFilterC
                             <input
                                 type="number"
                                 min="0"
-                                max="200"
+                                max="9000"
                                 value={priceRange[0]}
                                 onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
                                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
@@ -214,7 +214,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ projects, onFilterC
                             <input
                                 type="number"
                                 min="0"
-                                max="200"
+                                max="9000"
                                 value={priceRange[1]}
                                 onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
                                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"

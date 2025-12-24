@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardHeader from './DashboardHeader';
 import BuyerProjectCard from './BuyerProjectCard';
 import type { BuyerProject } from './BuyerProjectCard';
@@ -19,6 +19,33 @@ import CartPage from './CartPage';
 import SellerProfilePage from './SellerProfilePage';
 import HelpCenterPage from './HelpCenterPage';
 
+const GET_ALL_PROJECTS_ENDPOINT = 'https://vwqfgtwerj.execute-api.ap-south-2.amazonaws.com/default/Get_All_Projects_for_Admin_Buyer';
+
+interface ApiProject {
+    projectId: string;
+    title: string;
+    description: string;
+    price: number;
+    category: string;
+    tags: string[];
+    thumbnailUrl: string;
+    sellerId: string;
+    sellerEmail: string;
+    status: string;
+    adminApproved: boolean;
+    uploadedAt: string;
+    documentationUrl?: string;
+    youtubeVideoUrl?: string;
+    purchasesCount?: number;
+    likesCount?: number;
+    viewsCount?: number;
+}
+
+interface ApiResponse {
+    success: boolean;
+    count: number;
+    projects: ApiProject[];
+}
 
 const buyerProjects: BuyerProject[] = [
     {
@@ -153,9 +180,71 @@ interface DashboardContentProps {
 const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setDashboardMode, activeView, isSidebarOpen, toggleSidebar, setActiveView }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [buyerProjectView, setBuyerProjectView] = useState<'all' | 'activated' | 'disabled'>('all');
-    const [filteredProjects, setFilteredProjects] = useState<BuyerProject[]>(buyerProjects);
+    const [projects, setProjects] = useState<BuyerProject[]>([]);
+    const [filteredProjects, setFilteredProjects] = useState<BuyerProject[]>([]);
     const [selectedProject, setSelectedProject] = useState<BuyerProject | null>(null);
     const [selectedSeller, setSelectedSeller] = useState<any>(null);
+    const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+    const [projectsError, setProjectsError] = useState<string | null>(null);
+
+    // Map API project to BuyerProject interface
+    const mapApiProjectToComponent = (apiProject: ApiProject): BuyerProject => {
+        return {
+            id: apiProject.projectId,
+            imageUrl: apiProject.thumbnailUrl || 'https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop',
+            category: apiProject.category || 'Uncategorized',
+            title: apiProject.title || 'Untitled Project',
+            description: apiProject.description || 'No description available',
+            tags: apiProject.tags || [],
+            price: typeof apiProject.price === 'number' ? apiProject.price : parseFloat(String(apiProject.price || '0')),
+            isPremium: false, // API doesn't provide this, can be updated later
+            hasDocumentation: !!apiProject.documentationUrl,
+            hasExecutionVideo: !!apiProject.youtubeVideoUrl,
+        };
+    };
+
+    // Fetch projects from API
+    const fetchProjects = async () => {
+        setIsLoadingProjects(true);
+        setProjectsError(null);
+        
+        try {
+            const response = await fetch(GET_ALL_PROJECTS_ENDPOINT);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch projects: ${response.statusText}`);
+            }
+            
+            const data: ApiResponse = await response.json();
+            
+            if (data.success && data.projects) {
+                // Map all projects from API
+                const mappedProjects = data.projects.map(mapApiProjectToComponent);
+                
+                setProjects(mappedProjects);
+                setFilteredProjects(mappedProjects);
+                console.log('Fetched projects for buyer:', mappedProjects.length);
+                console.log('All projects data:', data.projects);
+            } else {
+                throw new Error('Invalid response format from API');
+            }
+        } catch (err) {
+            console.error('Error fetching projects:', err);
+            setProjectsError(err instanceof Error ? err.message : 'Failed to fetch projects');
+            // Keep empty array on error
+            setProjects([]);
+            setFilteredProjects([]);
+        } finally {
+            setIsLoadingProjects(false);
+        }
+    };
+
+    // Fetch projects on component mount (only for buyer mode)
+    useEffect(() => {
+        if (dashboardMode === 'buyer') {
+            fetchProjects();
+        }
+    }, [dashboardMode]);
 
     // Apply search filter
     const searchFilteredProjects = filteredProjects.filter(project => {
@@ -178,14 +267,40 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                                 {/* Filters Sidebar */}
                                 <div className="lg:w-80 flex-shrink-0">
                                     <DashboardFilters 
-                                        projects={buyerProjects} 
+                                        projects={projects} 
                                         onFilterChange={setFilteredProjects}
                                     />
                                 </div>
 
                                 {/* Projects Grid */}
                                 <div className="flex-1">
-                                    {searchFilteredProjects.length > 0 ? (
+                                    {/* Loading State */}
+                                    {isLoadingProjects && (
+                                        <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent mb-4"></div>
+                                            <p className="text-gray-600 font-medium">Loading projects...</p>
+                                        </div>
+                                    )}
+
+                                    {/* Error State */}
+                                    {projectsError && !isLoadingProjects && (
+                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <p className="text-red-800 font-medium">Error: {projectsError}</p>
+                                                <button
+                                                    onClick={fetchProjects}
+                                                    className="ml-auto px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-semibold"
+                                                >
+                                                    Retry
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!isLoadingProjects && !projectsError && searchFilteredProjects.length > 0 ? (
                                         <>
                                             <div className="mb-4 text-sm text-gray-600">
                                                 Showing <span className="font-semibold text-gray-900">{searchFilteredProjects.length}</span> project{searchFilteredProjects.length !== 1 ? 's' : ''}
@@ -203,17 +318,17 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                                                 ))}
                                             </div>
                                         </>
-                                    ) : (
+                                    ) : !isLoadingProjects && !projectsError ? (
                                         <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
                                             <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                             <p className="text-gray-500 text-lg font-medium">No projects found</p>
                                             <p className="text-gray-400 text-sm mt-2">
-                                                {searchQuery ? `No projects match "${searchQuery}"` : 'Try adjusting your filters'}
+                                                {searchQuery ? `No projects match "${searchQuery}"` : projects.length === 0 ? 'No projects available at the moment. Please check back later.' : 'Try adjusting your filters'}
                                             </p>
                                         </div>
-                                    )}
+                                    ) : null}
                                 </div>
                             </div>
                         )}
@@ -243,7 +358,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'wishlist':
                 return (
                     <WishlistPage 
-                        allProjects={buyerProjects}
+                        allProjects={projects}
                         onViewDetails={(proj) => {
                             setSelectedProject(proj);
                             setActiveView('project-details');
@@ -251,7 +366,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                     />
                 );
             case 'cart':
-                return <CartPage allProjects={buyerProjects} />;
+                return <CartPage allProjects={projects} />;
             case 'analytics':
                 return <BuyerAnalyticsPage />;
             case 'help-center':
@@ -303,10 +418,15 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 );
             case 'seller-profile':
                 if (!selectedSeller) return null;
-                // Get seller's projects (filter by seller or use all projects for demo)
-                const sellerProjectsList = buyerProjects.filter(p => 
-                    p.id === selectedProject?.id || Math.random() > 0.5
-                ).slice(0, 9);
+                // Get seller's projects (filter by seller email if available)
+                const sellerProjectsList = projects.filter(p => {
+                    // If we have seller info, filter by seller, otherwise show random projects
+                    if (selectedSeller.email) {
+                        // This would require storing sellerEmail in BuyerProject or fetching separately
+                        return true; // For now, show all projects
+                    }
+                    return Math.random() > 0.5;
+                }).slice(0, 9);
                 return (
                     <SellerProfilePage
                         seller={selectedSeller}
