@@ -446,26 +446,3 @@ export const handler = async (
 ```
 
 ---
-
-## Summary
-
-### Signup Lambda Parameters:
-- `email` (required)
-- `phoneNumber` (required)
-- `password` (required)
-- `confirmPassword` (required)
-
-### Login Lambda Parameters:
-- `email` (required)
-- `password` (required)
-- `rememberMe` (optional)
-
-### Data to Store:
-- User ID, Email, Phone Number
-- Password Hash (never store plain password!)
-- Role, Status, Premium status, Credits
-- Profile information (name, picture, social links)
-- Notification preferences
-- Timestamps (created, updated, last login)
-- Statistics (projects, earnings, purchases, rating)
-

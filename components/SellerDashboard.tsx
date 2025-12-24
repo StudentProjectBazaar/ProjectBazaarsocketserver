@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProjectDashboardCard from './ProjectDashboardCard';
-import { useNavigation, usePremium } from '../App';
+import { useNavigation, usePremium, useAuth } from '../App';
 
 interface StatCardProps {
     title: string;
@@ -45,9 +45,12 @@ interface InputFieldProps {
     type?: string;
     placeholder?: string;
     required?: boolean;
+    value?: string;
+    step?: string;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const InputField: React.FC<InputFieldProps> = ({ id, label, type = 'text', placeholder, required = false }) => (
+const InputField: React.FC<InputFieldProps> = ({ id, label, type = 'text', placeholder, required = false, value, step, onChange }) => (
     <div>
         <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
         <input 
@@ -55,6 +58,9 @@ const InputField: React.FC<InputFieldProps> = ({ id, label, type = 'text', place
             id={id} 
             placeholder={placeholder}
             required={required}
+            value={value}
+            step={step}
+            onChange={onChange}
             className="w-full px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-gray-900"
         />
     </div>
@@ -65,15 +71,19 @@ interface TextAreaProps {
     label: string;
     placeholder?: string;
     rows?: number;
+    value?: string;
+    onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-const TextArea: React.FC<TextAreaProps> = ({ id, label, placeholder, rows = 4 }) => (
+const TextArea: React.FC<TextAreaProps> = ({ id, label, placeholder, rows = 4, value, onChange }) => (
      <div>
         <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
         <textarea
             id={id}
             placeholder={placeholder}
             rows={rows}
+            value={value}
+            onChange={onChange}
             className="w-full px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-gray-900"
         />
     </div>
@@ -93,106 +103,238 @@ interface UploadedProject {
 }
 
 const MAX_FREE_PROJECTS = 5;
+const API_ENDPOINT = 'https://qh71ruloa8.execute-api.ap-south-2.amazonaws.com/default/Upload_project_from_buyer';
+const GET_PROJECTS_ENDPOINT = 'https://qosmi6luq0.execute-api.ap-south-2.amazonaws.com/default/Get_All_Projects_for_Seller';
 
 type ViewMode = 'grid' | 'table';
 
 const SellerDashboard: React.FC = () => {
     const { navigateTo } = useNavigation();
     const { isPremium } = usePremium();
+    const { userId, userEmail } = useAuth();
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [showPremiumModal, setShowPremiumModal] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
-    const [uploadedProjects, setUploadedProjects] = useState<UploadedProject[]>([
-        {
-            id: 'upload-1',
-            name: 'E-commerce Platform',
-            domain: 'ecommerce-demo.com',
-            description: 'A full-stack e-commerce solution built with MERN stack, including payment integration.',
-            logo: 'https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop',
-            tags: ['React', 'Node.js', 'MongoDB'],
-            status: 'Live',
-            sales: 45,
-            price: 49.99,
-            category: 'Web Development',
-        },
-        {
-            id: 'upload-2',
-            name: 'Task Management Tool',
-            domain: 'taskmanager-demo.com',
-            description: 'A Kanban-style task management application to organize and track your team\'s workflow.',
-            logo: 'https://images.unsplash.com/photo-1547658719-da2b51169166?q=80&w=1964&auto=format&fit=crop',
-            tags: ['Vue.js', 'Firebase', 'TailwindCSS'],
-            status: 'Live',
-            sales: 18,
-            price: 44.99,
-            category: 'Web Application',
-        },
-        {
-            id: 'upload-3',
-            name: 'Social Media App',
-            domain: 'socialmedia-demo.com',
-            description: 'A modern social media application with real-time features and media sharing.',
-            logo: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop',
-            tags: ['React Native', 'Firebase', 'TypeScript'],
-            status: 'Live',
-            sales: 32,
-            price: 59.99,
-            category: 'Mobile App',
-        },
-        {
-            id: 'upload-4',
-            name: 'Sales Prediction AI',
-            domain: 'salesai-demo.com',
-            description: 'AI-powered sales forecasting tool with machine learning algorithms.',
-            logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
-            tags: ['Python', 'TensorFlow', 'Flask'],
-            status: 'In Review',
-            sales: 0,
-            price: 79.99,
-            category: 'Data Science',
-        },
-        {
-            id: 'upload-5',
-            name: '2D Platformer Game',
-            domain: 'platformer-demo.com',
-            description: 'A fun 2D platformer game with multiple levels and character customization.',
-            logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop',
-            tags: ['Unity', 'C#', 'Game Design'],
-            status: 'Draft',
-            sales: 0,
-            price: 39.99,
-            category: 'Game Development',
-        },
-        {
-            id: 'upload-6',
-            name: 'Fintech App UI Kit',
-            domain: 'fintechui-demo.com',
-            description: 'Complete UI kit for fintech applications with modern design components.',
-            logo: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop',
-            tags: ['Figma', 'Design System', 'UI/UX'],
-            status: 'Live',
-            sales: 61,
-            price: 29.99,
-            category: 'UI/UX Design',
-        },
-    ]);
+    
+    // Form state
+    const [formData, setFormData] = useState({
+        title: '',
+        category: '',
+        description: '',
+        tags: '',
+        price: '',
+        originalPrice: '',
+        youtubeVideoUrl: '',
+        documentationUrl: ''
+    });
+    
+    // File state
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+    const [projectFiles, setProjectFiles] = useState<File | null>(null);
+    
+    // UI state
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [submitSuccess, setSubmitSuccess] = useState(false);
+    const [uploadedProjects, setUploadedProjects] = useState<UploadedProject[]>([]);
+    const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+    const [projectsError, setProjectsError] = useState<string | null>(null);
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setImagePreview(URL.createObjectURL(e.target.files[0]));
+    // Function to map API project to component format
+    const mapApiProjectToComponent = (apiProject: any): UploadedProject => {
+        // Map status from API to component format
+        let status: 'Live' | 'In Review' | 'Draft' = 'Draft';
+        const apiStatus = apiProject.status?.toLowerCase();
+        if (apiStatus === 'active') {
+            status = 'Live';
+        } else if (apiStatus === 'pending' || apiStatus === 'in-review' || apiStatus === 'in_review') {
+            status = 'In Review';
+        } else if (apiStatus === 'disabled' || apiStatus === 'rejected') {
+            status = 'Draft';
+        }
+
+        // Handle tags - API returns array
+        let tagsArray: string[] = [];
+        if (Array.isArray(apiProject.tags)) {
+            tagsArray = apiProject.tags;
+        } else if (typeof apiProject.tags === 'string') {
+            tagsArray = apiProject.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+        }
+
+        return {
+            id: apiProject.projectId || apiProject.id,
+            name: apiProject.title || apiProject.name || 'Untitled Project',
+            domain: `${(apiProject.title || apiProject.name || 'project').toLowerCase().replace(/\s+/g, '-')}.com`,
+            description: apiProject.description || '',
+            logo: apiProject.thumbnailUrl || apiProject.logo || 'https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop',
+            tags: tagsArray,
+            status: status,
+            sales: apiProject.purchasesCount || apiProject.sales || 0,
+            price: typeof apiProject.price === 'number' ? apiProject.price : parseFloat(apiProject.price || '0'),
+            category: apiProject.category || 'Uncategorized'
+        };
+    };
+
+    // Fetch projects from API
+    const fetchProjects = async () => {
+        if (!userId) {
+            setIsLoadingProjects(false);
+            return;
+        }
+
+        setIsLoadingProjects(true);
+        setProjectsError(null);
+
+        try {
+            const response = await fetch(`${GET_PROJECTS_ENDPOINT}?sellerId=${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.projects) {
+                // API returns projects array directly in response
+                const projects = Array.isArray(data.projects) ? data.projects : [];
+                const mappedProjects = projects.map(mapApiProjectToComponent);
+                setUploadedProjects(mappedProjects);
+            } else {
+                // If API returns empty or error, set empty array
+                setUploadedProjects([]);
+            }
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+            setProjectsError('Failed to load projects. Please refresh the page.');
+            // Keep existing projects on error
+        } finally {
+            setIsLoadingProjects(false);
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Fetch projects on component mount and when userId changes
+    useEffect(() => {
+        fetchProjects();
+    }, [userId]);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setThumbnailFile(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setProjectFiles(e.target.files[0]);
+        }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [id]: value
+        }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setSubmitError(null);
+        setSubmitSuccess(false);
+
+        if (!userId || !userEmail) {
+            setSubmitError('You must be logged in to upload a project');
+            return;
+        }
+
         if (!isPremium && uploadedProjects.length >= MAX_FREE_PROJECTS) {
             setShowPremiumModal(true);
             return;
         }
-        // Handle form submission
-        // After successful upload, add to uploadedProjects and hide form
-        setShowUploadForm(false);
+
+        // Validate required fields
+        if (!formData.title || !formData.category || !formData.description || !formData.tags || !formData.price) {
+            setSubmitError('Please fill in all required fields');
+            return;
+        }
+
+        if (!thumbnailFile || !projectFiles) {
+            setSubmitError('Please upload both thumbnail and project files');
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            // Prepare request body matching Lambda function expectations
+            const requestBody = {
+                sellerId: userId,
+                sellerEmail: userEmail,
+                title: formData.title.trim(),
+                category: formData.category.trim(),
+                description: formData.description.trim(),
+                tags: formData.tags.trim(),
+                price: parseFloat(formData.price),
+                originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
+                youtubeVideoUrl: formData.youtubeVideoUrl.trim() || undefined,
+                documentationUrl: formData.documentationUrl.trim() || undefined
+            };
+
+            // Remove undefined values
+            Object.keys(requestBody).forEach(key => {
+                if (requestBody[key as keyof typeof requestBody] === undefined) {
+                    delete requestBody[key as keyof typeof requestBody];
+                }
+            });
+
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setSubmitSuccess(true);
+                // Reset form
+                setFormData({
+                    title: '',
+                    category: '',
+                    description: '',
+                    tags: '',
+                    price: '',
+                    originalPrice: '',
+                    youtubeVideoUrl: '',
+                    documentationUrl: ''
+                });
+                setThumbnailFile(null);
+                setProjectFiles(null);
+                setImagePreview(null);
+                
+                // Refresh projects list to get the latest from API
+                await fetchProjects();
+                
+                // Hide form after 2 seconds
+                setTimeout(() => {
+                    setShowUploadForm(false);
+                    setSubmitSuccess(false);
+                }, 2000);
+            } else {
+                setSubmitError(data.error?.message || 'Failed to upload project. Please try again.');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            setSubmitError('Network error. Please check your connection and try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleUploadClick = () => {
@@ -266,7 +408,25 @@ const SellerDashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {uploadedProjects.length > 0 ? (
+                    {isLoadingProjects ? (
+                        <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                            <svg className="animate-spin h-12 w-12 text-orange-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p className="text-gray-500 text-lg font-medium">Loading projects...</p>
+                        </div>
+                    ) : projectsError ? (
+                        <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                            <p className="text-red-500 text-lg font-medium mb-2">{projectsError}</p>
+                            <button
+                                onClick={fetchProjects}
+                                className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    ) : uploadedProjects.length > 0 ? (
                         <>
                             {/* Grid View */}
                             {viewMode === 'grid' && (
@@ -377,7 +537,11 @@ const SellerDashboard: React.FC = () => {
                         <h2 className="text-2xl font-bold text-gray-900">Upload New Project</h2>
                         <button
                             type="button"
-                            onClick={() => setShowUploadForm(false)}
+                            onClick={() => {
+                                setShowUploadForm(false);
+                                setSubmitError(null);
+                                setSubmitSuccess(false);
+                            }}
                             className="text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -385,26 +549,97 @@ const SellerDashboard: React.FC = () => {
                             </svg>
                         </button>
                     </div>
+
+                    {/* Error Message */}
+                    {submitError && (
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-600">{submitError}</p>
+                        </div>
+                    )}
+
+                    {/* Success Message */}
+                    {submitSuccess && (
+                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <p className="text-sm text-green-600">Project uploaded successfully! Submitting for review...</p>
+                        </div>
+                    )}
+
                 <SectionCard title="Project Details" step={1}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <InputField id="title" label="Project Title" placeholder="e.g., E-commerce Platform" required />
-                        <InputField id="category" label="Category" placeholder="e.g., Web Development" required />
+                        <InputField 
+                            id="title" 
+                            label="Project Title" 
+                            placeholder="e.g., E-commerce Platform" 
+                            required 
+                            value={formData.title}
+                            onChange={handleInputChange}
+                        />
+                        <InputField 
+                            id="category" 
+                            label="Category" 
+                            placeholder="e.g., Web Development" 
+                            required 
+                            value={formData.category}
+                            onChange={handleInputChange}
+                        />
                     </div>
                     <div className="mt-6">
-                        <TextArea id="description" label="Description" placeholder="Describe your project in detail..." />
+                        <TextArea 
+                            id="description" 
+                            label="Description" 
+                            placeholder="Describe your project in detail..." 
+                            value={formData.description}
+                            onChange={handleInputChange}
+                        />
                     </div>
                      <div className="mt-6">
-                        <InputField id="tags" label="Tags" placeholder="e.g., React, Node.js, API (comma-separated)" />
+                        <InputField 
+                            id="tags" 
+                            label="Tags" 
+                            placeholder="e.g., React, Node.js, API (comma-separated)" 
+                            value={formData.tags}
+                            onChange={handleInputChange}
+                        />
                     </div>
                 </SectionCard>
 
                 <SectionCard title="Pricing & Media" step={2}>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <InputField id="price" label="Price (USD)" type="number" placeholder="e.g., 49.99" required />
-                        <InputField id="youtube" label="YouTube Video URL" placeholder="https://youtube.com/watch?v=..." />
+                        <InputField 
+                            id="price" 
+                            label="Price (USD)" 
+                            type="number" 
+                            step="0.01"
+                            placeholder="e.g., 49.99" 
+                            required 
+                            value={formData.price}
+                            onChange={handleInputChange}
+                        />
+                        <InputField 
+                            id="originalPrice" 
+                            label="Original Price (USD) - Optional" 
+                            type="number" 
+                            step="0.01"
+                            placeholder="e.g., 59.99 (for discount)" 
+                            value={formData.originalPrice}
+                            onChange={handleInputChange}
+                        />
                     </div>
-                     <div className="mt-6">
-                        <InputField id="docs" label="Documentation URL" placeholder="https://docs.example.com" />
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <InputField 
+                            id="youtubeVideoUrl" 
+                            label="YouTube Video URL" 
+                            placeholder="https://youtube.com/watch?v=..." 
+                            value={formData.youtubeVideoUrl}
+                            onChange={handleInputChange}
+                        />
+                        <InputField 
+                            id="documentationUrl" 
+                            label="Documentation URL" 
+                            placeholder="https://docs.example.com" 
+                            value={formData.documentationUrl}
+                            onChange={handleInputChange}
+                        />
                     </div>
                 </SectionCard>
 
@@ -433,10 +668,23 @@ const SellerDashboard: React.FC = () => {
                                 <div className="space-y-1 text-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                                     <div className="flex text-sm text-gray-600">
-                                        <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"><span>Upload files</span><input id="file-upload" name="file-upload" type="file" className="sr-only" /></label>
+                                        <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                            <span>Upload files</span>
+                                            <input 
+                                                id="file-upload" 
+                                                name="file-upload" 
+                                                type="file" 
+                                                className="sr-only" 
+                                                accept=".zip"
+                                                onChange={handleFileChange}
+                                            />
+                                        </label>
                                         <p className="pl-1">or drag and drop</p>
                                     </div>
                                     <p className="text-xs text-gray-500">ZIP file up to 50MB</p>
+                                    {projectFiles && (
+                                        <p className="text-xs text-green-600 mt-2">✓ {projectFiles.name}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -446,13 +694,40 @@ const SellerDashboard: React.FC = () => {
                 <div className="flex justify-end gap-4 pt-4">
                         <button 
                             type="button" 
-                            onClick={() => setShowUploadForm(false)}
-                            className="bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors"
+                            onClick={() => {
+                                setShowUploadForm(false);
+                                setSubmitError(null);
+                                setSubmitSuccess(false);
+                            }}
+                            disabled={isSubmitting}
+                            className="bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Cancel
                         </button>
-                        <button type="button" className="bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors">Save as Draft</button>
-                        <button type="submit" className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-2 px-6 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg">Submit for Review</button>
+                        <button 
+                            type="button" 
+                            disabled={isSubmitting}
+                            className="bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Save as Draft
+                        </button>
+                        <button 
+                            type="submit" 
+                            disabled={isSubmitting}
+                            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-2 px-6 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Submitting...
+                                </>
+                            ) : (
+                                'Submit for Review'
+                            )}
+                        </button>
                 </div>
             </form>
             )}

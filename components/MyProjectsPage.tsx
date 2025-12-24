@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import ProjectDashboardCard from './ProjectDashboardCard';
+import { useAuth } from '../App';
 
 interface SellerProject {
     id: string;
@@ -8,15 +9,19 @@ interface SellerProject {
     sales: number;
     price: number;
     category: string;
+    thumbnailUrl?: string;
+    description?: string;
 }
 
-const initialProjects: SellerProject[] = [
-    { id: 'sp-1', title: 'E-commerce Platform', status: 'Live', sales: 45, price: 49.99, category: 'Web Development' },
-    { id: 'sp-2', title: 'Social Media App', status: 'Live', sales: 32, price: 59.99, category: 'Mobile App' },
-    { id: 'sp-3', title: 'Sales Prediction AI', status: 'In Review', sales: 0, price: 79.99, category: 'Data Science' },
-    { id: 'sp-4', title: 'Task Management Tool', status: 'Live', sales: 18, price: 44.99, category: 'Web Application' },
-    { id: 'sp-5', title: '2D Platformer Game', status: 'Draft', sales: 0, price: 39.99, category: 'Game Development' },
-    { id: 'sp-6', title: 'Fintech App UI Kit', status: 'Live', sales: 61, price: 29.99, category: 'UI/UX Design' },
+const GET_PROJECTS_ENDPOINT = 'https://qosmi6luq0.execute-api.ap-south-2.amazonaws.com/default/Get_All_Projects_for_Seller';
+
+const ALLOWED_CATEGORIES = [
+    'Web Development',
+    'Mobile App',
+    'Data Science',
+    'UI/UX Design',
+    'Game Development',
+    'DevOps'
 ];
 
 type SortOption = 'none' | 'alphabetical' | 'reverse-alphabetical' | 'price-high-low' | 'price-low-high' | 'sales-high-low' | 'sales-low-high';
@@ -38,17 +43,100 @@ const DeleteIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 
 
 
 const MyProjectsPage: React.FC = () => {
+    const { userId } = useAuth();
     const [viewMode, setViewMode] = useState<ViewMode>('table');
-    const [projects, setProjects] = useState<SellerProject[]>(initialProjects);
+    const [projects, setProjects] = useState<SellerProject[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStatus, setSelectedStatus] = useState<'all' | 'Live' | 'In Review' | 'Draft'>('all');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 200]);
+    const [priceRange, setPriceRange] = useState<[number, number]>([0, 9000]);
     const [sortOption, setSortOption] = useState<SortOption>('none');
     const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [editingProject, setEditingProject] = useState<SellerProject | null>(null);
     const [editFormData, setEditFormData] = useState<Partial<SellerProject>>({});
+    const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+    const [projectsError, setProjectsError] = useState<string | null>(null);
+
+    // Function to map API project to component format
+    const mapApiProjectToComponent = (apiProject: any): SellerProject => {
+        // Map status from API to component format
+        let status: 'Live' | 'In Review' | 'Draft' = 'Draft';
+        const apiStatus = apiProject.status?.toLowerCase();
+        if (apiStatus === 'active') {
+            status = 'Live';
+        } else if (apiStatus === 'pending' || apiStatus === 'in-review' || apiStatus === 'in_review') {
+            status = 'In Review';
+        } else if (apiStatus === 'disabled' || apiStatus === 'rejected') {
+            status = 'Draft';
+        }
+
+        return {
+            id: apiProject.projectId || apiProject.id,
+            title: apiProject.title || apiProject.name || 'Untitled Project',
+            status: status,
+            sales: apiProject.purchasesCount || apiProject.sales || 0,
+            price: typeof apiProject.price === 'number' ? apiProject.price : parseFloat(apiProject.price || '0'),
+            category: apiProject.category || 'Uncategorized',
+            thumbnailUrl: apiProject.thumbnailUrl,
+            description: apiProject.description
+        };
+    };
+
+    // Fetch projects from API
+    const fetchProjects = async () => {
+        if (!userId) {
+            setIsLoadingProjects(false);
+            return;
+        }
+
+        setIsLoadingProjects(true);
+        setProjectsError(null);
+
+        try {
+            const response = await fetch(`${GET_PROJECTS_ENDPOINT}?sellerId=${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+            console.log('Fetched projects data:', data);
+
+            if (data.success && data.projects) {
+                // API returns projects array directly in response
+                const apiProjects = Array.isArray(data.projects) ? data.projects : [];
+                console.log('API projects received:', apiProjects);
+                console.log('Number of projects:', apiProjects.length);
+                const mappedProjects = apiProjects.map(mapApiProjectToComponent);
+                console.log('Mapped projects:', mappedProjects);
+                console.log('Setting projects state with', mappedProjects.length, 'projects');
+                setProjects(mappedProjects);
+            } else {
+                console.log('No projects found or API error. Response:', data);
+                setProjects([]);
+            }
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+            setProjectsError('Failed to load projects. Please refresh the page.');
+            setProjects([]);
+        } finally {
+            setIsLoadingProjects(false);
+        }
+    };
+
+    // Fetch projects on component mount and when userId changes
+    useEffect(() => {
+        if (userId) {
+            fetchProjects();
+            // Reset all filters when fetching new projects
+            setSelectedCategories([]);
+            setSearchQuery('');
+            setSelectedStatus('all');
+            setPriceRange([0, 9000]);
+        }
+    }, [userId]);
 
     // Get unique categories
     const categories = useMemo(() => {
@@ -57,6 +145,9 @@ const MyProjectsPage: React.FC = () => {
 
     // Filter and sort projects
     const filteredAndSortedProjects = useMemo(() => {
+        console.log('Filtering projects. Total projects:', projects.length);
+        console.log('Current filters - Status:', selectedStatus, 'Categories:', selectedCategories, 'Price Range:', priceRange);
+        
         let filtered = projects.filter(project => {
             // Search filter
             const query = searchQuery.toLowerCase();
@@ -73,8 +164,21 @@ const MyProjectsPage: React.FC = () => {
             // Price range filter
             const matchesPrice = project.price >= priceRange[0] && project.price <= priceRange[1];
 
-            return matchesSearch && matchesStatus && matchesCategory && matchesPrice;
+            const matches = matchesSearch && matchesStatus && matchesCategory && matchesPrice;
+            if (!matches && projects.length > 0) {
+                console.log('Project filtered out:', project.title, {
+                    matchesSearch,
+                    matchesStatus,
+                    matchesCategory,
+                    matchesPrice,
+                    price: project.price,
+                    priceRange
+                });
+            }
+            return matches;
         });
+        
+        console.log('Filtered projects count:', filtered.length);
 
         // Sort
         if (sortOption !== 'none') {
@@ -101,9 +205,13 @@ const MyProjectsPage: React.FC = () => {
         return filtered;
     }, [projects, searchQuery, selectedStatus, selectedCategories, priceRange, sortOption]);
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
+        // TODO: Call delete API endpoint when available
+        // For now, just remove from local state
         setProjects(prev => prev.filter(p => p.id !== id));
         setDeleteConfirmId(null);
+        // Optionally refresh the list
+        // await fetchProjects();
     };
 
     const handleEdit = (project: SellerProject) => {
@@ -150,7 +258,32 @@ const MyProjectsPage: React.FC = () => {
         <div className="mt-8">
             {/* Header with View Toggle */}
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">My Projects</h2>
+                <div className="flex items-center gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900">My Projects</h2>
+                        {!isLoadingProjects && projects.length > 0 && (
+                            <p className="text-sm text-gray-500 mt-1">
+                                {projects.length} project{projects.length !== 1 ? 's' : ''} total
+                                {filteredAndSortedProjects.length !== projects.length && (
+                                    <span className="ml-2">
+                                        ({filteredAndSortedProjects.length} shown)
+                                    </span>
+                                )}
+                            </p>
+                        )}
+                    </div>
+                    {!isLoadingProjects && (
+                        <button
+                            onClick={fetchProjects}
+                            className="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                            title="Refresh projects"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
+                    )}
+                </div>
                 {/* View Toggle Buttons */}
                 <div className="flex items-center bg-orange-50 rounded-lg p-1 border border-orange-200">
                     <button
@@ -223,19 +356,19 @@ const MyProjectsPage: React.FC = () => {
                             <input
                                 type="number"
                                 min="0"
-                                max="200"
+                                max="9000"
                                 value={priceRange[0]}
                                 onChange={(e) => setPriceRange([Math.max(0, parseInt(e.target.value) || 0), priceRange[1]])}
-                                className="w-20 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                className="w-24 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                             />
                             <span className="text-gray-500">-</span>
                             <input
                                 type="number"
                                 min="0"
-                                max="200"
+                                max="9000"
                                 value={priceRange[1]}
-                                onChange={(e) => setPriceRange([priceRange[0], Math.min(200, parseInt(e.target.value) || 200)])}
-                                className="w-20 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                onChange={(e) => setPriceRange([priceRange[0], Math.min(9000, parseInt(e.target.value) || 9000)])}
+                                className="w-24 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                             />
                         </div>
                     </div>
@@ -319,14 +452,14 @@ const MyProjectsPage: React.FC = () => {
                 )}
 
                 {/* Clear Filters */}
-                {(searchQuery || selectedStatus !== 'all' || selectedCategories.length > 0 || priceRange[1] < 200) && (
+                {(searchQuery || selectedStatus !== 'all' || selectedCategories.length > 0 || priceRange[1] < 9000) && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
                         <button
                             onClick={() => {
                                 setSearchQuery('');
                                 setSelectedStatus('all');
                                 setSelectedCategories([]);
-                                setPriceRange([0, 200]);
+                                setPriceRange([0, 9000]);
                             }}
                             className="text-sm text-orange-600 hover:text-orange-700 font-medium"
                         >
@@ -336,42 +469,84 @@ const MyProjectsPage: React.FC = () => {
                 )}
             </div>
 
-            {/* Grid View */}
-            {viewMode === 'grid' && (
+            {/* Loading State */}
+            {isLoadingProjects ? (
+                <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                    <svg className="animate-spin h-12 w-12 text-orange-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p className="text-gray-500 text-lg font-medium">Loading projects...</p>
+                </div>
+            ) : projectsError ? (
+                <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                    <p className="text-red-500 text-lg font-medium mb-2">{projectsError}</p>
+                    <button
+                        onClick={fetchProjects}
+                        className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
+            ) : (
                 <>
-                    {filteredAndSortedProjects.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredAndSortedProjects.map((project) => (
-                                <ProjectDashboardCard
-                                    key={project.id}
-                                    name={project.title}
-                                    domain={`${project.title.toLowerCase().replace(/\s+/g, '-')}.com`}
-                                    description={`${project.title} - ${project.category}`}
-                                    logo="https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop"
-                                    tags={[project.category]}
-                                    status={project.status}
-                                    sales={project.sales}
-                                    price={project.price}
-                                    category={project.category}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
-                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <p className="text-gray-500 text-lg font-medium">No projects found</p>
-                            <p className="text-gray-400 text-sm mt-2">Try adjusting your filters</p>
-                        </div>
+                    {/* Grid View */}
+                    {viewMode === 'grid' && (
+                        <>
+                            {filteredAndSortedProjects.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {filteredAndSortedProjects.map((project) => (
+                                        <ProjectDashboardCard
+                                            key={project.id}
+                                            name={project.title}
+                                            domain={`${project.title.toLowerCase().replace(/\s+/g, '-')}.com`}
+                                            description={project.description || `${project.title} - ${project.category}`}
+                                            logo={project.thumbnailUrl || "https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop"}
+                                            tags={[project.category]}
+                                            status={project.status}
+                                            sales={project.sales}
+                                            price={project.price}
+                                            category={project.category}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                                    <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-gray-500 text-lg font-medium">
+                                        {projects.length === 0 
+                                            ? 'No projects uploaded yet' 
+                                            : 'No projects match your filters'}
+                                    </p>
+                                    <p className="text-gray-400 text-sm mt-2">
+                                        {projects.length === 0 
+                                            ? 'Upload your first project to get started' 
+                                            : 'Try adjusting your filters or clear all filters'}
+                                    </p>
+                                    {projects.length > 0 && (
+                                        <button
+                                            onClick={() => {
+                                                setSearchQuery('');
+                                                setSelectedStatus('all');
+                                                setSelectedCategories([]);
+                                                setPriceRange([0, 9000]);
+                                            }}
+                                            className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                        >
+                                            Clear All Filters
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </>
                     )}
-                </>
-            )}
 
-            {/* Table View */}
-            {viewMode === 'table' && (
-                <>
-                    {filteredAndSortedProjects.length > 0 ? (
+                    {/* Table View */}
+                    {viewMode === 'table' && (
+                        <>
+                            {filteredAndSortedProjects.length > 0 ? (
                         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
@@ -425,9 +600,32 @@ const MyProjectsPage: React.FC = () => {
                             <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <p className="text-gray-500 text-lg font-medium">No projects found</p>
-                            <p className="text-gray-400 text-sm mt-2">Try adjusting your filters</p>
+                            <p className="text-gray-500 text-lg font-medium">
+                                {projects.length === 0 
+                                    ? 'No projects uploaded yet' 
+                                    : 'No projects match your filters'}
+                            </p>
+                            <p className="text-gray-400 text-sm mt-2">
+                                {projects.length === 0 
+                                    ? 'Upload your first project to get started' 
+                                    : 'Try adjusting your filters or clear all filters'}
+                            </p>
+                            {projects.length > 0 && (
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setSelectedStatus('all');
+                                        setSelectedCategories([]);
+                                        setPriceRange([0, 9000]);
+                                    }}
+                                    className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                >
+                                    Clear All Filters
+                                </button>
+                            )}
                         </div>
+                    )}
+                        </>
                     )}
                 </>
             )}
@@ -524,12 +722,18 @@ const MyProjectsPage: React.FC = () => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                    <select
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
                                         value={editFormData.category || ''}
                                         onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
-                                    />
+                                    >
+                                        <option value="">Select a category</option>
+                                        {ALLOWED_CATEGORIES.map((category) => (
+                                            <option key={category} value={category}>
+                                                {category}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div>
