@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../App';
 import DashboardHeader from './DashboardHeader';
 import BuyerProjectCard from './BuyerProjectCard';
 import type { BuyerProject } from './BuyerProjectCard';
@@ -32,7 +33,8 @@ interface ApiProject {
     sellerId: string;
     sellerEmail: string;
     status: string;
-    adminApproved: boolean;
+    adminApproved?: boolean;
+    adminApprovalStatus?: string; // "approved" | "rejected" | "disabled"
     uploadedAt: string;
     documentationUrl?: string;
     youtubeVideoUrl?: string;
@@ -178,6 +180,7 @@ interface DashboardContentProps {
 }
 
 const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setDashboardMode, activeView, isSidebarOpen, toggleSidebar, setActiveView }) => {
+    const { userId } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [buyerProjectView, setBuyerProjectView] = useState<'all' | 'activated' | 'disabled'>('all');
     const [projects, setProjects] = useState<BuyerProject[]>([]);
@@ -219,12 +222,26 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             const data: ApiResponse = await response.json();
             
             if (data.success && data.projects) {
-                // Map all projects from API
-                const mappedProjects = data.projects.map(mapApiProjectToComponent);
+                // Filter projects: Only show approved projects and exclude user's own projects
+                const filteredApiProjects = data.projects.filter((apiProject: ApiProject) => {
+                    // Check if project is approved
+                    const isApproved = 
+                        apiProject.adminApprovalStatus === 'approved' || 
+                        apiProject.status === 'approved' ||
+                        (apiProject.adminApproved === true && (apiProject.status === 'active' || apiProject.status === 'live'));
+                    
+                    // Check if project is not owned by current user
+                    const isNotOwnProject = userId ? apiProject.sellerId !== userId : true;
+                    
+                    return isApproved && isNotOwnProject;
+                });
+                
+                // Map filtered projects from API
+                const mappedProjects = filteredApiProjects.map(mapApiProjectToComponent);
                 
                 // Create a map of projectId to sellerId and sellerEmail for later use
                 const sellerMap = new Map<string, { sellerId: string; sellerEmail: string }>();
-                data.projects.forEach((apiProject) => {
+                filteredApiProjects.forEach((apiProject) => {
                     if (apiProject.projectId && apiProject.sellerId) {
                         sellerMap.set(apiProject.projectId, {
                             sellerId: apiProject.sellerId,
@@ -237,7 +254,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 setProjects(mappedProjects);
                 setFilteredProjects(mappedProjects);
                 console.log('Fetched projects for buyer:', mappedProjects.length);
-                console.log('All projects data:', data.projects);
+                console.log('Total projects from API:', data.projects.length);
+                console.log('Approved projects (excluding own):', filteredApiProjects.length);
             } else {
                 throw new Error('Invalid response format from API');
             }
