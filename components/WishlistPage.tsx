@@ -9,8 +9,17 @@ interface WishlistPageProps {
 }
 
 const WishlistPage: React.FC<WishlistPageProps> = ({ allProjects, onViewDetails }) => {
-  const { wishlist } = useWishlist();
+  const { wishlist, isLoading } = useWishlist();
   const wishlistProjects = allProjects.filter(project => wishlist.includes(project.id));
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <p className="text-gray-500 text-lg font-medium">Loading wishlist...</p>
+      </div>
+    );
+  }
 
   if (wishlistProjects.length === 0) {
     return (

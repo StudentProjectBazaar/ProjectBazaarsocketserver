@@ -1,12 +1,48 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import OrangeCheckbox from './OrangeCheckbox';
+import { useAuth } from '../App';
+import { fetchUserData, Purchase } from '../services/buyerApi';
 
-const purchasedProjects = [
-    { id: 'purchase-1', title: 'Portfolio Template', category: 'Web Development', purchaseDate: '2024-06-20', price: 19.99, status: 'Completed' },
-    { id: 'purchase-2', title: 'CI/CD Pipeline Automation', category: 'DevOps', purchaseDate: '2024-06-18', price: 69.99, status: 'Completed' },
-    { id: 'purchase-3', title: 'Task Management Tool', category: 'Web Application', purchaseDate: '2024-05-30', price: 44.99, status: 'Completed' },
-    { id: 'purchase-4', title: '2D Platformer Game', category: 'Game Development', purchaseDate: '2024-05-15', price: 39.99, status: 'Completed' },
-];
+const GET_PROJECT_DETAILS_ENDPOINT = 'https://8y8bbugmbd.execute-api.ap-south-2.amazonaws.com/default/Get_project_details_by_projectId';
+
+interface ApiProject {
+    projectId: string;
+    title: string;
+    description: string;
+    price: number;
+    category: string;
+    tags: string[];
+    thumbnailUrl: string;
+    sellerId: string;
+    sellerEmail: string;
+    status: string;
+    adminApproved?: boolean;
+    adminApprovalStatus?: string;
+    uploadedAt: string;
+    documentationUrl?: string;
+    youtubeVideoUrl?: string;
+    projectFilesUrl?: string;
+    originalPrice?: number;
+    currency?: string;
+    version?: string;
+}
+
+interface ProjectDetailsResponse {
+    success: boolean;
+    data: ApiProject;
+}
+
+interface PurchaseProject {
+    id: string;
+    title: string;
+    category: string;
+    purchaseDate: string;
+    price: number;
+    status: string;
+    projectId: string;
+    projectFilesUrl?: string;
+    description?: string;
+}
 
 const DownloadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
 
@@ -15,13 +51,165 @@ type SortOption = 'none' | 'alphabetical' | 'reverse-alphabetical' | 'purchase-d
 type ViewMode = 'table' | 'grid';
 
 const PurchasesPage: React.FC = () => {
+    const { userId } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('none');
     const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
     const [viewMode, setViewMode] = useState<ViewMode>('table');
+    const [purchasedProjects, setPurchasedProjects] = useState<PurchaseProject[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch purchases and projects
+    useEffect(() => {
+        const loadPurchases = async () => {
+            if (!userId) {
+                setPurchasedProjects([]);
+                setIsLoading(false);
+                return;
+            }
+
+            setIsLoading(true);
+            setError(null);
+
+            try {
+                // Fetch user data to get purchases
+                console.log('Fetching user data for userId:', userId);
+                const userData = await fetchUserData(userId);
+                console.log('User data received:', userData);
+                
+                if (!userData) {
+                    console.log('No user data returned');
+                    setError('Failed to fetch user data');
+                    setPurchasedProjects([]);
+                    setIsLoading(false);
+                    return;
+                }
+
+                if (!userData.purchases) {
+                    console.log('No purchases array in user data');
+                    setPurchasedProjects([]);
+                    setIsLoading(false);
+                    return;
+                }
+
+                if (userData.purchases.length === 0) {
+                    console.log('Purchases array is empty');
+                    setPurchasedProjects([]);
+                    setIsLoading(false);
+                    return;
+                }
+
+                console.log('Purchases found:', userData.purchases.length);
+
+                // Fetch project details for each purchase
+                console.log('Fetching project details for', userData.purchases.length, 'purchases');
+                const projectMap = new Map<string, ApiProject>();
+                
+                // Fetch all project details in parallel
+                const projectPromises = userData.purchases.map(async (purchase: Purchase) => {
+                    try {
+                        const response = await fetch(GET_PROJECT_DETAILS_ENDPOINT, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                projectId: purchase.projectId,
+                            }),
+                        });
+
+                        if (!response.ok) {
+                            console.warn(`Failed to fetch project ${purchase.projectId}:`, response.statusText);
+                            return null;
+                        }
+
+                        const projectData: ProjectDetailsResponse = await response.json();
+                        if (projectData.success && projectData.data) {
+                            return { projectId: purchase.projectId, project: projectData.data };
+                        }
+                        return null;
+                    } catch (error) {
+                        console.error(`Error fetching project ${purchase.projectId}:`, error);
+                        return null;
+                    }
+                });
+
+                const projectResults = await Promise.all(projectPromises);
+                projectResults.forEach((result) => {
+                    if (result) {
+                        projectMap.set(result.projectId, result.project);
+                    }
+                });
+
+                console.log('Fetched project details for', projectMap.size, 'projects');
+
+                // Map purchases to purchase projects with project details
+                // Sort by purchase date (newest first)
+                const sortedPurchases = [...userData.purchases].sort((a, b) => {
+                    const dateA = new Date(a.purchasedAt).getTime();
+                    const dateB = new Date(b.purchasedAt).getTime();
+                    return dateB - dateA; // Newest first
+                });
+
+                const mappedPurchases: PurchaseProject[] = sortedPurchases
+                    .map((purchase: Purchase) => {
+                        console.log('Processing purchase:', purchase);
+                        const project = projectMap.get(purchase.projectId);
+                        if (!project) {
+                            console.log('Project not found for purchase:', purchase.projectId);
+                            // If project not found, still show purchase with limited info
+                            return {
+                                id: `purchase-${purchase.projectId}`,
+                                title: `Project ${purchase.projectId}`,
+                                category: 'Unknown',
+                                purchaseDate: purchase.purchasedAt ? purchase.purchasedAt.split('T')[0] : new Date().toISOString().split('T')[0], // Extract date part
+                                price: purchase.priceAtPurchase || 0,
+                                status: purchase.orderStatus === 'SUCCESS' ? 'Completed' : (purchase.orderStatus || 'Unknown'),
+                                projectId: purchase.projectId,
+                            };
+                        }
+
+                        return {
+                            id: `purchase-${purchase.projectId}`,
+                            title: project.title,
+                            category: project.category || 'Uncategorized',
+                            purchaseDate: purchase.purchasedAt ? purchase.purchasedAt.split('T')[0] : new Date().toISOString().split('T')[0], // Extract date part
+                            price: purchase.priceAtPurchase || 0,
+                            status: purchase.orderStatus === 'SUCCESS' ? 'Completed' : (purchase.orderStatus || 'Unknown'),
+                            projectId: purchase.projectId,
+                            projectFilesUrl: project.projectFilesUrl,
+                            description: project.description,
+                        };
+                    });
+
+                console.log('Mapped purchases:', mappedPurchases);
+
+                setPurchasedProjects(mappedPurchases);
+            } catch (err) {
+                console.error('Error loading purchases:', err);
+                const errorMessage = err instanceof Error ? err.message : 'Failed to load purchases';
+                console.error('Error details:', {
+                    message: errorMessage,
+                    error: err,
+                    userId: userId
+                });
+                setError(errorMessage);
+                setPurchasedProjects([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadPurchases();
+    }, [userId]);
 
     const filteredAndSortedProjects = useMemo(() => {
+        if (!purchasedProjects || purchasedProjects.length === 0) {
+            return [];
+        }
+
         let filtered = purchasedProjects.filter(project => {
             const query = searchQuery.toLowerCase();
             return (
@@ -44,7 +232,7 @@ const PurchasesPage: React.FC = () => {
         }
 
         return filtered;
-    }, [searchQuery, sortOption]);
+    }, [purchasedProjects, searchQuery, sortOption]);
 
     const handleExport = () => {
         // Export functionality can be implemented here
@@ -85,6 +273,40 @@ const PurchasesPage: React.FC = () => {
         { value: 'price-high-low' as SortOption, label: 'Price', subtext: 'High → Low' },
         { value: 'price-low-high' as SortOption, label: 'Price', subtext: 'Low → High' },
     ];
+
+    if (isLoading) {
+        return (
+            <div className="mt-8 flex items-center justify-center py-16">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading purchases...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="mt-8 text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                <svg className="mx-auto h-16 w-16 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-red-500 mb-2 font-semibold">Error loading purchases</p>
+                <p className="text-gray-600 mb-4 text-sm">{error}</p>
+                <button
+                    onClick={() => {
+                        setError(null);
+                        setIsLoading(true);
+                        // Trigger reload by changing userId dependency
+                        window.location.reload();
+                    }}
+                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="mt-8">
@@ -288,7 +510,19 @@ const PurchasesPage: React.FC = () => {
                                             </div>
                                         </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button className="flex items-center bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-2 px-4 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 text-xs shadow-sm hover:shadow-md">
+                                            <button 
+                                                onClick={() => {
+                                                    if (project.projectFilesUrl) {
+                                                        window.open(project.projectFilesUrl, '_blank');
+                                                    } else {
+                                                        alert('Download link not available');
+                                                    }
+                                                }}
+                                                disabled={!project.projectFilesUrl}
+                                                className={`flex items-center bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-2 px-4 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 text-xs shadow-sm hover:shadow-md ${
+                                                    !project.projectFilesUrl ? 'opacity-50 cursor-not-allowed' : ''
+                                                }`}
+                                            >
                                             <DownloadIcon /> Download
                                         </button>
                                         </td>
@@ -301,9 +535,11 @@ const PurchasesPage: React.FC = () => {
                                             <svg className="h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
-                                            <p className="text-gray-500 text-sm font-medium">No purchases found</p>
+                                            <p className="text-gray-500 text-sm font-medium">
+                                                {searchQuery ? 'No purchases found' : 'You have no purchases yet'}
+                                            </p>
                                             <p className="text-gray-400 text-xs mt-1">
-                                                {searchQuery ? `No purchases match "${searchQuery}"` : 'You have no purchases yet'}
+                                                {searchQuery ? `No purchases match "${searchQuery}"` : 'Start purchasing projects to see them here'}
                                             </p>
                                         </div>
                                     </td>
@@ -407,7 +643,19 @@ const PurchasesPage: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <button className="w-full flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-2.5 px-4 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 text-sm shadow-sm hover:shadow-md">
+                                        <button 
+                                            onClick={() => {
+                                                if (project.projectFilesUrl) {
+                                                    window.open(project.projectFilesUrl, '_blank');
+                                                } else {
+                                                    alert('Download link not available');
+                                                }
+                                            }}
+                                            disabled={!project.projectFilesUrl}
+                                            className={`w-full flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-2.5 px-4 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 text-sm shadow-sm hover:shadow-md ${
+                                                !project.projectFilesUrl ? 'opacity-50 cursor-not-allowed' : ''
+                                            }`}
+                                        >
                                             <DownloadIcon /> Download
                                         </button>
                                     </div>
@@ -419,9 +667,11 @@ const PurchasesPage: React.FC = () => {
                                     <svg className="h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    <p className="text-gray-500 text-sm font-medium">No purchases found</p>
+                                    <p className="text-gray-500 text-sm font-medium">
+                                        {searchQuery ? 'No purchases found' : 'You have no purchases yet'}
+                                    </p>
                                     <p className="text-gray-400 text-xs mt-1">
-                                        {searchQuery ? `No purchases match "${searchQuery}"` : 'You have no purchases yet'}
+                                        {searchQuery ? `No purchases match "${searchQuery}"` : 'Start purchasing projects to see them here'}
                                     </p>
                                 </div>
                             </div>

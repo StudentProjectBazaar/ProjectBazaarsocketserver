@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
+import { fetchUserData } from '../services/buyerApi';
 import DashboardHeader from './DashboardHeader';
 import BuyerProjectCard from './BuyerProjectCard';
 import type { BuyerProject } from './BuyerProjectCard';
@@ -213,6 +214,15 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
         setProjectsError(null);
         
         try {
+            // Fetch user data to get purchased project IDs
+            let purchasedProjectIds: string[] = [];
+            if (userId) {
+                const userData = await fetchUserData(userId);
+                if (userData && userData.purchases) {
+                    purchasedProjectIds = userData.purchases.map((p: any) => p.projectId);
+                }
+            }
+
             const response = await fetch(GET_ALL_PROJECTS_ENDPOINT);
             
             if (!response.ok) {
@@ -222,7 +232,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             const data: ApiResponse = await response.json();
             
             if (data.success && data.projects) {
-                // Filter projects: Only show approved projects and exclude user's own projects
+                // Filter projects: Only show approved projects, exclude user's own projects, and exclude purchased projects
                 const filteredApiProjects = data.projects.filter((apiProject: ApiProject) => {
                     // Check if project is approved
                     const isApproved = 
@@ -233,7 +243,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                     // Check if project is not owned by current user
                     const isNotOwnProject = userId ? apiProject.sellerId !== userId : true;
                     
-                    return isApproved && isNotOwnProject;
+                    // Check if project is not already purchased
+                    const isNotPurchased = !purchasedProjectIds.includes(apiProject.projectId);
+                    
+                    return isApproved && isNotOwnProject && isNotPurchased;
                 });
                 
                 // Map filtered projects from API
@@ -255,7 +268,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 setFilteredProjects(mappedProjects);
                 console.log('Fetched projects for buyer:', mappedProjects.length);
                 console.log('Total projects from API:', data.projects.length);
-                console.log('Approved projects (excluding own):', filteredApiProjects.length);
+                console.log('Approved projects (excluding own and purchased):', filteredApiProjects.length);
+                console.log('Purchased projects filtered out:', purchasedProjectIds.length);
             } else {
                 throw new Error('Invalid response format from API');
             }

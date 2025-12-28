@@ -1,7 +1,8 @@
-import React, { useState, createContext, useContext, ReactNode } from 'react';
+import React, { useState, createContext, useContext, ReactNode, useEffect, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import DashboardContent from './DashboardContent';
-import { useTheme } from '../App';
+import { useTheme, useAuth } from '../App';
+import { fetchUserData, likeProject, unlikeProject, addToCart as apiAddToCart, removeFromCart as apiRemoveFromCart, CartItem } from '../services/buyerApi';
 
 export type DashboardView = 'dashboard' | 'purchases' | 'wishlist' | 'cart' | 'analytics' | 'settings' | 'my-projects' | 'earnings' | 'payouts' | 'project-details' | 'seller-profile' | 'help-center';
 
@@ -9,6 +10,8 @@ interface WishlistContextType {
     wishlist: string[];
     toggleWishlist: (projectId: string) => void;
     isInWishlist: (projectId: string) => boolean;
+    refreshWishlist: () => Promise<void>;
+    isLoading: boolean;
 }
 
 export const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
@@ -27,6 +30,8 @@ interface CartContextType {
     removeFromCart: (projectId: string) => void;
     isInCart: (projectId: string) => boolean;
     cartCount: number;
+    refreshCart: () => Promise<void>;
+    isLoading: boolean;
 }
 
 export const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -40,46 +45,172 @@ export const useCart = (): CartContextType => {
 };
 
 
-const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [wishlist, setWishlist] = useState<string[]>(['proj-1', 'proj-3']);
+const WishlistProvider: React.FC<{ children: ReactNode; userId: string | null }> = ({ children, userId }) => {
+    const [wishlist, setWishlist] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const toggleWishlist = (projectId: string) => {
+    // Function to load wishlist from API
+    const loadWishlist = useCallback(async () => {
+        if (!userId) {
+            setWishlist([]);
+            setIsLoading(false);
+            return;
+        }
+
+        setIsLoading(true);
+        const userData = await fetchUserData(userId);
+        if (userData && userData.wishlist) {
+            setWishlist(userData.wishlist);
+        } else {
+            setWishlist([]);
+        }
+        setIsLoading(false);
+    }, [userId]);
+
+    // Fetch wishlist from API on mount and when userId changes
+    useEffect(() => {
+        loadWishlist();
+    }, [loadWishlist]);
+
+    const refreshWishlist = useCallback(async () => {
+        await loadWishlist();
+    }, [loadWishlist]);
+
+    const toggleWishlist = async (projectId: string) => {
+        if (!userId) return;
+
+        const isLiked = wishlist.includes(projectId);
+        
+        // Optimistic update
         setWishlist(prev => 
-            prev.includes(projectId) 
+            isLiked
                 ? prev.filter(id => id !== projectId)
                 : [...prev, projectId]
         );
+
+        // Sync with API
+        try {
+            if (isLiked) {
+                await unlikeProject(userId, projectId);
+            } else {
+                await likeProject(userId, projectId);
+            }
+        } catch (error) {
+            // Revert on error
+            setWishlist(prev => 
+                isLiked
+                    ? [...prev, projectId]
+                    : prev.filter(id => id !== projectId)
+            );
+            console.error('Error toggling wishlist:', error);
+        }
     };
 
     const isInWishlist = (projectId: string) => wishlist.includes(projectId);
 
     return (
-        <WishlistContext.Provider value={{ wishlist, toggleWishlist, isInWishlist }}>
+        <WishlistContext.Provider value={{ wishlist, toggleWishlist, isInWishlist, refreshWishlist, isLoading }}>
             {children}
         </WishlistContext.Provider>
     )
 }
 
-const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+const CartProvider: React.FC<{ children: ReactNode; userId: string | null }> = ({ children, userId }) => {
     const [cart, setCart] = useState<string[]>([]);
+    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const addToCart = (projectId: string) => {
-        setCart(prev => {
-            if (!prev.includes(projectId)) {
-                return [...prev, projectId];
+    // Function to load cart from API
+    const loadCart = useCallback(async () => {
+        if (!userId) {
+            setCart([]);
+            setCartItems([]);
+            setIsLoading(false);
+            return;
+        }
+
+        setIsLoading(true);
+        const userData = await fetchUserData(userId);
+        if (userData && userData.cart) {
+            setCartItems(userData.cart);
+            setCart(userData.cart.map(item => item.projectId));
+        } else {
+            setCart([]);
+            setCartItems([]);
+        }
+        setIsLoading(false);
+    }, [userId]);
+
+    // Fetch cart from API on mount and when userId changes
+    useEffect(() => {
+        loadCart();
+    }, [loadCart]);
+
+    const refreshCart = useCallback(async () => {
+        await loadCart();
+    }, [loadCart]);
+
+    const addToCart = async (projectId: string) => {
+        if (!userId) return;
+
+        // Check if already in cart
+        if (cart.includes(projectId)) {
+            return;
+        }
+
+        // Optimistic update
+        setCart(prev => [...prev, projectId]);
+        setCartItems(prev => [...prev, { projectId, addedAt: new Date().toISOString() }]);
+
+        // Sync with API
+        try {
+            const result = await apiAddToCart(userId, projectId);
+            if (!result.success) {
+                // Revert on error
+                setCart(prev => prev.filter(id => id !== projectId));
+                setCartItems(prev => prev.filter(item => item.projectId !== projectId));
             }
-            return prev;
-        });
+        } catch (error) {
+            // Revert on error
+            setCart(prev => prev.filter(id => id !== projectId));
+            setCartItems(prev => prev.filter(item => item.projectId !== projectId));
+            console.error('Error adding to cart:', error);
+        }
     };
 
-    const removeFromCart = (projectId: string) => {
+    const removeFromCart = async (projectId: string) => {
+        if (!userId) return;
+
+        // Optimistic update
         setCart(prev => prev.filter(id => id !== projectId));
+        setCartItems(prev => prev.filter(item => item.projectId !== projectId));
+
+        // Sync with API
+        try {
+            const result = await apiRemoveFromCart(userId, projectId);
+            if (!result.success) {
+                // Revert on error - reload from API
+                const userData = await fetchUserData(userId);
+                if (userData && userData.cart) {
+                    setCartItems(userData.cart);
+                    setCart(userData.cart.map(item => item.projectId));
+                }
+            }
+        } catch (error) {
+            // Revert on error - reload from API
+            const userData = await fetchUserData(userId);
+            if (userData && userData.cart) {
+                setCartItems(userData.cart);
+                setCart(userData.cart.map(item => item.projectId));
+            }
+            console.error('Error removing from cart:', error);
+        }
     };
 
     const isInCart = (projectId: string) => cart.includes(projectId);
 
     return (
-        <CartContext.Provider value={{ cart, addToCart, removeFromCart, isInCart, cartCount: cart.length }}>
+        <CartContext.Provider value={{ cart, addToCart, removeFromCart, isInCart, cartCount: cart.length, refreshCart, isLoading }}>
             {children}
         </CartContext.Provider>
     );
@@ -87,6 +218,7 @@ const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
 const DashboardPage: React.FC = () => {
     const { theme } = useTheme();
+    const { userId } = useAuth();
     const [dashboardMode, setDashboardMode] = useState<'buyer' | 'seller'>('buyer');
     const [activeView, setActiveView] = useState<DashboardView>('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -107,8 +239,8 @@ const DashboardPage: React.FC = () => {
     };
 
     return (
-        <WishlistProvider>
-            <CartProvider>
+        <WishlistProvider userId={userId}>
+            <CartProvider userId={userId}>
                 <div className={`flex h-screen bg-white text-gray-900 font-sans transition-colors duration-300 relative`}>
                 {/* Overlay for mobile */}
                 {isSidebarOpen && (

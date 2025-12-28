@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { BuyerProject } from './BuyerProjectCard';
 import BuyerProjectCard from './BuyerProjectCard';
 import { useCart } from './DashboardPage';
+import { useAuth } from '../App';
+import { purchaseProject } from '../services/buyerApi';
 
 interface CartPageProps {
   allProjects: BuyerProject[];
@@ -9,10 +11,69 @@ interface CartPageProps {
 }
 
 const CartPage: React.FC<CartPageProps> = ({ allProjects, onViewDetails }) => {
-  const { cart, removeFromCart } = useCart();
-  const cartProjects = allProjects.filter(project => cart.includes(project.id));
+  const { userId } = useAuth();
+  const { cart, removeFromCart, isLoading } = useCart();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   
+  const cartProjects = allProjects.filter(project => cart.includes(project.id));
   const totalPrice = cartProjects.reduce((sum, project) => sum + project.price, 0);
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <p className="text-gray-500 text-lg font-medium">Loading cart...</p>
+      </div>
+    );
+  }
+
+  const handleCheckout = async () => {
+    if (!userId || cartProjects.length === 0) return;
+
+    setIsProcessing(true);
+    setCheckoutError(null);
+    setCheckoutSuccess(false);
+
+    try {
+      // Purchase all items in cart
+      const purchasePromises = cartProjects.map(async (project) => {
+        // Generate a unique payment ID (in production, this would come from payment gateway)
+        const paymentId = `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        return purchaseProject(
+          userId,
+          project.id,
+          project.price,
+          paymentId,
+          'SUCCESS'
+        );
+      });
+
+      const results = await Promise.all(purchasePromises);
+      
+      // Check if all purchases succeeded
+      const allSucceeded = results.every(result => result.success);
+      
+      if (allSucceeded) {
+        setCheckoutSuccess(true);
+        // Clear cart after successful purchase (cart will be cleared by Lambda)
+        // Reload page after 2 seconds to refresh data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        const failedCount = results.filter(r => !r.success).length;
+        setCheckoutError(`Failed to purchase ${failedCount} item(s). Please try again.`);
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setCheckoutError('An error occurred during checkout. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   if (cartProjects.length === 0) {
     return (
@@ -75,8 +136,42 @@ const CartPage: React.FC<CartPageProps> = ({ allProjects, onViewDetails }) => {
               </div>
             </div>
 
-            <button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-md hover:shadow-lg">
-              Proceed to Checkout
+            {checkoutSuccess && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-700 text-sm font-medium text-center">
+                  ✓ Purchase successful! Redirecting...
+                </p>
+              </div>
+            )}
+
+            {checkoutError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm font-medium text-center">
+                  {checkoutError}
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={handleCheckout}
+              disabled={isProcessing || cartProjects.length === 0}
+              className={`w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg ${
+                isProcessing || cartProjects.length === 0
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'hover:from-orange-600 hover:to-orange-700'
+              }`}
+            >
+              {isProcessing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                'Proceed to Checkout'
+              )}
             </button>
 
             <p className="text-xs text-gray-500 text-center mt-4">
