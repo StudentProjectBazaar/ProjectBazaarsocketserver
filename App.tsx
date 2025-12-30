@@ -177,14 +177,50 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const [page, setPage] = useState<Page>('home');
+  // Initialize state from localStorage if available
+  const [page, setPage] = useState<Page>(() => {
+    const stored = localStorage.getItem('currentPage');
+    return (stored as Page) || 'home';
+  });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
 
+  // Restore auth state from localStorage on mount
+  useEffect(() => {
+    const storedUserData = localStorage.getItem('userData');
+    const storedAuth = localStorage.getItem('authSession');
+    
+    if (storedAuth === 'true' && storedUserData) {
+      try {
+        const userData = JSON.parse(storedUserData);
+        if (userData.userId && userData.email) {
+          const role = userData.email === 'saimanee@gmail.com' ? 'admin' : (userData.role || 'user');
+          setUserId(userData.userId);
+          setUserEmail(userData.email);
+          setUserRole(role);
+          setIsLoggedIn(true);
+          
+          // Navigate to appropriate page based on role
+          if (role === 'admin') {
+            setPage('admin');
+          } else {
+            setPage('dashboard');
+          }
+        }
+      } catch (error) {
+        console.error('Error restoring auth state:', error);
+        // Clear invalid data
+        localStorage.removeItem('userData');
+        localStorage.removeItem('authSession');
+      }
+    }
+  }, []);
+
   const navigateTo = (targetPage: Page) => {
     setPage(targetPage);
+    localStorage.setItem('currentPage', targetPage);
     window.scrollTo(0, 0);
   };
   
@@ -193,6 +229,10 @@ const App: React.FC = () => {
     setUserEmail(email);
     setUserRole(role);
     setIsLoggedIn(true);
+    
+    // Store auth session in localStorage
+    localStorage.setItem('authSession', 'true');
+    
     if (role === 'admin') {
       navigateTo('admin');
     } else {
@@ -205,6 +245,12 @@ const App: React.FC = () => {
     setUserEmail(null);
     setUserRole(null);
     setIsLoggedIn(false);
+    
+    // Clear auth data from localStorage
+    localStorage.removeItem('userData');
+    localStorage.removeItem('authSession');
+    localStorage.removeItem('currentPage');
+    
     navigateTo('home');
   };
 

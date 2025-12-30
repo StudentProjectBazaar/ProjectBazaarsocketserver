@@ -100,13 +100,11 @@ const AuthPage: React.FC = () => {
         // Determine role - check if admin (you can modify this logic)
         const userRole = data.data.email === 'saimanee@gmail.com' ? 'admin' : (data.data.role || 'user');
         
+        // Store user data in localStorage for session persistence
+        localStorage.setItem('userData', JSON.stringify(data.data));
+        
         // Call the login function with user data
         login(data.data.userId, data.data.email, userRole);
-        
-        // Store user data in localStorage if rememberMe is checked
-        if (rememberMe) {
-          localStorage.setItem('userData', JSON.stringify(data.data));
-        }
       } else {
         setError(data.error?.message || 'Login failed. Please check your credentials.');
       }
@@ -136,6 +134,10 @@ const AuthPage: React.FC = () => {
 
       if (data.success && data.data) {
         const userRole = data.data.email === 'saimanee@gmail.com' ? 'admin' : (data.data.role || 'user');
+        
+        // Store user data in localStorage for session persistence
+        localStorage.setItem('userData', JSON.stringify(data.data));
+        
         login(data.data.userId, data.data.email, userRole);
       }
     } catch (err) {
