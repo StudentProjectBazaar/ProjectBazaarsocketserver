@@ -4,6 +4,7 @@
 
 const LAMBDA_ENDPOINT = 'https://tcladht447.execute-api.ap-south-2.amazonaws.com/default/Like_Addtocart_purcaseproject_for_Buyer';
 const GET_USER_DETAILS_ENDPOINT = 'https://6omszxa58g.execute-api.ap-south-2.amazonaws.com/default/Get_user_Details_by_his_Id';
+const GET_PROJECT_DETAILS_ENDPOINT = 'https://8y8bbugmbd.execute-api.ap-south-2.amazonaws.com/default/Get_project_details_by_projectId';
 
 export interface CartItem {
   projectId: string;
@@ -40,6 +41,33 @@ export interface UserData {
 export interface ApiResponse {
   success: boolean;
   message?: string;
+  error?: string;
+}
+
+export interface ProjectDetails {
+  projectId: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  tags: string[];
+  thumbnailUrl: string;
+  sellerId: string;
+  sellerEmail: string;
+  status: string;
+  adminApproved?: boolean;
+  adminApprovalStatus?: string; // "approved" | "rejected" | "disabled"
+  uploadedAt: string;
+  documentationUrl?: string;
+  youtubeVideoUrl?: string;
+  purchasesCount?: number;
+  likesCount?: number;
+  viewsCount?: number;
+}
+
+export interface ProjectDetailsResponse {
+  success: boolean;
+  data?: ProjectDetails;
   error?: string;
 }
 
@@ -243,6 +271,96 @@ export const purchaseProject = async (
       message: 'Failed to purchase project',
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+};
+
+/**
+ * Fetch project details by project ID
+ */
+export const fetchProjectDetails = async (projectId: string): Promise<ProjectDetails | null> => {
+  try {
+    const response = await fetch(GET_PROJECT_DETAILS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        projectId: projectId,
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch project details: ${response.statusText}`);
+    }
+    
+    const data: ProjectDetailsResponse = await response.json();
+    
+    if (data.success && data.data) {
+      return data.data;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error fetching project details:', error);
+    return null;
+  }
+};
+
+/**
+ * Fetch user details with projects (for seller dashboard)
+ */
+export const fetchUserDetailsWithProjects = async (userId: string): Promise<{ user: UserData | null; projects: ProjectDetails[] }> => {
+  try {
+    // Try POST method first (as per fetchUserData pattern)
+    const response = await fetch(GET_USER_DETAILS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: userId,
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user details: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Handle different response structures
+      const userData = data.data || data.user || {};
+      const projectsData = data.projects || data.data?.projects || [];
+      
+      const user: UserData = {
+        userId: userData.userId || userId,
+        email: userData.email,
+        phoneNumber: userData.phoneNumber,
+        role: userData.role,
+        status: userData.status,
+        isPremium: userData.isPremium,
+        credits: userData.credits,
+        projectsCount: userData.projectsCount,
+        totalPurchases: userData.totalPurchases,
+        totalSpent: userData.totalSpent,
+        wishlist: userData.wishlist || [],
+        cart: userData.cart || [],
+        purchases: userData.purchases || [],
+        lastLoginAt: userData.lastLoginAt,
+        loginCount: userData.loginCount,
+        createdBy: userData.createdBy,
+      };
+      
+      const projects: ProjectDetails[] = Array.isArray(projectsData) ? projectsData : [];
+      
+      return { user, projects };
+    }
+    
+    return { user: null, projects: [] };
+  } catch (error) {
+    console.error('Error fetching user details with projects:', error);
+    return { user: null, projects: [] };
   }
 };
 

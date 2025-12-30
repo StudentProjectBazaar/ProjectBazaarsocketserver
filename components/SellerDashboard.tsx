@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProjectDashboardCard from './ProjectDashboardCard';
 import { useNavigation, usePremium, useAuth } from '../App';
+import { fetchProjectDetails, ProjectDetails } from '../services/buyerApi';
 
 interface StatCardProps {
     title: string;
@@ -96,10 +97,11 @@ interface UploadedProject {
     description: string;
     logo: string;
     tags: string[];
-    status: 'Live' | 'In Review' | 'Draft';
+    status: 'Live' | 'In Review' | 'Draft' | 'Approved' | 'Rejected' | 'Disabled';
     sales: number;
     price: number;
     category: string;
+    adminApprovalStatus?: string;
 }
 
 const MAX_FREE_PROJECTS = 5;
@@ -140,17 +142,33 @@ const SellerDashboard: React.FC = () => {
     const [uploadedProjects, setUploadedProjects] = useState<UploadedProject[]>([]);
     const [isLoadingProjects, setIsLoadingProjects] = useState(true);
     const [projectsError, setProjectsError] = useState<string | null>(null);
+    
+    // Stats state
+    const [stats, setStats] = useState({
+        activatedProjects: 0,
+        rejectedProjects: 0,
+        disabledProjects: 0,
+        totalProjectsSold: 0,
+        totalRevenue: 0
+    });
 
     // Function to map API project to component format
     const mapApiProjectToComponent = (apiProject: any): UploadedProject => {
-        // Map status from API to component format
-        let status: 'Live' | 'In Review' | 'Draft' = 'Draft';
-        const apiStatus = apiProject.status?.toLowerCase();
-        if (apiStatus === 'active') {
-            status = 'Live';
-        } else if (apiStatus === 'pending' || apiStatus === 'in-review' || apiStatus === 'in_review') {
+        // Map status from API to component format based on adminApprovalStatus
+        let status: 'Live' | 'In Review' | 'Draft' | 'Approved' | 'Rejected' | 'Disabled' = 'Draft';
+        const approvalStatus = apiProject.adminApprovalStatus?.toLowerCase();
+        const projectStatus = apiProject.status?.toLowerCase();
+        
+        // Priority: adminApprovalStatus > status
+        if (approvalStatus === 'approved' || (approvalStatus === undefined && projectStatus === 'active')) {
+            status = 'Approved';
+        } else if (approvalStatus === 'rejected') {
+            status = 'Rejected';
+        } else if (approvalStatus === 'disabled') {
+            status = 'Disabled';
+        } else if (projectStatus === 'pending' || projectStatus === 'in-review' || projectStatus === 'in_review' || approvalStatus === 'pending') {
             status = 'In Review';
-        } else if (apiStatus === 'disabled' || apiStatus === 'rejected') {
+        } else {
             status = 'Draft';
         }
 
@@ -162,8 +180,11 @@ const SellerDashboard: React.FC = () => {
             tagsArray = apiProject.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
         }
 
+        // Handle project ID - could be projectId or id
+        const projectId = apiProject.projectId || apiProject.id || '';
+
         return {
-            id: apiProject.projectId || apiProject.id,
+            id: projectId,
             name: apiProject.title || apiProject.name || 'Untitled Project',
             domain: `${(apiProject.title || apiProject.name || 'project').toLowerCase().replace(/\s+/g, '-')}.com`,
             description: apiProject.description || '',
@@ -171,12 +192,13 @@ const SellerDashboard: React.FC = () => {
             tags: tagsArray,
             status: status,
             sales: apiProject.purchasesCount || apiProject.sales || 0,
-            price: typeof apiProject.price === 'number' ? apiProject.price : parseFloat(apiProject.price || '0'),
-            category: apiProject.category || 'Uncategorized'
+            price: typeof apiProject.price === 'number' ? apiProject.price : parseFloat(String(apiProject.price || '0')),
+            category: apiProject.category || 'Uncategorized',
+            adminApprovalStatus: apiProject.adminApprovalStatus
         };
     };
 
-    // Fetch projects from API
+    // Fetch projects from API and calculate stats
     const fetchProjects = async () => {
         if (!userId) {
             setIsLoadingProjects(false);
@@ -187,6 +209,7 @@ const SellerDashboard: React.FC = () => {
         setProjectsError(null);
 
         try {
+            // First, try to fetch projects from the seller projects endpoint
             const response = await fetch(`${GET_PROJECTS_ENDPOINT}?sellerId=${userId}`, {
                 method: 'GET',
                 headers: {
@@ -195,15 +218,93 @@ const SellerDashboard: React.FC = () => {
             });
 
             const data = await response.json();
+            console.log('Fetched projects data:', data);
 
-            if (data.success && data.projects) {
-                // API returns projects array directly in response
-                const projects = Array.isArray(data.projects) ? data.projects : [];
-                const mappedProjects = projects.map(mapApiProjectToComponent);
-                setUploadedProjects(mappedProjects);
+            let apiProjects: ProjectDetails[] = [];
+
+            if (data.success && data.projects && Array.isArray(data.projects)) {
+                // Use projects from the seller endpoint
+                apiProjects = data.projects;
             } else {
-                // If API returns empty or error, set empty array
+                // Fallback: Try to fetch from user details endpoint
+                console.log('Seller endpoint returned no projects, trying user details endpoint...');
+                // This would require the user details endpoint to return projects
+                // For now, we'll work with what we have
+            }
+
+            if (apiProjects.length > 0) {
+                // Fetch detailed information for each project to get updated sales data
+                const projectsWithDetails = await Promise.all(
+                    apiProjects.map(async (project) => {
+                        try {
+                            const projectId = project.projectId || project.id;
+                            if (projectId) {
+                                const projectDetail = await fetchProjectDetails(projectId);
+                                if (projectDetail) {
+                                    return {
+                                        ...project,
+                                        purchasesCount: projectDetail.purchasesCount || project.purchasesCount || 0,
+                                        adminApprovalStatus: projectDetail.adminApprovalStatus || project.adminApprovalStatus,
+                                        status: projectDetail.status || project.status,
+                                        price: projectDetail.price || project.price,
+                                        description: projectDetail.description || project.description,
+                                        thumbnailUrl: projectDetail.thumbnailUrl || project.thumbnailUrl,
+                                    };
+                                }
+                            }
+                            return project;
+                        } catch (error) {
+                            console.error(`Error fetching details for project ${project.projectId || project.id}:`, error);
+                            return project;
+                        }
+                    })
+                );
+
+                const mappedProjects = projectsWithDetails.map(mapApiProjectToComponent);
+                console.log('Mapped projects for display:', mappedProjects);
+                console.log('Number of projects to display:', mappedProjects.length);
+                setUploadedProjects(mappedProjects);
+                
+                // Calculate stats
+                let activatedCount = 0;
+                let rejectedCount = 0;
+                let disabledCount = 0;
+                let totalSold = 0;
+                let totalRev = 0;
+                
+                mappedProjects.forEach(project => {
+                    // Count by status
+                    if (project.status === 'Approved') {
+                        activatedCount++;
+                    } else if (project.status === 'Rejected') {
+                        rejectedCount++;
+                    } else if (project.status === 'Disabled') {
+                        disabledCount++;
+                    }
+                    
+                    // Calculate sales and revenue
+                    const sales = project.sales || 0;
+                    totalSold += sales;
+                    totalRev += sales * project.price;
+                });
+                
+                setStats({
+                    activatedProjects: activatedCount,
+                    rejectedProjects: rejectedCount,
+                    disabledProjects: disabledCount,
+                    totalProjectsSold: totalSold,
+                    totalRevenue: totalRev
+                });
+            } else {
+                console.log('No projects found for seller');
                 setUploadedProjects([]);
+                setStats({
+                    activatedProjects: 0,
+                    rejectedProjects: 0,
+                    disabledProjects: 0,
+                    totalProjectsSold: 0,
+                    totalRevenue: 0
+                });
             }
         } catch (error) {
             console.error('Error fetching projects:', error);
@@ -350,10 +451,12 @@ const SellerDashboard: React.FC = () => {
     return (
         <div className="mt-8 space-y-8">
             {/* Stats */}
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StatCard title="Total Revenue" value="$8,450" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} colorClass="bg-gradient-to-br from-green-500 to-green-600" />
-                <StatCard title="Projects Sold" value="102" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} colorClass="bg-gradient-to-br from-blue-500 to-blue-600" />
-                <StatCard title="Active Projects" value={uploadedProjects.length.toString()} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>} colorClass="bg-gradient-to-br from-purple-500 to-purple-600" />
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                <StatCard title="Activated Projects" value={stats.activatedProjects.toString()} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} colorClass="bg-gradient-to-br from-green-500 to-green-600" />
+                <StatCard title="Rejected Projects" value={stats.rejectedProjects.toString()} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} colorClass="bg-gradient-to-br from-red-500 to-red-600" />
+                <StatCard title="Disabled Projects" value={stats.disabledProjects.toString()} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>} colorClass="bg-gradient-to-br from-gray-500 to-gray-600" />
+                <StatCard title="Total Projects Sold" value={stats.totalProjectsSold.toString()} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} colorClass="bg-gradient-to-br from-blue-500 to-blue-600" />
+                <StatCard title="Total Revenue" value={`$${stats.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} colorClass="bg-gradient-to-br from-purple-500 to-purple-600" />
             </div>
 
             {/* Uploaded Projects Grid (shown by default) */}
@@ -481,10 +584,14 @@ const SellerDashboard: React.FC = () => {
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                             <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                                                                project.status === 'Live'
+                                                                project.status === 'Live' || project.status === 'Approved'
                                                                     ? 'bg-green-100 text-green-800'
                                                                     : project.status === 'In Review'
                                                                     ? 'bg-orange-100 text-orange-800'
+                                                                    : project.status === 'Rejected'
+                                                                    ? 'bg-red-100 text-red-800'
+                                                                    : project.status === 'Disabled'
+                                                                    ? 'bg-gray-200 text-gray-700'
                                                                     : 'bg-gray-100 text-gray-800'
                                                             }`}>
                                                                 {project.status}

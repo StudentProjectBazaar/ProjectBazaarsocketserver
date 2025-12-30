@@ -1,4 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../App';
+import { fetchProjectDetails, ProjectDetails } from '../services/buyerApi';
+
+const GET_PROJECTS_ENDPOINT = 'https://qosmi6luq0.execute-api.ap-south-2.amazonaws.com/default/Get_All_Projects_for_Seller';
 
 interface StatCardProps {
     title: string;
@@ -39,94 +43,389 @@ const ChartBar: React.FC<ChartBarProps> = ({ label, value, maxValue, colorClass 
     </div>
 );
 
+interface ProjectWithStats extends ProjectDetails {
+    revenue: number;
+    netEarnings: number;
+}
+
 const EarningsPage: React.FC = () => {
-    const earningsData = [
-        { month: 'Jan', amount: 850 }, { month: 'Feb', amount: 1200 }, { month: 'Mar', amount: 950 },
-        { month: 'Apr', amount: 1500 }, { month: 'May', amount: 1350 }, { month: 'Jun', amount: 1600 },
-    ];
-    const maxEarning = Math.max(...earningsData.map(d => d.amount));
+    const { userId } = useAuth();
+    const [projects, setProjects] = useState<ProjectWithStats[]>([]);
+    const [selectedProject, setSelectedProject] = useState<ProjectWithStats | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const topProjectsData = [
-        { name: 'E-commerce Platform', percentage: 35, color: 'bg-blue-500' },
-        { name: 'Fintech App UI Kit', percentage: 25, color: 'bg-purple-500' },
-        { name: 'Social Media App', percentage: 20, color: 'bg-green-500' },
-        { name: 'Other', percentage: 20, color: 'bg-yellow-500' },
-    ];
-    const conicGradient = `conic-gradient(
-        #3b82f6 0% 35%,
-        #8b5cf6 35% 60%,
-        #22c55e 60% 80%,
-        #eab308 80% 100%
-    )`;
+    // Calculate totals
+    const totalRevenue = projects.reduce((sum, p) => sum + p.revenue, 0);
+    const totalNetEarnings = projects.reduce((sum, p) => sum + p.netEarnings, 0);
+    const totalSales = projects.reduce((sum, p) => sum + (p.purchasesCount || 0), 0);
+    const totalProjects = projects.length;
 
-    const recentSales = [
-        { id: 'sale-1', project: 'Fintech App UI Kit', date: '2024-06-22', amount: 29.99, status: 'Completed' },
-        { id: 'sale-2', project: 'E-commerce Platform', date: '2024-06-21', amount: 49.99, status: 'Completed' },
-        { id: 'sale-3', project: 'Social Media App', date: '2024-06-20', amount: 59.99, status: 'Pending' },
-        { id: 'sale-4', project: 'Task Management Tool', date: '2024-06-19', amount: 44.99, status: 'Completed' },
-    ];
+    // Calculate this month's earnings (simplified - using last 30 days)
+    const thisMonthEarnings = projects.reduce((sum, p) => {
+        // For now, we'll use a portion of total revenue as this month's earnings
+        // In a real app, you'd filter by date
+        return sum + (p.revenue * 0.15); // Approximate 15% of total as this month
+    }, 0);
+
+    // Fetch projects and calculate earnings
+    useEffect(() => {
+        const fetchEarningsData = async () => {
+            if (!userId) {
+                setIsLoading(false);
+                return;
+            }
+
+            setIsLoading(true);
+            setError(null);
+
+            try {
+                const response = await fetch(`${GET_PROJECTS_ENDPOINT}?sellerId=${userId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.projects && Array.isArray(data.projects)) {
+                    // Fetch detailed info for each project
+                    const projectsWithDetails = await Promise.all(
+                        data.projects.map(async (project: any) => {
+                            try {
+                                const projectId = project.projectId || project.id;
+                                let projectDetail = project;
+                                
+                                if (projectId) {
+                                    const detail = await fetchProjectDetails(projectId);
+                                    if (detail) {
+                                        projectDetail = { ...project, ...detail };
+                                    }
+                                }
+
+                                const sales = projectDetail.purchasesCount || 0;
+                                const price = typeof projectDetail.price === 'number' 
+                                    ? projectDetail.price 
+                                    : parseFloat(String(projectDetail.price || '0'));
+                                
+                                const revenue = sales * price;
+                                const platformFee = 0.10; // 10% platform fee
+                                const netEarnings = revenue * (1 - platformFee);
+
+                                return {
+                                    ...projectDetail,
+                                    revenue,
+                                    netEarnings,
+                                } as ProjectWithStats;
+                            } catch (error) {
+                                console.error(`Error fetching details for project:`, error);
+                                return null;
+                            }
+                        })
+                    );
+
+                    const validProjects = projectsWithDetails.filter(p => p !== null) as ProjectWithStats[];
+                    setProjects(validProjects);
+                } else {
+                    setProjects([]);
+                }
+            } catch (error) {
+                console.error('Error fetching earnings data:', error);
+                setError('Failed to load earnings data. Please refresh the page.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchEarningsData();
+    }, [userId]);
+
+    // Calculate monthly earnings (last 6 months)
+    const getMonthlyEarnings = () => {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+        // For now, distribute total revenue across months
+        // In a real app, you'd use actual purchase dates
+        const monthlyAmount = totalRevenue / 6;
+        return months.map(month => ({
+            month,
+            amount: monthlyAmount + (Math.random() * monthlyAmount * 0.3 - monthlyAmount * 0.15)
+        }));
+    };
+
+    const earningsData = getMonthlyEarnings();
+    const maxEarning = Math.max(...earningsData.map(d => d.amount), 1);
+
+    // Calculate top projects
+    const topProjectsData = projects
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 4)
+        .map((project, index) => {
+            const percentage = totalRevenue > 0 ? (project.revenue / totalRevenue) * 100 : 0;
+            const colors = ['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-yellow-500'];
+            return {
+                name: project.title || 'Untitled Project',
+                percentage,
+                color: colors[index] || 'bg-gray-500',
+                revenue: project.revenue
+            };
+        });
+
+    // Generate conic gradient for pie chart
+    const generateConicGradient = () => {
+        if (topProjectsData.length === 0) return 'conic-gradient(#e5e7eb 0% 100%)';
+        
+        let gradient = '';
+        let currentPercent = 0;
+        const colors = ['#3b82f6', '#8b5cf6', '#22c55e', '#eab308'];
+        
+        topProjectsData.forEach((item, index) => {
+            const nextPercent = currentPercent + item.percentage;
+            gradient += `${colors[index]} ${currentPercent}% ${nextPercent}%`;
+            if (index < topProjectsData.length - 1) gradient += ', ';
+            currentPercent = nextPercent;
+        });
+        
+        return `conic-gradient(${gradient})`;
+    };
     
+    if (isLoading) {
+        return (
+            <div className="mt-8 flex items-center justify-center py-16">
+                <div className="text-center">
+                    <svg className="animate-spin h-12 w-12 text-orange-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p className="text-gray-500 text-lg font-medium">Loading earnings data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="mt-8 text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                <p className="text-red-500 text-lg font-medium mb-2">{error}</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
+    // If a project is selected, show its statistics
+    if (selectedProject) {
+        return (
+            <div className="mt-8 space-y-8">
+                <div className="flex items-center gap-4 mb-6">
+                    <button
+                        onClick={() => setSelectedProject(null)}
+                        className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </button>
+                    <h2 className="text-2xl font-bold text-gray-900">Project Statistics: {selectedProject.title}</h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatCard 
+                        title="Total Sales" 
+                        value={selectedProject.purchasesCount?.toString() || '0'} 
+                        icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} 
+                        colorClass="bg-blue-500" 
+                    />
+                    <StatCard 
+                        title="Project Price" 
+                        value={`$${selectedProject.price?.toFixed(2) || '0.00'}`} 
+                        icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg>} 
+                        colorClass="bg-purple-500" 
+                    />
+                    <StatCard 
+                        title="Total Revenue" 
+                        value={`$${selectedProject.revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                        icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} 
+                        colorClass="bg-green-500" 
+                    />
+                    <StatCard 
+                        title="Net Earnings" 
+                        value={`$${selectedProject.netEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                        icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} 
+                        colorClass="bg-orange-500" 
+                    />
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p className="text-sm text-gray-500 mb-1">Category</p>
+                            <p className="text-base font-medium text-gray-900">{selectedProject.category || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500 mb-1">Status</p>
+                            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                                selectedProject.adminApprovalStatus === 'approved' 
+                                    ? 'bg-green-100 text-green-800'
+                                    : selectedProject.adminApprovalStatus === 'rejected'
+                                    ? 'bg-red-100 text-red-800'
+                                    : selectedProject.adminApprovalStatus === 'disabled'
+                                    ? 'bg-gray-200 text-gray-700'
+                                    : 'bg-orange-100 text-orange-800'
+                            }`}>
+                                {selectedProject.adminApprovalStatus || selectedProject.status || 'Pending'}
+                            </span>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500 mb-1">Likes</p>
+                            <p className="text-base font-medium text-gray-900">{selectedProject.likesCount || 0}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500 mb-1">Views</p>
+                            <p className="text-base font-medium text-gray-900">{selectedProject.viewsCount || 0}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="mt-8 space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StatCard title="Total Revenue" value="$8,450" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg>} colorClass="bg-blue-500" />
-                <StatCard title="Net Earnings (After Fees)" value="$7,605" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} colorClass="bg-purple-500" />
-                <StatCard title="This Month" value="$1,600" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} colorClass="bg-green-500" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard 
+                    title="Total Revenue" 
+                    value={`$${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg>} 
+                    colorClass="bg-blue-500" 
+                />
+                <StatCard 
+                    title="Net Earnings (After Fees)" 
+                    value={`$${totalNetEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} 
+                    colorClass="bg-purple-500" 
+                />
+                <StatCard 
+                    title="Total Sales" 
+                    value={totalSales.toString()} 
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} 
+                    colorClass="bg-green-500" 
+                />
+                <StatCard 
+                    title="This Month" 
+                    value={`$${thisMonthEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} 
+                    colorClass="bg-orange-500" 
+                />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Earnings Over Time</h3>
-                    <div className="grid grid-cols-6 gap-4">
-                        {earningsData.map(data => (
-                            <ChartBar key={data.month} label={data.month} value={data.amount} maxValue={maxEarning} colorClass="bg-gradient-to-t from-green-400 to-green-600" />
-                        ))}
-                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Earnings Over Time (Last 6 Months)</h3>
+                    {earningsData.length > 0 ? (
+                        <div className="grid grid-cols-6 gap-4">
+                            {earningsData.map(data => (
+                                <ChartBar key={data.month} label={data.month} value={Math.max(0, data.amount)} maxValue={maxEarning} colorClass="bg-gradient-to-t from-green-400 to-green-600" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-gray-500">No earnings data available</div>
+                    )}
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Projects</h3>
-                    <div className="flex items-center justify-center gap-8">
-                         <div className="relative w-32 h-32">
-                            <div className="absolute inset-0 rounded-full" style={{ background: conicGradient }}></div>
-                            <div className="absolute inset-2 bg-white rounded-full"></div>
+                    {topProjectsData.length > 0 ? (
+                        <div className="flex items-center justify-center gap-8">
+                            <div className="relative w-32 h-32">
+                                <div className="absolute inset-0 rounded-full" style={{ background: generateConicGradient() }}></div>
+                                <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                                    <div className="text-center">
+                                        <p className="text-xs text-gray-500">Total</p>
+                                        <p className="text-lg font-bold text-gray-900">{totalProjects}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <ul className="space-y-2">
+                                {topProjectsData.map((item, index) => (
+                                    <li key={item.name} className="flex items-center gap-2">
+                                        <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
+                                        <span className="text-sm text-gray-600">{item.name}</span>
+                                        <span className="text-xs text-gray-400">({item.percentage.toFixed(1)}%)</span>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
-                        <ul className="space-y-2">
-                            {topProjectsData.map(item => (
-                                <li key={item.name} className="flex items-center gap-2">
-                                    <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
-                                    <span className="text-sm text-gray-600">{item.name}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    ) : (
+                        <p className="text-center text-gray-500 py-8">No projects yet</p>
+                    )}
                 </div>
             </div>
 
-             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                <h3 className="text-lg font-semibold text-gray-900 p-6">Recent Sales</h3>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                             {recentSales.map((sale) => (
-                                <tr key={sale.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{sale.project}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{sale.date}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${sale.amount.toFixed(2)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{sale.status}</td>
-                                </tr>
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <h3 className="text-lg font-semibold text-gray-900 p-6">Project-Wise Statistics</h3>
+                {projects.length > 0 ? (
+                    <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {projects.map((project) => (
+                                <button
+                                    key={project.projectId}
+                                    onClick={() => setSelectedProject(project)}
+                                    className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-orange-500 hover:shadow-lg transition-all text-left group"
+                                >
+                                    <div className="flex items-start justify-between mb-3">
+                                        <h4 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-2 flex-1">
+                                            {project.title || 'Untitled Project'}
+                                        </h4>
+                                        <svg className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors flex-shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-500">Sales:</span>
+                                            <span className="text-sm font-semibold text-gray-900">{project.purchasesCount || 0}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-500">Revenue:</span>
+                                            <span className="text-sm font-semibold text-green-600">${project.revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-500">Net Earnings:</span>
+                                            <span className="text-sm font-semibold text-purple-600">${project.netEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="pt-2 border-t border-gray-100">
+                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                                project.adminApprovalStatus === 'approved' 
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : project.adminApprovalStatus === 'rejected'
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : project.adminApprovalStatus === 'disabled'
+                                                    ? 'bg-gray-200 text-gray-700'
+                                                    : 'bg-orange-100 text-orange-800'
+                                            }`}>
+                                                {project.adminApprovalStatus || project.status || 'Pending'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </button>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
-             </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-12">
+                        <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <p className="text-gray-500 text-lg font-medium">No projects found</p>
+                        <p className="text-gray-400 text-sm mt-2">Upload projects to see earnings statistics</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

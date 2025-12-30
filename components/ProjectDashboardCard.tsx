@@ -6,7 +6,7 @@ interface ProjectDashboardCardProps {
     description: string;
     logo: string;
     tags: string[];
-    status?: 'Live' | 'In Review' | 'Draft';
+    status?: 'Live' | 'In Review' | 'Draft' | 'Approved' | 'Rejected' | 'Disabled';
     sales?: number;
     price?: number;
     category?: string;
@@ -55,10 +55,14 @@ const ProjectDashboardCard: React.FC<ProjectDashboardCardProps> = ({ name, domai
                         <div className="flex items-center justify-between gap-4 mb-3">
                             {status && (
                                 <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                                    status === 'Live'
+                                    status === 'Live' || status === 'Approved'
                                         ? 'bg-green-100 text-green-800'
                                         : status === 'In Review'
                                         ? 'bg-orange-100 text-orange-800'
+                                        : status === 'Rejected'
+                                        ? 'bg-red-100 text-red-800'
+                                        : status === 'Disabled'
+                                        ? 'bg-gray-200 text-gray-700'
                                         : 'bg-gray-100 text-gray-800'
                                 }`}>
                                     {status}
