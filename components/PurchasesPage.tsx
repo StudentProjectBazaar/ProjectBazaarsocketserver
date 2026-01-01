@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import OrangeCheckbox from './OrangeCheckbox';
 import { useAuth } from '../App';
 import { fetchUserData, Purchase } from '../services/buyerApi';
+import ReportProjectModal from './ReportProjectModal';
 
 const GET_PROJECT_DETAILS_ENDPOINT = 'https://8y8bbugmbd.execute-api.ap-south-2.amazonaws.com/default/Get_project_details_by_projectId';
 
@@ -60,6 +61,8 @@ const PurchasesPage: React.FC = () => {
     const [purchasedProjects, setPurchasedProjects] = useState<PurchaseProject[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [selectedProjectForReport, setSelectedProjectForReport] = useState<PurchaseProject | null>(null);
 
     // Fetch purchases and projects
     useEffect(() => {
@@ -472,7 +475,7 @@ const PurchasesPage: React.FC = () => {
                                     Price
                                 </th>
                                 <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                    Action
+                                    Actions
                                 </th>
                             </tr>
                         </thead>
@@ -510,6 +513,7 @@ const PurchasesPage: React.FC = () => {
                                             </div>
                                         </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div className="flex items-center gap-2">
                                             <button 
                                                 onClick={() => {
                                                     if (project.projectFilesUrl) {
@@ -523,9 +527,23 @@ const PurchasesPage: React.FC = () => {
                                                     !project.projectFilesUrl ? 'opacity-50 cursor-not-allowed' : ''
                                                 }`}
                                             >
-                                            <DownloadIcon /> Download
-                                        </button>
-                                        </td>
+                                                <DownloadIcon /> Download
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedProjectForReport(project);
+                                                    setReportModalOpen(true);
+                                                }}
+                                                className="flex items-center gap-1.5 bg-red-50 text-red-600 font-semibold py-2 px-4 rounded-xl hover:bg-red-100 transition-all duration-300 text-xs border border-red-200 hover:border-red-300"
+                                                title="Report this project"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                Report
+                                            </button>
+                                        </div>
+                                    </td>
                                     </tr>
                                 ))
                             ) : (
@@ -643,21 +661,35 @@ const PurchasesPage: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <button 
-                                            onClick={() => {
-                                                if (project.projectFilesUrl) {
-                                                    window.open(project.projectFilesUrl, '_blank');
-                                                } else {
-                                                    alert('Download link not available');
-                                                }
-                                            }}
-                                            disabled={!project.projectFilesUrl}
-                                            className={`w-full flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-2.5 px-4 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 text-sm shadow-sm hover:shadow-md ${
-                                                !project.projectFilesUrl ? 'opacity-50 cursor-not-allowed' : ''
-                                            }`}
-                                        >
-                                            <DownloadIcon /> Download
-                                        </button>
+                                        <div className="space-y-2">
+                                            <button 
+                                                onClick={() => {
+                                                    if (project.projectFilesUrl) {
+                                                        window.open(project.projectFilesUrl, '_blank');
+                                                    } else {
+                                                        alert('Download link not available');
+                                                    }
+                                                }}
+                                                disabled={!project.projectFilesUrl}
+                                                className={`w-full flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-2.5 px-4 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 text-sm shadow-sm hover:shadow-md ${
+                                                    !project.projectFilesUrl ? 'opacity-50 cursor-not-allowed' : ''
+                                                }`}
+                                            >
+                                                <DownloadIcon /> Download
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedProjectForReport(project);
+                                                    setReportModalOpen(true);
+                                                }}
+                                                className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 font-semibold py-2.5 px-4 rounded-xl hover:bg-red-100 transition-all duration-300 text-sm border border-red-200 hover:border-red-300"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                Report Project
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -678,6 +710,25 @@ const PurchasesPage: React.FC = () => {
                         )}
                     </div>
                 </div>
+            )}
+
+            {/* Report Project Modal */}
+            {selectedProjectForReport && userId && (
+                <ReportProjectModal
+                    isOpen={reportModalOpen}
+                    onClose={() => {
+                        setReportModalOpen(false);
+                        setSelectedProjectForReport(null);
+                    }}
+                    projectId={selectedProjectForReport.projectId}
+                    projectTitle={selectedProjectForReport.title}
+                    buyerId={userId}
+                    isPurchased={true} // All projects in purchases page are purchased
+                    onSuccess={() => {
+                        // Optionally show a success message or refresh data
+                        console.log('Report submitted successfully');
+                    }}
+                />
             )}
         </div>
     );

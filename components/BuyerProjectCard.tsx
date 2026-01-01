@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useWishlist, useCart } from './DashboardPage';
+import { useAuth } from '../App';
+import ReportProjectModal from './ReportProjectModal';
 
 export interface BuyerProject {
   id: string;
@@ -17,6 +19,7 @@ export interface BuyerProject {
 interface BuyerProjectCardProps {
   project: BuyerProject;
   onViewDetails?: (project: BuyerProject) => void;
+  onReport?: (project: BuyerProject) => void;
 }
 
 const HeartIcon = ({ liked }: { liked: boolean }) => (
@@ -44,14 +47,16 @@ const DocsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-
 const VideoIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>;
 
 
-const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDetails }) => {
+const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDetails, onReport }) => {
   const { id, imageUrl, category, title, description, tags, price, isPremium, hasDocumentation, hasExecutionVideo } = project;
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { isInCart, addToCart } = useCart();
+  const { userId } = useAuth();
   const liked = isInWishlist(id);
   const inCart = isInCart(id);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isCartAnimating, setIsCartAnimating] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const handleLikeClick = () => {
     setIsAnimating(true);
@@ -89,18 +94,46 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
         </div>
       )}
       
-      {/* Wishlist Button */}
-      <button 
-          onClick={handleLikeClick}
-          className={`absolute top-4 right-4 z-10 p-2.5 rounded-full transition-all duration-300 shadow-lg backdrop-blur-sm ${
-              liked 
-                  ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700' 
-                  : 'bg-white/95 text-gray-600 hover:bg-white hover:text-orange-500'
-          } ${isAnimating ? 'animate-pulse scale-125' : liked ? 'scale-110' : 'scale-100 hover:scale-110'}`}
-          aria-label={liked ? 'Remove from wishlist' : 'Add to wishlist'}
-      >
-          <HeartIcon liked={liked} />
-      </button>
+      {/* Action Buttons - Top Right */}
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+        {/* Report Button */}
+        {userId && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onReport) {
+                onReport(project);
+              } else {
+                setReportModalOpen(true);
+              }
+            }}
+            className="p-2.5 rounded-full bg-white/95 hover:bg-red-50 text-gray-600 hover:text-red-600 transition-all duration-300 shadow-lg backdrop-blur-sm hover:scale-110 group/report"
+            title="Report this project"
+            aria-label="Report project"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            {/* Tooltip */}
+            <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/report:opacity-100 transition-opacity pointer-events-none">
+              Report Issue
+            </span>
+          </button>
+        )}
+        
+        {/* Wishlist Button */}
+        <button 
+            onClick={handleLikeClick}
+            className={`p-2.5 rounded-full transition-all duration-300 shadow-lg backdrop-blur-sm ${
+                liked 
+                    ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700' 
+                    : 'bg-white/95 text-gray-600 hover:bg-white hover:text-orange-500'
+            } ${isAnimating ? 'animate-pulse scale-125' : liked ? 'scale-110' : 'scale-100 hover:scale-110'}`}
+            aria-label={liked ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+            <HeartIcon liked={liked} />
+        </button>
+      </div>
 
       {/* Image Section */}
       <div className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
@@ -196,6 +229,21 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
           </div>
         </div>
       </div>
+
+      {/* Report Project Modal */}
+      {userId && (
+        <ReportProjectModal
+          isOpen={reportModalOpen}
+          onClose={() => setReportModalOpen(false)}
+          projectId={project.id}
+          projectTitle={project.title}
+          buyerId={userId}
+          isPurchased={false} // Cards in dashboard are for non-purchased projects
+          onSuccess={() => {
+            setReportModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

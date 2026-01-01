@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { BuyerProject } from './BuyerProjectCard';
 import { useWishlist } from './DashboardPage';
+import { useAuth } from '../App';
+import { fetchUserData } from '../services/buyerApi';
+import ReportProjectModal from './ReportProjectModal';
 
 interface ExtendedProject extends BuyerProject {
     likes: number;
@@ -30,12 +33,42 @@ interface ProjectDetailsPageProps {
 
 const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack, onViewSeller }) => {
     const { isInWishlist, toggleWishlist } = useWishlist();
+    const { userId } = useAuth();
     const [activeTab, setActiveTab] = useState<'description' | 'features' | 'support'>('description');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [promoCode, setPromoCode] = useState('');
     const [appliedPromo, setAppliedPromo] = useState(false);
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [isPurchased, setIsPurchased] = useState(false);
     
     const liked = isInWishlist(project.id);
+
+    // Check if project is purchased
+    useEffect(() => {
+        const checkPurchaseStatus = async () => {
+            if (!userId) {
+                setIsPurchased(false);
+                return;
+            }
+            
+            try {
+                const userData = await fetchUserData(userId);
+                if (userData && userData.purchases) {
+                    const purchased = userData.purchases.some(
+                        (purchase: any) => purchase.projectId === project.id
+                    );
+                    setIsPurchased(purchased);
+                } else {
+                    setIsPurchased(false);
+                }
+            } catch (error) {
+                console.error('Error checking purchase status:', error);
+                setIsPurchased(false);
+            }
+        };
+
+        checkPurchaseStatus();
+    }, [userId, project.id]);
     const images = project.images || [project.imageUrl];
     const finalPrice = appliedPromo && project.promoCode ? project.price * 0.9 : project.price;
     const discount = project.discount || (project.originalPrice ? Math.round(((project.originalPrice - project.price) / project.originalPrice) * 100) : 0);
@@ -215,13 +248,24 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                             </p>
                         </div>
 
-                        {/* Buy Now Button */}
-                        <button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-4 px-6 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] flex items-center justify-center gap-2">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            Buy Now
-                        </button>
+                        {/* Action Buttons */}
+                        <div className="space-y-3">
+                            <button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-4 px-6 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Buy Now
+                            </button>
+                            <button
+                                onClick={() => setReportModalOpen(true)}
+                                className="w-full bg-white border-2 border-red-200 text-red-600 font-semibold py-3 px-6 rounded-xl hover:bg-red-50 hover:border-red-300 transition-all duration-300 flex items-center justify-center gap-2 group"
+                            >
+                                <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Report Issue
+                            </button>
+                        </div>
                     </div>
 
                     {/* Seller Info */}
@@ -326,16 +370,28 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
 
                     {activeTab === 'support' && (
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Support</h2>
-                            <div className="bg-white border border-gray-200 rounded-2xl p-6">
-                                <p className="text-gray-600 leading-relaxed mb-4">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Support & Help</h2>
+                            <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                                <p className="text-gray-600 leading-relaxed mb-6">
                                     {project.supportInfo || 'For any questions or support regarding this project, please contact the seller directly through their profile or email.'}
                                 </p>
-                                <div className="flex gap-4">
-                                    <button className="px-6 py-2.5 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <button 
+                                        onClick={() => onViewSeller?.(project.seller)}
+                                        className="flex items-center justify-center gap-3 px-6 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02]"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
                                         Contact Seller
                                     </button>
-                                    <button className="px-6 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors">
+                                    <button 
+                                        onClick={() => setReportModalOpen(true)}
+                                        className="flex items-center justify-center gap-3 px-6 py-3.5 bg-white border-2 border-red-300 text-red-600 font-semibold rounded-xl hover:bg-red-50 hover:border-red-400 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02]"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
                                         Report Issue
                                     </button>
                                 </div>
@@ -344,6 +400,22 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                     )}
                 </div>
             </div>
+
+            {/* Report Project Modal */}
+            {userId && (
+                <ReportProjectModal
+                    isOpen={reportModalOpen}
+                    onClose={() => setReportModalOpen(false)}
+                    projectId={project.id}
+                    projectTitle={project.title}
+                    buyerId={userId}
+                    isPurchased={isPurchased}
+                    onSuccess={() => {
+                        console.log('Report submitted successfully');
+                        setReportModalOpen(false);
+                    }}
+                />
+            )}
         </div>
     );
 };
