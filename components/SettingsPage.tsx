@@ -54,9 +54,9 @@ const InputField: React.FC<InputFieldProps> = ({ id, label, type = 'text', value
                 />
             </div>
         ) : (
-            <div className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg border border-gray-100">
+            <div className="flex items-center gap-3 py-2 px-3 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed">
                 <span className="text-gray-400">{icon}</span>
-                <span className="text-gray-900">{displayValue || value || <span className="text-gray-400 italic">Not set</span>}</span>
+                <span className="text-gray-500">{displayValue || value || <span className="text-gray-400 italic">Not set</span>}</span>
             </div>
         )}
     </div>
@@ -436,8 +436,10 @@ const SettingsPage: React.FC = () => {
                             name="phoneNumber"
                             placeholder="+91..."
                             value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            isEditing={isEditingProfile}
+                            onChange={() => {
+                                // Phone number is not editable via settings; ignore changes
+                            }}
+                            isEditing={false}
                             icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>}
                         />
                         <div className="grid grid-cols-1 gap-6">
