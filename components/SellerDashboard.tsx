@@ -53,7 +53,10 @@ interface InputFieldProps {
 
 const InputField: React.FC<InputFieldProps> = ({ id, label, type = 'text', placeholder, required = false, value, step, onChange }) => (
     <div>
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
         <input 
             type={type} 
             id={id} 
@@ -73,17 +76,22 @@ interface TextAreaProps {
     placeholder?: string;
     rows?: number;
     value?: string;
+    required?: boolean;
     onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-const TextArea: React.FC<TextAreaProps> = ({ id, label, placeholder, rows = 4, value, onChange }) => (
+const TextArea: React.FC<TextAreaProps> = ({ id, label, placeholder, rows = 4, value, required = false, onChange }) => (
      <div>
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
         <textarea
             id={id}
             placeholder={placeholder}
             rows={rows}
             value={value}
+            required={required}
             onChange={onChange}
             className="w-full px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-gray-900"
         />
@@ -706,8 +714,23 @@ const SellerDashboard: React.FC = () => {
         }
 
         // Validate required fields
-        if (!formData.title || !formData.category || !formData.description || !formData.price) {
-            setSubmitError('Please fill in all required fields');
+        if (!formData.title.trim()) {
+            setSubmitError('Please enter a project title');
+            return;
+        }
+
+        if (!formData.category.trim()) {
+            setSubmitError('Please enter a category');
+            return;
+        }
+
+        if (!formData.description.trim()) {
+            setSubmitError('Please enter a project description');
+            return;
+        }
+
+        if (!formData.price.trim()) {
+            setSubmitError('Please enter a price');
             return;
         }
 
@@ -716,13 +739,24 @@ const SellerDashboard: React.FC = () => {
             return;
         }
 
-        if (imageFiles.length === 0) {
-            setSubmitError('Please upload at least one project image');
+        if (imageFiles.length < 2) {
+            setSubmitError('Please upload at least 2 project images');
             return;
         }
 
-        // Validate GitHub URL if provided
-        if (formData.githubUrl.trim() && !githubValidated) {
+        // YouTube Demo Video URL is mandatory
+        if (!formData.youtubeVideoUrl.trim()) {
+            setSubmitError('Please enter a YouTube demo video URL');
+            return;
+        }
+
+        // GitHub URL is mandatory and must be verified
+        if (!formData.githubUrl.trim()) {
+            setSubmitError('Please enter a GitHub repository URL');
+            return;
+        }
+
+        if (!githubValidated) {
             setSubmitError('Please verify your GitHub URL by clicking the "Verify" button');
             return;
         }
@@ -842,7 +876,7 @@ const SellerDashboard: React.FC = () => {
             if (error instanceof Error) {
                 setSubmitError(error.message);
             } else {
-                setSubmitError('Network error. Please check your connection and try again.');
+            setSubmitError('Network error. Please check your connection and try again.');
             }
         } finally {
             setIsSubmitting(false);
@@ -1083,6 +1117,11 @@ const SellerDashboard: React.FC = () => {
                         </div>
                     )}
 
+                    {/* Required fields note */}
+                    <div className="text-sm text-gray-500 flex items-center gap-1">
+                        <span className="text-red-500">*</span> indicates required fields
+                    </div>
+
                 <SectionCard title="Project Details" step={1}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputField 
@@ -1107,13 +1146,14 @@ const SellerDashboard: React.FC = () => {
                             id="description" 
                             label="Description" 
                             placeholder="Describe your project in detail..." 
+                            required
                             value={formData.description}
                             onChange={handleInputChange}
                         />
                     </div>
                      <div className="mt-6">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Tags <span className="text-gray-400 font-normal">({tags.length}/10)</span>
+                            Tags <span className="text-red-500">*</span> <span className="text-gray-400 font-normal">({tags.length}/10)</span>
                         </label>
                         <div className={`w-full px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-orange-500 transition-all ${tags.length >= 10 ? 'opacity-75' : ''}`}>
                             <div className="flex flex-wrap gap-2">
@@ -1147,7 +1187,7 @@ const SellerDashboard: React.FC = () => {
                                 )}
                             </div>
                         </div>
-                        <p className="mt-1 text-xs text-gray-500">Press Enter or comma to add a tag. Backspace to remove the last tag.</p>
+                        <p className="mt-1 text-xs text-gray-500">Press Enter or comma to add a tag. Backspace to remove the last tag. <span className="text-orange-600 font-medium">At least 1 tag required.</span></p>
                     </div>
                 </SectionCard>
 
@@ -1178,6 +1218,7 @@ const SellerDashboard: React.FC = () => {
                             id="youtubeVideoUrl" 
                             label="YouTube Demo Video URL" 
                             placeholder="https://youtube.com/watch?v=..." 
+                            required
                             value={formData.youtubeVideoUrl}
                             onChange={handleInputChange}
                         />
@@ -1248,8 +1289,8 @@ const SellerDashboard: React.FC = () => {
                                                         onChange={(e) => handleResourceUrlChange(resourceKey, e.target.value)}
                                                         placeholder={option.placeholder}
                                                         className="w-full px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-gray-900 text-sm"
-                                                    />
-                                                </div>
+                        />
+                    </div>
                                                 <button
                                                     type="button"
                                                     onClick={() => toggleResource(resourceKey)}
@@ -1273,7 +1314,7 @@ const SellerDashboard: React.FC = () => {
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                                 </svg>
-                                            </div>
+                                        </div>
                                             <div className="flex-1 space-y-2">
                                                 <input
                                                     type="text"
@@ -1303,20 +1344,20 @@ const SellerDashboard: React.FC = () => {
                                         </div>
                                     </div>
                                 ))}
-                            </div>
-                        )}
+                                    </div>
+                                )}
                         
                         {selectedResources.length === 0 && customResources.length === 0 && (
                             <p className="text-sm text-gray-500 bg-gray-50 rounded-lg p-4 text-center border border-dashed border-gray-200">
                                 Click on resource types above to add links, or use "Add Custom" for other resources
                             </p>
-                        )}
-                    </div>
+                                )}
+                            </div>
                     
                     {/* GitHub URL with validation */}
                     <div className="mt-6">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Project GitHub URL
+                            Project GitHub URL <span className="text-red-500">*</span>
                             <span className="text-gray-400 font-normal ml-1">(must be public repository)</span>
                         </label>
                         <div className="flex gap-3">
@@ -1325,7 +1366,7 @@ const SellerDashboard: React.FC = () => {
                                     <svg className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                                     </svg>
-                                </div>
+                        </div>
                                 <input
                                     type="url"
                                     value={formData.githubUrl}
@@ -1399,9 +1440,9 @@ const SellerDashboard: React.FC = () => {
                 </SectionCard>
 
                  <SectionCard title="Uploads" step={3}>
-                    <div>
+                         <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Project Images <span className="text-gray-400 font-normal">({imagePreviews.length}/{MAX_IMAGES})</span>
+                            Project Images <span className="text-red-500">*</span> <span className="text-gray-400 font-normal">({imagePreviews.length}/{MAX_IMAGES})</span>
                         </label>
                         
                         {/* Drop Zone */}
@@ -1422,22 +1463,22 @@ const SellerDashboard: React.FC = () => {
                                 <div className="flex text-sm text-gray-600 justify-center">
                                     <label htmlFor="image-upload" className="relative cursor-pointer rounded-md font-medium text-orange-600 hover:text-orange-500 focus-within:outline-none">
                                         <span>Click to upload</span>
-                                        <input 
+                                            <input 
                                             id="image-upload" 
                                             name="image-upload" 
-                                            type="file" 
-                                            className="sr-only" 
+                                                type="file" 
+                                                className="sr-only" 
                                             onChange={handleImageChange} 
                                             accept="image/*"
                                             multiple
                                             disabled={imageFiles.length >= MAX_IMAGES}
-                                        />
-                                    </label>
-                                    <p className="pl-1">or drag and drop</p>
+                                            />
+                                        </label>
+                                        <p className="pl-1">or drag and drop</p>
+                                    </div>
+                                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB each • Min 2, Max {MAX_IMAGES} images</p>
                                 </div>
-                                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB each • Max {MAX_IMAGES} images</p>
                             </div>
-                        </div>
 
                         {/* Image Previews Grid */}
                         {imagePreviews.length > 0 && (
@@ -1463,7 +1504,7 @@ const SellerDashboard: React.FC = () => {
                                                 alt={`Preview ${index + 1}`} 
                                                 className="w-full h-full object-cover pointer-events-none select-none"
                                             />
-                                        </div>
+                        </div>
                                         {/* Drag handle indicator */}
                                         <div className={`absolute top-1 left-1 w-6 h-6 bg-black/50 text-white rounded flex items-center justify-center transition-opacity ${
                                             draggedImageIndex !== null ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
