@@ -12,6 +12,9 @@ import Pricing from './components/Pricing';
 import AuthPage from './components/AuthPage';
 import DashboardPage from './components/DashboardPage';
 import AdminDashboard from './components/admin/AdminDashboard';
+import Categories from './components/Categories';
+import TopSellers from './components/TopSellers';
+import Testimonials from './components/Testimonials';
 
 type Theme = 'light' | 'dark';
 type Page = 'home' | 'auth' | 'dashboard' | 'admin';
@@ -163,9 +166,12 @@ const AppContent: React.FC = () => {
           <main>
             <Hero />
             <Stats />
+            <Categories />
             <HowItWorks />
+            <TopSellers />
             <Referral />
             <FeaturedProjects />
+            <Testimonials />
             <Pricing />
             <Faqs />
             <CtaSection />
