@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import HowItWorks from './components/HowItWorks';
 import FeaturedProjects from './components/FeaturedProjects';
 import Faqs from './components/Faqs';
 import CtaSection from './components/CtaSection';
@@ -15,6 +14,10 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import Categories from './components/Categories';
 import TopSellers from './components/TopSellers';
 import Testimonials from './components/Testimonials';
+import SellerSuccessStories from './components/SellerSuccessStories';
+import WhatCanYouSell from './components/WhatCanYouSell';
+import SellerCta from './components/SellerCta';
+import BuyerSellerToggle from './components/BuyerSellerToggle';
 
 type Theme = 'light' | 'dark';
 type Page = 'home' | 'auth' | 'dashboard' | 'admin';
@@ -167,11 +170,14 @@ const AppContent: React.FC = () => {
             <Hero />
             <Stats />
             <Categories />
-            <HowItWorks />
+            <BuyerSellerToggle />
             <TopSellers />
-            <Referral />
             <FeaturedProjects />
+            <WhatCanYouSell />
+            <SellerSuccessStories />
             <Testimonials />
+            <SellerCta />
+            <Referral />
             <Pricing />
             <Faqs />
             <CtaSection />
