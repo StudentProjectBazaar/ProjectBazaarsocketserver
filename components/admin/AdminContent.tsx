@@ -7,6 +7,7 @@ import RevenueAnalyticsPage from './RevenueAnalyticsPage';
 import PayoutSystemsPage from './PayoutSystemsPage';
 import AdminUserProfilePage from './AdminUserProfilePage';
 import AdminProjectDetailsPage from './AdminProjectDetailsPage';
+import AdminReportDetailsPage from './AdminReportDetailsPage';
 import type { BuyerProject } from '../BuyerProjectCard';
 
 interface AdminProject extends BuyerProject {
@@ -39,6 +40,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, isSidebarOpen, 
     const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; email: string } | null>(null);
     const [userProjects, setUserProjects] = useState<AdminProject[]>([]);
     const [selectedProject, setSelectedProject] = useState<AdminProject | null>(null);
+    const [selectedReport, setSelectedReport] = useState<any | null>(null);
     const [allProjects, setAllProjects] = useState<AdminProject[]>([]);
 
     const viewTitles: Record<AdminView, string> = {
@@ -49,6 +51,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, isSidebarOpen, 
         'payout-systems': 'Payout Systems',
         'user-profile': selectedUser ? `${selectedUser.name}'s Profile` : 'User Profile',
         'admin-project-details': selectedProject ? `Project: ${selectedProject.title}` : 'Project Details',
+        'admin-report-details': 'Report Details',
     };
 
     const handleViewUser = (user: { id: string; name: string; email: string }) => {
@@ -191,8 +194,41 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, isSidebarOpen, 
                         onProjectStatusChange={handleProjectStatusChange}
                     />
                 )}
-                {activeView === 'fraud-management' && <FraudManagementPage />}
-                {activeView === 'user-management' && <UserManagementPage />}
+                {activeView === 'fraud-management' && (
+                    <FraudManagementPage 
+                        onViewReport={(report) => {
+                            setSelectedReport(report);
+                            setActiveView('admin-report-details');
+                        }}
+                    />
+                )}
+                {activeView === 'admin-report-details' && selectedReport && (
+                    <AdminReportDetailsPage
+                        report={selectedReport}
+                        onBack={() => {
+                            setSelectedReport(null);
+                            setActiveView('fraud-management');
+                        }}
+                        onStatusUpdate={(reportId, status, comment) => {
+                            // Update report status (local state update)
+                            // In production, this should call an API
+                            console.log('Status update:', { reportId, status, comment });
+                        }}
+                        onReportUpdated={() => {
+                            // Refresh reports list by going back and navigating again
+                            // This will trigger a re-fetch in FraudManagementPage
+                            setActiveView('fraud-management');
+                            setTimeout(() => {
+                                // The FraudManagementPage will refetch on mount
+                            }, 100);
+                        }}
+                    />
+                )}
+                {activeView === 'user-management' && (
+                    <UserManagementPage 
+                        onViewUser={handleViewUser}
+                    />
+                )}
                 {activeView === 'revenue-analytics' && <RevenueAnalyticsPage />}
                 {activeView === 'payout-systems' && <PayoutSystemsPage />}
             </div>
