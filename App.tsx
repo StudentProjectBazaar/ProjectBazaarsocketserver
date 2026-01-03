@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import HowItWorks from './components/HowItWorks';
 import FeaturedProjects from './components/FeaturedProjects';
 import Faqs from './components/Faqs';
 import CtaSection from './components/CtaSection';
@@ -12,9 +11,18 @@ import Pricing from './components/Pricing';
 import AuthPage from './components/AuthPage';
 import DashboardPage from './components/DashboardPage';
 import AdminDashboard from './components/admin/AdminDashboard';
+import Categories from './components/Categories';
+import TopSellers from './components/TopSellers';
+import Testimonials from './components/Testimonials';
+import SellerSuccessStories from './components/SellerSuccessStories';
+import WhatCanYouSell from './components/WhatCanYouSell';
+import SellerCta from './components/SellerCta';
+import BuyerSellerToggle from './components/BuyerSellerToggle';
+import { CallToAction } from './components/ui/cta-3';
+import FAQWithSpiral from './components/ui/faq-section';
 
 type Theme = 'light' | 'dark';
-type Page = 'home' | 'auth' | 'dashboard' | 'admin';
+type Page = 'home' | 'auth' | 'dashboard' | 'admin' | 'faq';
 type UserRole = 'user' | 'admin';
 
 interface PremiumContextType {
@@ -155,6 +163,13 @@ const AppContent: React.FC = () => {
       return isLoggedIn && userRole === 'admin' ? <AdminDashboard /> : <AuthPage />;
     case 'dashboard':
       return isLoggedIn ? <DashboardPage /> : <AuthPage />;
+    case 'faq':
+      return (
+        <div className="bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 overflow-x-hidden transition-colors duration-300">
+          <Header />
+          <FAQWithSpiral />
+        </div>
+      );
     case 'home':
     default:
       return (
@@ -163,11 +178,20 @@ const AppContent: React.FC = () => {
           <main>
             <Hero />
             <Stats />
-            <HowItWorks />
-            <Referral />
+            <Categories />
+            <BuyerSellerToggle />
+            <TopSellers />
             <FeaturedProjects />
+            <WhatCanYouSell />
+            <SellerSuccessStories />
+            <Testimonials />
+            <SellerCta />
+            <Referral />
             <Pricing />
             <Faqs />
+            <div className="py-12 px-4">
+              <CallToAction />
+            </div>
             <CtaSection />
           </main>
           <Footer />
