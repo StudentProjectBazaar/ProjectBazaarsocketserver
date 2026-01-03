@@ -19,9 +19,10 @@ import WhatCanYouSell from './components/WhatCanYouSell';
 import SellerCta from './components/SellerCta';
 import BuyerSellerToggle from './components/BuyerSellerToggle';
 import { CallToAction } from './components/ui/cta-3';
+import FAQWithSpiral from './components/ui/faq-section';
 
 type Theme = 'light' | 'dark';
-type Page = 'home' | 'auth' | 'dashboard' | 'admin';
+type Page = 'home' | 'auth' | 'dashboard' | 'admin' | 'faq';
 type UserRole = 'user' | 'admin';
 
 interface PremiumContextType {
@@ -162,6 +163,13 @@ const AppContent: React.FC = () => {
       return isLoggedIn && userRole === 'admin' ? <AdminDashboard /> : <AuthPage />;
     case 'dashboard':
       return isLoggedIn ? <DashboardPage /> : <AuthPage />;
+    case 'faq':
+      return (
+        <div className="bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 overflow-x-hidden transition-colors duration-300">
+          <Header />
+          <FAQWithSpiral />
+        </div>
+      );
     case 'home':
     default:
       return (

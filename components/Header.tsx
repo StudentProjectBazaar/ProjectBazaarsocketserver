@@ -42,8 +42,7 @@ const Header: React.FC = () => {
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     }},
     { name: 'FAQs', onClick: () => {
-      const element = document.getElementById('faqs');
-      if (element) element.scrollIntoView({ behavior: 'smooth' });
+      navigateTo('faq');
     }},
   ];
 
