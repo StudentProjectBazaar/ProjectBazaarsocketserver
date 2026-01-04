@@ -1,4 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+
+const GET_USER_PAYMENTS_ENDPOINT = 'https://z4utxrtd2e.execute-api.ap-south-2.amazonaws.com/default/get_user_payments';
+const GET_ALL_PROJECTS_ENDPOINT = 'https://vwqfgtwerj.execute-api.ap-south-2.amazonaws.com/default/Get_All_Projects_for_Admin_Buyer';
 
 interface Purchase {
     id: string;
@@ -36,129 +39,301 @@ interface PayoutRequest {
     purchases: Purchase[];
 }
 
+
+interface PaymentApiResponse {
+    success: boolean;
+    data?: {
+        userId: string;
+        orders: any[];
+        purchases: any[];
+        summary: {
+            totalOrders: number;
+            successfulOrders: number;
+            failedOrders: number;
+            pendingOrders: number;
+            totalSpent: number;
+            totalPurchases: number;
+        };
+    };
+    error?: string;
+}
+
+interface PaymentInfo {
+    userId: string;
+    orders: any[];
+    purchases: any[];
+    summary: {
+        totalOrders: number;
+        successfulOrders: number;
+        failedOrders: number;
+        pendingOrders: number;
+        totalSpent: number;
+        totalPurchases: number;
+    };
+}
+
 const PayoutSystemsPage: React.FC = () => {
     const [selectedSeller, setSelectedSeller] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'overview' | 'requests' | 'history'>('overview');
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [sellerPaymentData, setSellerPaymentData] = useState<Map<string, PaymentInfo>>(new Map());
 
-    // Mock data - Seller earnings with purchases
-    const [sellerEarnings, setSellerEarnings] = useState<SellerEarnings[]>([
-        {
-            sellerId: 'seller-1',
-            sellerName: 'John Doe',
-            sellerEmail: 'john.doe@example.com',
-            totalEarnings: 2847.50,
-            pendingEarnings: 1250.50,
-            paidEarnings: 1597.00,
-            purchases: [
-                {
-                    id: 'purchase-1',
-                    projectId: 'proj-1',
-                    projectTitle: 'E-commerce Platform',
-                    projectImage: 'https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop',
-                    buyerName: 'Alice Buyer',
-                    buyerEmail: 'alice@example.com',
-                    purchaseDate: '2024-11-15',
-                    amount: 49.99,
-                    commission: 4.99,
-                    sellerEarnings: 45.00,
-                },
-                {
-                    id: 'purchase-2',
-                    projectId: 'proj-2',
-                    projectTitle: 'Task Management Tool',
-                    projectImage: 'https://images.unsplash.com/photo-1547658719-da2b51169166?q=80&w=1964&auto=format&fit=crop',
-                    buyerName: 'Bob Buyer',
-                    buyerEmail: 'bob@example.com',
-                    purchaseDate: '2024-11-18',
-                    amount: 59.99,
-                    commission: 5.99,
-                    sellerEarnings: 54.00,
-                },
-                {
-                    id: 'purchase-3',
-                    projectId: 'proj-3',
-                    projectTitle: 'Social Media App',
-                    projectImage: 'https://images.unsplash.com/photo-1611162617213-6d22e4f13374?q=80&w=1974&auto=format&fit=crop',
-                    buyerName: 'Charlie Buyer',
-                    buyerEmail: 'charlie@example.com',
-                    purchaseDate: '2024-11-20',
-                    amount: 79.99,
-                    commission: 7.99,
-                    sellerEarnings: 72.00,
-                },
-            ],
-        },
-        {
-            sellerId: 'seller-2',
-            sellerName: 'Jane Smith',
-            sellerEmail: 'jane.smith@example.com',
-            totalEarnings: 1890.25,
-            pendingEarnings: 890.25,
-            paidEarnings: 1000.00,
-            purchases: [
-                {
-                    id: 'purchase-4',
-                    projectId: 'proj-4',
-                    projectTitle: 'Portfolio Template',
-                    projectImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
-                    buyerName: 'David Buyer',
-                    buyerEmail: 'david@example.com',
-                    purchaseDate: '2024-11-16',
-                    amount: 29.99,
-                    commission: 2.99,
-                    sellerEarnings: 27.00,
-                },
-            ],
-        },
-        {
-            sellerId: 'seller-3',
-            sellerName: 'Bob Johnson',
-            sellerEmail: 'bob.johnson@example.com',
-            totalEarnings: 2100.75,
-            pendingEarnings: 0,
-            paidEarnings: 2100.75,
-            purchases: [],
-        },
-    ]);
+    // Real data - Seller earnings with purchases (loaded from API)
+    const [sellerEarnings, setSellerEarnings] = useState<SellerEarnings[]>([]);
 
-    const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([
-        {
-            id: 'request-1',
-            sellerId: 'seller-1',
-            sellerEmail: 'john.doe@example.com',
-            sellerName: 'John Doe',
-            amount: 1250.50,
-            requestDate: '2024-11-18',
-            status: 'pending',
-            paymentMethod: 'Bank Transfer',
-            accountDetails: '****1234',
-            purchases: sellerEarnings[0].purchases.filter(p => ['purchase-1', 'purchase-2'].includes(p.id)),
-        },
-        {
-            id: 'request-2',
-            sellerId: 'seller-2',
-            sellerEmail: 'jane.smith@example.com',
-            sellerName: 'Jane Smith',
-            amount: 890.25,
-            requestDate: '2024-11-19',
-            status: 'pending',
-            paymentMethod: 'PayPal',
-            accountDetails: 'jane.smith@paypal.com',
-            purchases: sellerEarnings[1].purchases,
-        },
-        {
-            id: 'request-3',
-            sellerId: 'seller-1',
-            sellerEmail: 'john.doe@example.com',
-            sellerName: 'John Doe',
-            amount: 1597.00,
-            requestDate: '2024-11-10',
-            status: 'completed',
-            paymentMethod: 'Bank Transfer',
-            accountDetails: '****1234',
-            purchases: [],
-        },
-    ]);
+    // Fetch sellers and their payment details using get_user_payments API
+    useEffect(() => {
+        const fetchSellersWithPayments = async () => {
+            setIsLoading(true);
+            setError(null);
+            
+            try {
+                console.log('Step 1: Fetching projects to get seller IDs...');
+                
+                // Step 1: Get all projects to extract unique seller IDs
+                const projectsResponse = await fetch(GET_ALL_PROJECTS_ENDPOINT, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!projectsResponse.ok) {
+                    throw new Error(`Failed to fetch projects: ${projectsResponse.statusText}`);
+                }
+
+                const projectsData = await projectsResponse.json();
+                console.log('Projects data:', projectsData);
+
+                // Extract unique seller IDs from projects
+                const sellerMap = new Map<string, { sellerId: string; sellerEmail: string; sellerName: string }>();
+                
+                if (projectsData.success && Array.isArray(projectsData.data)) {
+                    projectsData.data.forEach((project: any) => {
+                        if (project.sellerId && !sellerMap.has(project.sellerId)) {
+                            sellerMap.set(project.sellerId, {
+                                sellerId: project.sellerId,
+                                sellerEmail: project.sellerEmail || '',
+                                sellerName: project.sellerName || project.sellerEmail?.split('@')[0] || 'Unknown',
+                            });
+                        }
+                    });
+                }
+
+                const sellers = Array.from(sellerMap.values());
+                console.log('Found sellers:', sellers);
+
+                if (sellers.length === 0) {
+                    console.log('No sellers found in projects');
+                    setSellerEarnings([]);
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Step 2: Fetch payment details for each seller using get_user_payments API
+                console.log('Step 2: Fetching payment details for each seller...');
+                const paymentPromises = sellers.map(async (seller) => {
+                    try {
+                        console.log(`Fetching payment details for seller: ${seller.sellerId}`);
+                        const response = await fetch(GET_USER_PAYMENTS_ENDPOINT, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ 
+                                userId: seller.sellerId,
+                                role: "admin"
+                            }),
+                        });
+
+                        if (!response.ok) {
+                            console.warn(`Failed to fetch payment for seller ${seller.sellerId}`);
+                            return null;
+                        }
+
+                        const data = await response.json();
+                        console.log(`Payment data for ${seller.sellerId}:`, data);
+
+                        if (data.success && data.data) {
+                            return {
+                                seller,
+                                paymentData: data.data
+                            };
+                        }
+                        return null;
+                    } catch (err) {
+                        console.error(`Error fetching payment for seller ${seller.sellerId}:`, err);
+                        return null;
+                    }
+                });
+
+                const paymentResults = await Promise.all(paymentPromises);
+                console.log('Payment results:', paymentResults);
+
+                // Step 3: Process payment data and create seller earnings
+                const earningsData: SellerEarnings[] = paymentResults
+                    .filter(result => result !== null)
+                    .map((result) => {
+                        const { seller, paymentData } = result!;
+                        const ordersArray = Array.isArray(paymentData.orders) ? paymentData.orders : [];
+
+                        // Calculate earnings from successful orders
+                        const successfulOrders = ordersArray.filter((order: any) => order.status === 'SUCCESS');
+                        const totalEarnings = successfulOrders.reduce((sum: number, order: any) => {
+                            const amount = order.totalAmount || 0;
+                            return sum + (amount * 0.85); // 85% to seller
+                        }, 0);
+
+                        const pendingEarnings = ordersArray.filter((order: any) => order.status === 'PENDING')
+                            .reduce((sum: number, order: any) => {
+                                const amount = order.totalAmount || 0;
+                                return sum + (amount * 0.85);
+                            }, 0);
+
+                        // Map orders to purchases format
+                        const purchases: Purchase[] = successfulOrders.map((order: any, index: number) => {
+                            const orderAmount = order.totalAmount || 0;
+                            return {
+                                id: `order-${seller.sellerId}-${index}`,
+                                projectId: order.projectIds?.[0] || '',
+                                projectTitle: `Project ${order.projectIds?.[0] || 'Unknown'}`,
+                                projectImage: 'https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop',
+                                buyerName: 'Buyer',
+                                buyerEmail: order.userId || 'buyer@example.com',
+                                purchaseDate: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                                amount: orderAmount,
+                                commission: orderAmount * 0.15, // 15% commission
+                                sellerEarnings: orderAmount * 0.85, // 85% to seller
+                            };
+                        });
+
+                        return {
+                            sellerId: seller.sellerId,
+                            sellerName: seller.sellerName,
+                            sellerEmail: seller.sellerEmail,
+                            totalEarnings: totalEarnings,
+                            pendingEarnings: pendingEarnings,
+                            paidEarnings: totalEarnings - pendingEarnings,
+                            purchases: purchases,
+                        };
+                    });
+
+                setSellerEarnings(earningsData);
+                console.log('Set seller earnings:', earningsData);
+                setIsLoading(false);
+                
+            } catch (err) {
+                console.error('Error fetching sellers:', err);
+                setError(err instanceof Error ? err.message : 'Failed to fetch sellers');
+                setIsLoading(false);
+            }
+        };
+
+        fetchSellersWithPayments();
+    }, []);
+
+    // Fetch payment details for a seller using get_user_payments API
+    const fetchSellerPaymentDetails = async (sellerId: string) => {
+        try {
+            console.log('Fetching payment details for seller:', sellerId);
+            const response = await fetch(GET_USER_PAYMENTS_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    userId: sellerId,
+                    role: "admin"
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch payment details: ${response.statusText}`);
+            }
+
+            const data: PaymentApiResponse = await response.json();
+            console.log('Payment details response:', data);
+
+            if (data.success && data.data) {
+                const paymentData = data.data;
+                
+                // Calculate earnings from orders (for sellers, orders represent sales)
+                const ordersArray = Array.isArray(paymentData.orders) ? paymentData.orders : [];
+                
+                // For sellers, calculate earnings from successful orders
+                const successfulOrders = ordersArray.filter((order: any) => order.status === 'SUCCESS');
+                const totalEarnings = successfulOrders.reduce((sum: number, order: any) => {
+                    const amount = order.totalAmount || 0;
+                    return sum + (amount * 0.85); // 85% to seller
+                }, 0);
+
+                // Map orders to purchases format
+                const purchases: Purchase[] = successfulOrders.map((order: any, index: number) => {
+                    const orderAmount = order.totalAmount || 0;
+                    return {
+                        id: `order-${sellerId}-${index}`,
+                        projectId: order.projectIds?.[0] || '',
+                        projectTitle: `Project ${order.projectIds?.[0] || 'Unknown'}`,
+                        projectImage: 'https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop',
+                        buyerName: 'Buyer',
+                        buyerEmail: order.userId || 'buyer@example.com',
+                        purchaseDate: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                        amount: orderAmount,
+                        commission: orderAmount * 0.15, // 15% commission
+                        sellerEarnings: orderAmount * 0.85, // 85% to seller
+                    };
+                });
+
+                // Update or add seller to earnings list
+                setSellerEarnings(prev => {
+                    const existingIndex = prev.findIndex(s => s.sellerId === sellerId);
+                    const sellerData = {
+                        sellerId: sellerId,
+                        sellerName: paymentData.userId || 'Unknown Seller',
+                        sellerEmail: paymentData.userId || 'unknown@example.com',
+                        totalEarnings: totalEarnings,
+                        pendingEarnings: 0, // TODO: Calculate from pending orders
+                        paidEarnings: totalEarnings,
+                        purchases: purchases,
+                    };
+
+                    if (existingIndex >= 0) {
+                        const updated = [...prev];
+                        updated[existingIndex] = sellerData;
+                        return updated;
+                    } else {
+                        return [...prev, sellerData];
+                    }
+                });
+
+                // Store payment data
+                setSellerPaymentData(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(sellerId, paymentData);
+                    return newMap;
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching seller payment details:', err);
+        }
+    };
+
+
+    // Fetch payment data for a specific seller when viewing details using get_user_payments API
+    const fetchSellerPaymentData = async (sellerId: string) => {
+        // Check if we already have payment data cached
+        if (sellerPaymentData.has(sellerId)) {
+            console.log('Using cached payment data for seller:', sellerId);
+            return;
+        }
+
+        // Use the fetchSellerPaymentDetails function
+        await fetchSellerPaymentDetails(sellerId);
+    };
+
+    // Payout requests - will be populated from API or user actions
+    const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
 
     const totalPendingAmount = useMemo(() => {
         return payoutRequests
@@ -198,6 +373,37 @@ const PayoutSystemsPage: React.FC = () => {
     };
 
     const selectedSellerData = sellerEarnings.find(s => s.sellerId === selectedSeller);
+
+    // Fetch payment data when seller is selected
+    useEffect(() => {
+        if (selectedSeller && !sellerPaymentData.has(selectedSeller)) {
+            fetchSellerPaymentData(selectedSeller);
+        }
+    }, [selectedSeller]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent mb-4"></div>
+                    <p className="text-gray-600 font-medium">Loading seller earnings...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-red-800 font-medium">Error: {error}</p>
+                </div>
+            </div>
+        );
+    }
 
     if (selectedSeller && selectedSellerData) {
         return (
@@ -374,6 +580,15 @@ const PayoutSystemsPage: React.FC = () => {
             {/* Content */}
             {viewMode === 'overview' && (
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    {sellerEarnings.length === 0 ? (
+                        <div className="p-12 text-center">
+                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p className="text-gray-500 text-lg font-medium mb-2">No sellers found</p>
+                            <p className="text-gray-400 text-sm">Sellers will appear here once they register and start earning.</p>
+                        </div>
+                    ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
@@ -425,12 +640,22 @@ const PayoutSystemsPage: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+                    )}
                 </div>
             )}
 
             {viewMode === 'requests' && (
                 <div className="space-y-4">
-                    {payoutRequests.filter(p => p.status === 'pending' || p.status === 'approved').map((request) => (
+                    {payoutRequests.length === 0 ? (
+                        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p className="text-gray-500 text-lg font-medium mb-2">No payout requests</p>
+                            <p className="text-gray-400 text-sm">Payout requests will appear here when sellers request payouts.</p>
+                        </div>
+                    ) : (
+                        payoutRequests.filter(p => p.status === 'pending' || p.status === 'approved').map((request) => (
                         <div key={request.id} className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center gap-4">
@@ -518,12 +743,22 @@ const PayoutSystemsPage: React.FC = () => {
                                 )}
                             </div>
                         </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             )}
 
             {viewMode === 'history' && (
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    {payoutRequests.filter(p => p.status === 'completed').length === 0 ? (
+                        <div className="p-12 text-center">
+                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            <p className="text-gray-500 text-lg font-medium mb-2">No payment history</p>
+                            <p className="text-gray-400 text-sm">Completed payouts will appear here.</p>
+                        </div>
+                    ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
@@ -563,6 +798,7 @@ const PayoutSystemsPage: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+                    )}
                 </div>
             )}
         </div>

@@ -34,6 +34,7 @@ interface AdminUserProfilePageProps {
 }
 
 const GET_USER_DETAILS_ENDPOINT = 'https://5d1gdw7t26.execute-api.ap-south-2.amazonaws.com/default/Get_userdetails_and_His_Projects_By_UserId';
+const GET_USER_PAYMENTS_ENDPOINT = 'https://z4utxrtd2e.execute-api.ap-south-2.amazonaws.com/default/get_user_payments';
 
 interface ApiUser {
   userId: string;
@@ -81,16 +82,66 @@ interface ApiResponse {
   projectsCount: number;
 }
 
+interface Order {
+  orderId: string;
+  userId: string;
+  projectIds: string[];
+  razorpayOrderId: string;
+  totalAmount: number;
+  currency: string;
+  status: "PENDING" | "SUCCESS" | "FAILED";
+  createdAt: string;
+  updatedAt: string;
+  expiresAt?: string;
+}
+
+interface Purchase {
+  projectId: string;
+  priceAtPurchase: number;
+  purchasedAt: string;
+  paymentId: string;
+  orderStatus: string;
+}
+
+interface PaymentSummary {
+  totalOrders: number;
+  successfulOrders: number;
+  failedOrders: number;
+  pendingOrders: number;
+  totalSpent: number;
+  totalPurchases: number;
+}
+
+interface PaymentInfo {
+  userId: string;
+  orders: Order[];
+  purchases: Purchase[];
+  summary: PaymentSummary;
+}
+
+interface PaymentApiResponse {
+  success: boolean;
+  data?: PaymentInfo;
+  error?: string;
+}
+
 const AdminUserProfilePage: React.FC<AdminUserProfilePageProps> = ({ 
   user, 
   userProjects, 
   onBack,
   onProjectStatusChange 
 }) => {
+  console.log('🚀 AdminUserProfilePage component mounted/rendered');
+  console.log('📦 Props received - user:', user);
+  console.log('📦 Props received - userProjects:', userProjects);
+  
   const [userData, setUserData] = useState<User>(user);
   const [projects, setProjects] = useState<AdminProject[]>(userProjects);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [paymentData, setPaymentData] = useState<PaymentInfo | null>(null);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   // Map API user to component User interface
   const mapApiUserToComponent = (apiUser: ApiUser): User => {
@@ -200,6 +251,44 @@ const AdminUserProfilePage: React.FC<AdminUserProfilePageProps> = ({
         
         console.log('Fetched user details:', mappedUser);
         console.log('Fetched projects:', data.projects?.length || 0);
+        
+        // Fetch payment history after user details are loaded
+        // Use the userId from the API response
+        if (data.user.userId) {
+          console.log('✅ User details loaded, will fetch payment history with userId:', data.user.userId);
+          // Use a longer timeout to ensure state is updated
+          setTimeout(() => {
+            console.log('⏰ Timeout completed, calling fetchPaymentHistory');
+            // Force fetch with the API userId
+            const fetchWithUserId = async () => {
+              try {
+                setIsLoadingPayments(true);
+                setPaymentError(null);
+                console.log('📞 Calling payment API with userId:', data.user.userId);
+                const response = await fetch(GET_USER_PAYMENTS_ENDPOINT, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userId: data.user.userId }),
+                });
+                console.log('📥 Payment API response status:', response.status);
+                const paymentData: PaymentApiResponse = await response.json();
+                console.log('📥 Payment API response:', paymentData);
+                if (paymentData.success && paymentData.data) {
+                  setPaymentData(paymentData.data);
+                  console.log('✅ Payment data set successfully');
+                }
+              } catch (err) {
+                console.error('❌ Error in payment fetch:', err);
+                setPaymentError(err instanceof Error ? err.message : 'Failed to fetch payment history');
+              } finally {
+                setIsLoadingPayments(false);
+              }
+            };
+            fetchWithUserId();
+          }, 1000);
+        } else {
+          console.warn('❌ No userId in API response, cannot fetch payment history');
+        }
       } else {
         throw new Error('Invalid response format from API');
       }
@@ -212,13 +301,112 @@ const AdminUserProfilePage: React.FC<AdminUserProfilePageProps> = ({
     }
   };
 
+  // Fetch payment history
+  const fetchPaymentHistory = async () => {
+    // Try multiple possible ID fields - prioritize userData.id as it comes from API
+    const userId = userData.id || user.id || (user as any).userId;
+    
+    console.log('=== fetchPaymentHistory called ===');
+    console.log('user object:', user);
+    console.log('userData object:', userData);
+    console.log('Extracted userId:', userId);
+    
+    if (!userId) {
+      console.warn('No user ID available for payment history');
+      setPaymentError('User ID is required. Please wait for user details to load.');
+      return;
+    }
+
+    setIsLoadingPayments(true);
+    setPaymentError(null);
+
+    try {
+      console.log('Calling payment API:', GET_USER_PAYMENTS_ENDPOINT);
+      console.log('Request body:', { userId });
+      
+      const response = await fetch(GET_USER_PAYMENTS_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      console.log('Payment API response status:', response.status);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch payment history: ${response.statusText}`);
+      }
+
+      const data: PaymentApiResponse = await response.json();
+      console.log('Payment API response data:', data);
+
+      if (data.success && data.data) {
+        setPaymentData(data.data);
+        console.log('Payment data set successfully');
+      } else {
+        throw new Error(data.error || 'Failed to fetch payment history');
+      }
+    } catch (err) {
+      console.error('Error fetching payment history:', err);
+      setPaymentError(err instanceof Error ? err.message : 'Failed to fetch payment history');
+    } finally {
+      setIsLoadingPayments(false);
+    }
+  };
+
   // Fetch user details on component mount
   useEffect(() => {
-    if (user.id) {
+    console.log('=== AdminUserProfilePage useEffect triggered ===');
+    console.log('user object:', user);
+    console.log('user.id:', user.id);
+    console.log('user.userId:', (user as any).userId);
+    
+    const userId = user.id || (user as any).userId;
+    
+    if (userId) {
+      console.log('✅ User ID found:', userId);
+      console.log('Fetching user details for user:', userId);
       fetchUserDetails();
+      
+      // Also try to fetch payment history immediately with the initial user.id
+      // This is a fallback in case userData doesn't get set properly
+      console.log('🔄 Attempting immediate payment fetch with user.id:', userId);
+      setTimeout(() => {
+        const currentUserId = userData.id || user.id || (user as any).userId;
+        if (currentUserId && !paymentData && !isLoadingPayments) {
+          console.log('🔄 Fallback: Fetching payment with userId:', currentUserId);
+          fetchPaymentHistory();
+        }
+      }, 2000);
+    } else {
+      console.warn('❌ user.id is not available, skipping API calls');
+      console.warn('Full user object:', JSON.stringify(user, null, 2));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.id]);
+  }, [user.id, (user as any).userId]);
+
+  // Also add a useEffect to call payment API when userData is available
+  useEffect(() => {
+    console.log('🔄 userData useEffect triggered');
+    console.log('userData:', userData);
+    console.log('userData.id:', userData?.id);
+    console.log('paymentData:', paymentData);
+    console.log('isLoadingPayments:', isLoadingPayments);
+    
+    if (userData && userData.id && !paymentData && !isLoadingPayments) {
+      console.log('✅ Conditions met, triggering payment fetch');
+      console.log('userData.id:', userData.id);
+      fetchPaymentHistory();
+    } else {
+      console.log('⏸️ Conditions not met for payment fetch');
+      if (!userData) console.log('  - No userData');
+      if (!userData?.id) console.log('  - No userData.id');
+      if (paymentData) console.log('  - paymentData already exists');
+      if (isLoadingPayments) console.log('  - Already loading payments');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userData?.id, paymentData, isLoadingPayments]);
 
   const handleStatusChange = (projectId: string, newStatus: AdminProject['status']) => {
     setProjects(projects.map(p => 
@@ -610,6 +798,177 @@ const AdminUserProfilePage: React.FC<AdminUserProfilePageProps> = ({
             ))}
           </div>
         )}
+        </div>
+
+        {/* Payment History Section */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Payment History</h2>
+            <button
+              onClick={fetchPaymentHistory}
+              disabled={isLoadingPayments}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-semibold text-sm shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <svg className={`w-4 h-4 ${isLoadingPayments ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </button>
+          </div>
+
+          {isLoadingPayments && (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-orange-500 border-t-transparent mb-4"></div>
+              <p className="text-gray-600">Loading payment history...</p>
+            </div>
+          )}
+
+          {paymentError && !isLoadingPayments && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-red-800 font-medium">Error: {paymentError}</p>
+                <button
+                  onClick={fetchPaymentHistory}
+                  className="ml-auto px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-semibold"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
+
+          {paymentData && !isLoadingPayments && (
+            <>
+              {/* Summary Statistics */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                  <p className="text-sm text-blue-600 font-medium mb-1">Total Orders</p>
+                  <p className="text-2xl font-bold text-blue-900">{paymentData.summary.totalOrders}</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                  <p className="text-sm text-green-600 font-medium mb-1">Successful</p>
+                  <p className="text-2xl font-bold text-green-900">{paymentData.summary.successfulOrders}</p>
+                </div>
+                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border border-red-200">
+                  <p className="text-sm text-red-600 font-medium mb-1">Failed</p>
+                  <p className="text-2xl font-bold text-red-900">{paymentData.summary.failedOrders}</p>
+                </div>
+                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
+                  <p className="text-sm text-yellow-600 font-medium mb-1">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-900">{paymentData.summary.pendingOrders}</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                  <p className="text-sm text-purple-600 font-medium mb-1">Total Spent</p>
+                  <p className="text-2xl font-bold text-purple-900">₹{paymentData.summary.totalSpent.toFixed(2)}</p>
+                </div>
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+                  <p className="text-sm text-orange-600 font-medium mb-1">Purchases</p>
+                  <p className="text-2xl font-bold text-orange-900">{paymentData.summary.totalPurchases}</p>
+                </div>
+              </div>
+
+              {/* Orders Table */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Orders</h3>
+                {paymentData.orders.length === 0 ? (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                    <p className="text-gray-500">No orders found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order ID</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Projects</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Razorpay ID</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {paymentData.orders.map((order) => (
+                          <tr key={order.orderId} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm text-gray-900 font-mono">{order.orderId}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+                              {order.currency} {order.totalAmount.toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {order.projectIds.length} project{order.projectIds.length !== 1 ? 's' : ''}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                order.status === 'SUCCESS' ? 'bg-green-100 text-green-800' :
+                                order.status === 'FAILED' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {order.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600 font-mono text-xs">{order.razorpayOrderId}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Purchases Table */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Purchase History</h3>
+                {paymentData.purchases.length === 0 ? (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                    <p className="text-gray-500">No purchases found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Project ID</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Purchase Date</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Payment ID</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {paymentData.purchases.map((purchase, index) => (
+                          <tr key={`${purchase.projectId}-${index}`} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm text-gray-900 font-mono">{purchase.projectId}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {new Date(purchase.purchasedAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+                              ₹{purchase.priceAtPurchase.toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600 font-mono text-xs">{purchase.paymentId}</td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                purchase.orderStatus === 'SUCCESS' ? 'bg-green-100 text-green-800' :
+                                purchase.orderStatus === 'FAILED' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {purchase.orderStatus}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
         </>
       )}
