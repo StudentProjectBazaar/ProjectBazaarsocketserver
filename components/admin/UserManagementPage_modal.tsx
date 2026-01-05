@@ -1,3 +1,39 @@
+import React from 'react';
+
+interface EditFormData {
+  status: 'active' | 'blocked' | 'deleted';
+  credits?: number;
+  accountLockedUntil?: string | null;
+}
+
+interface User {
+  name: string;
+  email: string;
+  credits?: number;
+}
+
+interface UserManagementPageModalProps {
+  editingUser: User | null;
+  editFormData: EditFormData;
+  setEditFormData: (data: EditFormData) => void;
+  updateSuccess: boolean;
+  handleCloseEditModal: () => void;
+  handleUpdateUser: () => void;
+  isUpdating?: boolean;
+}
+
+export function UserManagementPageModal({
+  editingUser,
+  editFormData,
+  setEditFormData,
+  updateSuccess,
+  handleCloseEditModal,
+  handleUpdateUser,
+  isUpdating = false,
+}: UserManagementPageModalProps) {
+
+  return (
+    <>
             {/* Edit User Modal */}
             {editingUser && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -34,7 +70,7 @@
                                 </label>
                                 <select
                                     value={editFormData.status}
-                                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditFormData({ ...editFormData, status: e.target.value as 'active' | 'blocked' | 'deleted' })}
                                     disabled={isUpdating}
                                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-500 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
@@ -57,8 +93,8 @@
                                 <input
                                     type="number"
                                     min="0"
-                                    value={editFormData.credits}
-                                    onChange={(e) => setEditFormData({ ...editFormData, credits: parseInt(e.target.value) || 0 })}
+                                    value={editFormData.credits || 0}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ ...editFormData, credits: parseInt(e.target.value) || 0 })}
                                     disabled={isUpdating}
                                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-500 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
@@ -73,7 +109,7 @@
                                 <input
                                     type="datetime-local"
                                     value={editFormData.accountLockedUntil ? new Date(editFormData.accountLockedUntil).toISOString().slice(0, 16) : ''}
-                                    onChange={(e) => setEditFormData({ 
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ 
                                         ...editFormData, 
                                         accountLockedUntil: e.target.value ? new Date(e.target.value).toISOString() : null 
                                     })}
@@ -134,4 +170,6 @@
                     </div>
                 </div>
             )}
-
+    </>
+  );
+}
