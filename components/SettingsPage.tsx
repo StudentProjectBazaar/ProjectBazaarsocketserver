@@ -181,10 +181,19 @@ const SettingsPage: React.FC = () => {
                     
                     // GitHub data
                     if (user.githubData) {
-                        setGithubData(user.githubData);
-                        // Try to fetch repositories if we have access token
-                        // Note: Access token should be retrieved from secure storage in production
-                        // For now, we'll fetch repos when user explicitly requests
+                        // Restore access token from localStorage if available
+                        const storedToken = localStorage.getItem('github_access_token');
+                        const githubDataWithToken = storedToken 
+                            ? { ...user.githubData, accessToken: storedToken }
+                            : user.githubData;
+                        setGithubData(githubDataWithToken);
+                    } else {
+                        // If no githubData in database but token exists in localStorage, try to restore
+                        const storedToken = localStorage.getItem('github_access_token');
+                        if (storedToken) {
+                            // Try to fetch GitHub user info to restore connection state
+                            fetchGitHubUserInfo(storedToken);
+                        }
                     }
                     
                     // Sync premium status and credits
@@ -221,6 +230,11 @@ const SettingsPage: React.FC = () => {
                     const decodedData = JSON.parse(decodeURIComponent(githubDataParam));
                     
                     if (decodedData.success && decodedData.github) {
+                        // Store access token in localStorage (temporary solution - should be encrypted in production)
+                        if (decodedData.github.accessToken) {
+                            localStorage.setItem('github_access_token', decodedData.github.accessToken);
+                        }
+                        
                         setGithubData(decodedData.github);
                         setGithubUrl(decodedData.github.profileUrl || '');
                         
@@ -288,9 +302,86 @@ const SettingsPage: React.FC = () => {
         window.location.href = githubAuthUrl;
     };
 
+    // Fetch GitHub user info to restore connection state
+    const fetchGitHubUserInfo = async (accessToken: string) => {
+        try {
+            const response = await fetch('https://api.github.com/user', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                },
+            });
+            
+            if (response.ok) {
+                const user = await response.json();
+                const username = user.login;
+                const created_at = user.created_at;
+                
+                // Generate heatmap URL
+                const heatmap_url = `https://ghchart.rshah.org/${username}`;
+                
+                // Calculate account creation year
+                let account_creation_year = null;
+                if (created_at) {
+                    try {
+                        account_creation_year = new Date(created_at).getFullYear();
+                    } catch (e) {
+                        // Ignore
+                    }
+                }
+                
+                const currentYear = new Date().getFullYear();
+                const minYear = account_creation_year && account_creation_year > 2010
+                    ? account_creation_year
+                    : Math.max(2014, currentYear - 10);
+                
+                // Restore GitHub data
+                const restoredGithubData = {
+                    id: user.id,
+                    username: username,
+                    name: user.name,
+                    avatar: user.avatar_url,
+                    profileUrl: user.html_url,
+                    bio: user.bio,
+                    followers: user.followers,
+                    following: user.following,
+                    publicRepos: user.public_repos,
+                    heatmapUrl: heatmap_url,
+                    accountCreatedAt: created_at,
+                    minYear: minYear,
+                    accessToken: accessToken,
+                };
+                
+                setGithubData(restoredGithubData);
+                setGithubUrl(user.html_url);
+                
+                // Save to database (without token)
+                const { accessToken: _, ...githubDataToSave } = restoredGithubData;
+                
+                if (userId) {
+                    await fetch(UPDATE_SETTINGS_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'updateSettings',
+                            userId,
+                            githubUrl: user.html_url,
+                            githubData: githubDataToSave,
+                        }),
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('Failed to restore GitHub user info:', err);
+            // If token is invalid, remove it
+            localStorage.removeItem('github_access_token');
+        }
+    };
+
     // Fetch GitHub repositories
     const fetchRepositories = async (accessToken?: string) => {
-        const token = accessToken || githubData?.accessToken;
+        // Try to get token from: parameter > state > localStorage
+        const token = accessToken || githubData?.accessToken || localStorage.getItem('github_access_token');
         if (!token) {
             setReposError('GitHub access token not available. Please reconnect your GitHub account.');
             return;
@@ -340,10 +431,11 @@ const SettingsPage: React.FC = () => {
     
     // Load repositories when GitHub is connected
     useEffect(() => {
-        if (githubData?.accessToken && repositories.length === 0 && !loadingRepos) {
+        const token = githubData?.accessToken || localStorage.getItem('github_access_token');
+        if (token && githubData && repositories.length === 0 && !loadingRepos) {
             fetchRepositories();
         }
-    }, [githubData?.accessToken]);
+    }, [githubData]);
     
     // Disconnect GitHub
     const disconnectGithub = async () => {
@@ -367,6 +459,8 @@ const SettingsPage: React.FC = () => {
                 setGithubData(null);
                 setGithubUrl('');
                 setRepositories([]);
+                // Remove access token from localStorage
+                localStorage.removeItem('github_access_token');
                 setSaveMessage('GitHub account disconnected');
             } else {
                 setSaveError('Failed to disconnect GitHub account');
