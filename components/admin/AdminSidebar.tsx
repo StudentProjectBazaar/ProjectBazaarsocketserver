@@ -38,7 +38,7 @@ interface AdminSidebarProps {
     onCollapseToggle: () => void;
 }
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeView, setActiveView, isOpen, isCollapsed, onClose, onToggle, onCollapseToggle }) => {
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeView, setActiveView, isOpen, isCollapsed, onCollapseToggle }) => {
     const { userEmail, logout } = useAuth();
     const [isHovered, setIsHovered] = React.useState(false);
 

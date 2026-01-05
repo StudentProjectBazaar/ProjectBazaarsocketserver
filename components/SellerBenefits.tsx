@@ -140,7 +140,7 @@ const SellerBenefits: React.FC = () => {
           viewport={{ once: true }}
           className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-14"
         >
-          {stats.map((stat, index) => (
+          {stats.map((stat, _index) => (
             <div 
               key={stat.label}
               className="text-center p-4 rounded-xl bg-white/5 border border-white/10"

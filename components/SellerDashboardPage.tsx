@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import DashboardContent from './DashboardContent';
-import { useTheme, useAuth } from '../App';
+import { useAuth } from '../App';
 import { WishlistProvider, CartProvider, type DashboardView } from './DashboardPage';
 
 const SellerDashboardPage: React.FC = () => {
-    const { theme } = useTheme();
     const { userId } = useAuth();
     // Always use seller mode for this page
     const dashboardMode: 'seller' = 'seller';
@@ -29,7 +28,7 @@ const SellerDashboardPage: React.FC = () => {
     };
 
     // Seller dashboard doesn't need mode switching, but we keep the prop for consistency
-    const handleSetDashboardMode = (mode: 'buyer' | 'seller') => {
+    const handleSetDashboardMode = (_mode: 'buyer' | 'seller') => {
         // In seller dashboard, we can optionally navigate to buyer dashboard
         // For now, we'll just reset the view
         setActiveView('dashboard');

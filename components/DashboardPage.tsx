@@ -1,7 +1,7 @@
 import React, { useState, createContext, useContext, ReactNode, useEffect, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import DashboardContent from './DashboardContent';
-import { useTheme, useAuth } from '../App';
+import { useAuth } from '../App';
 import { fetchUserData, likeProject, unlikeProject, addToCart as apiAddToCart, removeFromCart as apiRemoveFromCart, CartItem } from '../services/buyerApi';
 
 export type DashboardView = 'dashboard' | 'purchases' | 'wishlist' | 'cart' | 'analytics' | 'settings' | 'my-projects' | 'earnings' | 'payouts' | 'project-details' | 'seller-profile' | 'help-center';
@@ -124,7 +124,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode; userId: string | 
 
 export const CartProvider: React.FC<{ children: ReactNode; userId: string | null }> = ({ children, userId }) => {
     const [cart, setCart] = useState<string[]>([]);
-    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const [, setCartItems] = useState<CartItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     // Function to load cart from API
@@ -224,7 +224,6 @@ export const CartProvider: React.FC<{ children: ReactNode; userId: string | null
 };
 
 const DashboardPage: React.FC = () => {
-    const { theme } = useTheme();
     const { userId } = useAuth();
     // Dashboard page defaults to buyer mode
     const [dashboardMode, setDashboardMode] = useState<'buyer' | 'seller'>('buyer');

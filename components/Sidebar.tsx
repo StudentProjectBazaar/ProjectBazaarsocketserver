@@ -60,7 +60,7 @@ interface SidebarProps {
     onCollapseToggle: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ dashboardMode, activeView, setActiveView, isOpen, isCollapsed, onClose, onToggle, onCollapseToggle }) => {
+const Sidebar: React.FC<SidebarProps> = ({ dashboardMode, activeView, setActiveView, isOpen, isCollapsed, onCollapseToggle }) => {
     const { userEmail, userId, logout } = useAuth();
     const [isHovered, setIsHovered] = useState(false);
     const [userProfileImage, setUserProfileImage] = useState<string | null>(null);

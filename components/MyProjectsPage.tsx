@@ -19,7 +19,6 @@ interface SellerProject {
 
 const GET_PROJECTS_ENDPOINT = 'https://qosmi6luq0.execute-api.ap-south-2.amazonaws.com/default/Get_All_Projects_for_Seller';
 const UPDATE_PROJECT_ENDPOINT = 'https://dihvjwfsk0.execute-api.ap-south-2.amazonaws.com/default/Update_projectDetils_and_likescounts_by_projectId';
-const UPLOAD_PROJECT_ENDPOINT = 'https://qh71ruloa8.execute-api.ap-south-2.amazonaws.com/default/Upload_project_from_buyer';
 
 const ALLOWED_CATEGORIES = [
     'Web Development',
@@ -346,7 +345,9 @@ const MyProjectsPage: React.FC = () => {
     // Upload file to S3
     // Note: This is a placeholder - you may need to use a presigned URL endpoint or direct S3 upload
     // For now, we'll handle file uploads separately if needed
-    const uploadFileToS3 = async (file: File, projectId: string, fileType: 'thumbnail' | 'projectFiles'): Promise<string | null> => {
+    // @ts-ignore - Function kept for future S3 upload implementation
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const uploadFileToS3 = async (_file: File, _projectId: string, _fileType: 'thumbnail' | 'projectFiles'): Promise<string | null> => {
         try {
             // TODO: Implement actual S3 upload
             // Option 1: Use presigned URL from backend
@@ -355,7 +356,7 @@ const MyProjectsPage: React.FC = () => {
             
             // For now, we'll skip file uploads in edit mode and only update text fields
             // Files can be updated separately through a dedicated file update endpoint
-            console.log(`File upload for ${fileType} would go here`);
+            console.log(`File upload for ${_fileType} would go here`);
             return null;
         } catch (error) {
             console.error('Error uploading file:', error);
@@ -780,7 +781,7 @@ const MyProjectsPage: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-100">
-                                        {filteredAndSortedProjects.map((project, index) => (
+                                        {filteredAndSortedProjects.map((project: SellerProject) => (
                                             <tr 
                                                 key={project.id} 
                                                 className="hover:bg-orange-50/50 transition-all duration-200 group border-b border-gray-100 last:border-0"

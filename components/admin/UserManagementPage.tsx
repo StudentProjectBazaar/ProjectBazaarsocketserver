@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { BuyerProject } from '../BuyerProjectCard';
 
-const GET_USER_DETAILS_ENDPOINT = 'https://6omszxa58g.execute-api.ap-south-2.amazonaws.com/default/Get_user_Details_by_his_Id';
 const GET_ALL_USERS_ENDPOINT = 'https://m81g90npsf.execute-api.ap-south-2.amazonaws.com/default/Get_All_users_for_admin';
 const UPDATE_USER_ENDPOINT = 'https://m81g90npsf.execute-api.ap-south-2.amazonaws.com/default/Get_All_users_for_admin';
 
@@ -54,7 +52,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onViewUser }) =
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState<'all' | 'buyer' | 'seller'>('all');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'suspended'>('all');
@@ -284,25 +281,16 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onViewUser }) =
         setUpdateSuccess(false);
     };
 
-    // Map API status to UI status for display
-    const mapApiStatusToUI = (apiStatus: string): 'active' | 'inactive' | 'suspended' => {
-        const statusLower = apiStatus.toLowerCase();
-        if (statusLower === 'blocked') return 'inactive';
-        if (statusLower === 'deleted') return 'suspended';
-        return 'active';
-    };
-
     const handleViewUserDetails = (user: User) => {
         if (onViewUser) {
             onViewUser({ id: user.id, name: user.name, email: user.email });
         }
     };
 
-    const activeUsers = users.filter(u => u.status === 'active');
-    const inactiveUsers = users.filter(u => u.status === 'inactive');
-    const suspendedUsers = users.filter(u => u.status === 'suspended');
-    const sellers = users.filter(u => u.role === 'seller');
-    const buyers = users.filter(u => u.role === 'buyer');
+    const activeUsers = users.filter((u: User) => u.status === 'active');
+    const suspendedUsers = users.filter((u: User) => u.status === 'suspended');
+    const sellers = users.filter((u: User) => u.role === 'seller');
+    const buyers = users.filter((u: User) => u.role === 'buyer');
 
     const getStatusBadge = (status: User['status']) => {
         const styles = {

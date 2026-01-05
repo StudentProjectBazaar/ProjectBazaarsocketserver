@@ -28,10 +28,9 @@ interface SellerRevenue {
 }
 
 const RevenueAnalyticsPage: React.FC = () => {
-    const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'month' | 'week' | 'day'>('all');
     const [selectedSeller, setSelectedSeller] = useState<string | null>(null);
 
-    const [transactions, setTransactions] = useState<Transaction[]>([
+    const [transactions] = useState<Transaction[]>([
         {
             id: 'txn-1',
             date: '2024-11-20',

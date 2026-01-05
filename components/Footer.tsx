@@ -12,10 +12,8 @@ import {
   Github,
 } from "lucide-react";
 import { FooterBackgroundGradient, TextHoverEffect } from "./ui/hover-footer";
-import { useNavigation } from '../App';
 
 const Footer: React.FC = () => {
-  const { navigateTo } = useNavigation();
 
   // Footer link data
   const footerLinks = [

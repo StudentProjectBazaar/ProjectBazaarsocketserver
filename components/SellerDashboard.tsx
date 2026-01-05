@@ -137,7 +137,7 @@ const SellerDashboard: React.FC = () => {
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [isDragging, setIsDragging] = useState(false);
     const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null);
-    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+    const [, setDragOverIndex] = useState<number | null>(null);
     
     // Form state
     const [formData, setFormData] = useState({

@@ -4,6 +4,7 @@ const GET_REPORTS_ENDPOINT = 'https://0en59tzhoa.execute-api.ap-south-2.amazonaw
 const GET_PROJECT_DETAILS_ENDPOINT = 'https://8y8bbugmbd.execute-api.ap-south-2.amazonaws.com/default/Get_project_details_by_projectId';
 const GET_USER_DETAILS_ENDPOINT = 'https://6omszxa58g.execute-api.ap-south-2.amazonaws.com/default/Get_user_Details_by_his_Id';
 const ADMIN_APPROVAL_ENDPOINT = 'https://wt58x2f09d.execute-api.ap-south-2.amazonaws.com/default/Admin_approved_or_rejected';
+const UPDATE_REPORT_STATUS_ENDPOINT = 'https://0en59tzhoa.execute-api.ap-south-2.amazonaws.com/default/Get_ReportDetails_by_sellerid_buyerId_ReportId';
 
 interface ApiReport {
     reportId: string;
@@ -26,6 +27,7 @@ interface ProjectDetails {
     thumbnailUrl?: string;
     category?: string;
     price?: number;
+    description?: string;
 }
 
 interface UserDetails {
@@ -70,10 +72,10 @@ const FraudManagementPage: React.FC<FraudManagementPageProps> = ({ onViewReport 
     const [replyComment, setReplyComment] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const [selectedReport, setSelectedReport] = useState<FraudReport | null>(null);
-    const [selectedProjectDetails, setSelectedProjectDetails] = useState<any>(null);
-    const [loadingProjectDetails, setLoadingProjectDetails] = useState(false);
     const [statusUpdateComment, setStatusUpdateComment] = useState('');
     const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [loadingProjectDetails] = useState(false);
+    const [selectedProjectDetails] = useState<ProjectDetails | null>(null);
 
     // Map API report to FraudReport interface
     const mapApiReportToComponent = async (apiReport: ApiReport): Promise<FraudReport> => {
@@ -300,6 +302,48 @@ const FraudManagementPage: React.FC<FraudManagementPageProps> = ({ onViewReport 
                 newSet.delete(projectId);
                 return newSet;
             });
+        }
+    };
+
+    const handleUpdateStatus = async (reportId: string, newStatus: 'resolved' | 'dismissed') => {
+        if (!statusUpdateComment.trim()) {
+            alert('Please provide a comment before updating the status.');
+            return;
+        }
+
+        setUpdatingStatus(true);
+        try {
+            const response = await fetch(UPDATE_REPORT_STATUS_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    reportId: reportId,
+                    status: newStatus,
+                    adminComment: statusUpdateComment
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to update status: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(`Report marked as ${newStatus} successfully`);
+                setStatusUpdateComment('');
+                setSelectedReport(null);
+                fetchReports();
+            } else {
+                throw new Error(data.error?.message || data.message || 'Failed to update status');
+            }
+        } catch (err) {
+            console.error('Error updating status:', err);
+            alert(`Failed to update status: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        } finally {
+            setUpdatingStatus(false);
         }
     };
 

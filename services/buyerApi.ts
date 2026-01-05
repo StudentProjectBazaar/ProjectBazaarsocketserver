@@ -49,6 +49,7 @@ export interface ApiResponse {
 
 export interface ProjectDetails {
   projectId: string;
+  id?: string;
   title: string;
   description: string;
   price: number;
@@ -66,6 +67,7 @@ export interface ProjectDetails {
   purchasesCount?: number;
   likesCount?: number;
   viewsCount?: number;
+  originalPrice?: number;
 }
 
 export interface ProjectDetailsResponse {

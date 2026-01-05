@@ -6,7 +6,7 @@ const Pricing: React.FC = () => {
     const { setIsPremium, setCredits } = usePremium();
     const { navigateTo } = useNavigation();
 
-    const handlePurchase = (planName: string) => {
+    const handlePurchase = (_planName: string) => {
         // Set premium status and give credits
         setIsPremium(true);
         setCredits(100);

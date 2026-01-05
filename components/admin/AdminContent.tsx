@@ -36,7 +36,7 @@ interface AdminContentProps {
     setActiveView: (view: AdminView) => void;
 }
 
-const AdminContent: React.FC<AdminContentProps> = ({ activeView, isSidebarOpen, toggleSidebar, setActiveView }) => {
+const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, setActiveView }) => {
     const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; email: string } | null>(null);
     const [userProjects, setUserProjects] = useState<AdminProject[]>([]);
     const [selectedProject, setSelectedProject] = useState<AdminProject | null>(null);
@@ -71,6 +71,8 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, isSidebarOpen, 
                 status: 'active',
                 uploadedDate: '2024-11-15',
                 sellerId: user.id,
+                sellerName: user.name,
+                sellerEmail: user.email,
             },
             {
                 id: 'proj-2',
@@ -85,6 +87,8 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, isSidebarOpen, 
                 status: 'pending',
                 uploadedDate: '2024-11-16',
                 sellerId: user.id,
+                sellerName: user.name,
+                sellerEmail: user.email,
             },
             {
                 id: 'proj-3',
@@ -99,6 +103,8 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, isSidebarOpen, 
                 status: 'in-review',
                 uploadedDate: '2024-11-17',
                 sellerId: user.id,
+                sellerName: user.name,
+                sellerEmail: user.email,
             },
         ];
         setSelectedUser(user);
@@ -107,10 +113,10 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, isSidebarOpen, 
     };
 
     const handleProjectStatusChange = (projectId: string, newStatus: AdminProject['status']) => {
-        setUserProjects(userProjects.map(p => 
+        setUserProjects(userProjects.map((p: AdminProject) => 
             p.id === projectId ? { ...p, status: newStatus } : p
         ));
-        setAllProjects(allProjects.map(p => 
+        setAllProjects(allProjects.map((p: AdminProject) => 
             p.id === projectId ? { ...p, status: newStatus } : p
         ));
         if (selectedProject && selectedProject.id === projectId) {

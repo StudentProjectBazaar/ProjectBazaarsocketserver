@@ -146,9 +146,9 @@ const ProjectManagementPage: React.FC<ProjectManagementPageProps> = ({ onViewUse
                 setProjects(mappedProjects);
                 console.log('Fetched projects:', mappedProjects.length);
                 console.log('Projects status breakdown:', {
-                    pending: mappedProjects.filter(p => p.status === 'pending' || p.status === 'in-review').length,
-                    approved: mappedProjects.filter(p => p.status === 'active').length,
-                    rejected: mappedProjects.filter(p => p.status === 'rejected').length
+                    pending: mappedProjects.filter((p: PendingProject) => p.status === 'pending' || p.status === 'in-review').length,
+                    approved: mappedProjects.filter((p: PendingProject) => p.status === 'active').length,
+                    rejected: mappedProjects.filter((p: PendingProject) => p.status === 'rejected').length
                 });
             } else {
                 throw new Error('Invalid response format from API');
