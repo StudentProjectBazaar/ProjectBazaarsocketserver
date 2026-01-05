@@ -20,6 +20,7 @@ import ProjectDetailsPage from './ProjectDetailsPage';
 import CartPage from './CartPage';
 import SellerProfilePage from './SellerProfilePage';
 import HelpCenterPage from './HelpCenterPage';
+import BuyerCoursesPage from './BuyerCoursesPage';
 import Pagination from './Pagination';
 
 const GET_ALL_PROJECTS_ENDPOINT = 'https://vwqfgtwerj.execute-api.ap-south-2.amazonaws.com/default/Get_All_Projects_for_Admin_Buyer';
@@ -488,6 +489,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 );
             case 'cart':
                 return <CartPage allProjects={projects} />;
+            case 'courses':
+                return <BuyerCoursesPage />;
             case 'analytics':
                 return <BuyerAnalyticsPage />;
             case 'help-center':
