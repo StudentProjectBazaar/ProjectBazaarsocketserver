@@ -6,6 +6,8 @@ import {
   TechOrbitDisplay,
 } from '@/components/ui/modern-animated-sign-in';
 
+type FieldType = 'text' | 'email' | 'password';
+
 const API_ENDPOINT = 'https://xlxus7dr78.execute-api.ap-south-2.amazonaws.com/User_login_signup';
 
 type AuthMode = 'login' | 'signup';
@@ -195,7 +197,7 @@ const AuthPage: React.FC = () => {
     password: '',
     confirmPassword: '',
   });
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isLogin = authMode === 'login';
@@ -357,62 +359,76 @@ const AuthPage: React.FC = () => {
     });
   };
 
+  const loginFields: Array<{
+    label: string;
+    required: boolean;
+    type: FieldType;
+    placeholder: string;
+    onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  }> = [
+    {
+      label: 'Email',
+      required: true,
+      type: 'email',
+      placeholder: 'Enter your email address',
+      onChange: (event: ChangeEvent<HTMLInputElement>) =>
+        handleInputChange(event, 'email'),
+    },
+    {
+      label: 'Password',
+      required: true,
+      type: 'password',
+      placeholder: 'Enter your password',
+      onChange: (event: ChangeEvent<HTMLInputElement>) =>
+        handleInputChange(event, 'password'),
+    },
+  ];
+
+  const signupFields: Array<{
+    label: string;
+    required: boolean;
+    type: FieldType;
+    placeholder: string;
+    onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  }> = [
+    {
+      label: 'Email',
+      required: true,
+      type: 'email',
+      placeholder: 'Enter your email address',
+      onChange: (event: ChangeEvent<HTMLInputElement>) =>
+        handleInputChange(event, 'email'),
+    },
+    {
+      label: 'PhoneNumber',
+      required: true,
+      type: 'text',
+      placeholder: 'Enter your phone number',
+      onChange: (event: ChangeEvent<HTMLInputElement>) =>
+        handleInputChange(event, 'phoneNumber'),
+    },
+    {
+      label: 'Password',
+      required: true,
+      type: 'password',
+      placeholder: 'Enter your password',
+      onChange: (event: ChangeEvent<HTMLInputElement>) =>
+        handleInputChange(event, 'password'),
+    },
+    {
+      label: 'ConfirmPassword',
+      required: true,
+      type: 'password',
+      placeholder: 'Confirm your password',
+      onChange: (event: ChangeEvent<HTMLInputElement>) =>
+        handleInputChange(event, 'confirmPassword'),
+    },
+  ];
+
   const formFields = {
     header: isLogin ? 'Welcome back' : 'Create an account',
     subHeader: isLogin ? 'Sign in to your account' : 'Sign up to get started',
-    fields: isLogin
-      ? [
-          {
-            label: 'Email',
-            required: true,
-            type: 'email',
-            placeholder: 'Enter your email address',
-            onChange: (event: ChangeEvent<HTMLInputElement>) =>
-              handleInputChange(event, 'email'),
-          },
-          {
-            label: 'Password',
-            required: true,
-            type: 'password',
-            placeholder: 'Enter your password',
-            onChange: (event: ChangeEvent<HTMLInputElement>) =>
-              handleInputChange(event, 'password'),
-          },
-        ]
-      : [
-          {
-            label: 'Email',
-            required: true,
-            type: 'email',
-            placeholder: 'Enter your email address',
-            onChange: (event: ChangeEvent<HTMLInputElement>) =>
-              handleInputChange(event, 'email'),
-          },
-          {
-            label: 'PhoneNumber',
-            required: true,
-            type: 'text',
-            placeholder: 'Enter your phone number',
-            onChange: (event: ChangeEvent<HTMLInputElement>) =>
-              handleInputChange(event, 'phoneNumber'),
-          },
-          {
-            label: 'Password',
-            required: true,
-            type: 'password',
-            placeholder: 'Enter your password',
-            onChange: (event: ChangeEvent<HTMLInputElement>) =>
-              handleInputChange(event, 'password'),
-          },
-          {
-            label: 'ConfirmPassword',
-            required: true,
-            type: 'password',
-            placeholder: 'Confirm your password',
-            onChange: (event: ChangeEvent<HTMLInputElement>) =>
-              handleInputChange(event, 'confirmPassword'),
-          },
-        ],
+    fields: isLogin ? loginFields : signupFields,
     submitButton: isLogin ? 'Sign in' : 'Sign up',
     textVariantButton: isLogin ? 'Forgot password?' : undefined,
   };

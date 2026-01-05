@@ -63,6 +63,7 @@ const AdminReportDetailsPage: React.FC<AdminReportDetailsPageProps> = ({ report,
     });
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const [updateSuccess, setUpdateSuccess] = useState(false);
+    const [, setDisablingProject] = useState(false);
 
     useEffect(() => {
         const fetchProjectDetails = async () => {
@@ -96,12 +97,6 @@ const AdminReportDetailsPage: React.FC<AdminReportDetailsPageProps> = ({ report,
         fetchProjectDetails();
     }, [report.projectId]);
 
-    // Map UI status to API status
-    const mapUIStatusToAPI = (uiStatus: 'resolved' | 'dismissed' | 'pending'): 'approved' | 'rejected' | 'under_review' => {
-        if (uiStatus === 'resolved') return 'approved';
-        if (uiStatus === 'dismissed') return 'rejected';
-        return 'under_review';
-    };
 
     // Map API status to UI status
     const mapAPIStatusToUI = (apiStatus: string): 'resolved' | 'dismissed' | 'pending' => {
@@ -258,6 +253,8 @@ const AdminReportDetailsPage: React.FC<AdminReportDetailsPageProps> = ({ report,
         }
     };
 
+    // @ts-ignore - Function kept for future use
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleDisableProject = async () => {
         if (!confirm('Are you sure you want to disable this project? This action can be reversed later.')) {
             return;

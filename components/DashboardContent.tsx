@@ -53,6 +53,8 @@ interface ApiResponse {
     projects: ApiProject[];
 }
 
+// @ts-ignore - Mock data kept for potential future use
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const buyerProjects: BuyerProject[] = [
     {
       id: 'proj-1',

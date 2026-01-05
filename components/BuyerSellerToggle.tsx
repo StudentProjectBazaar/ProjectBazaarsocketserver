@@ -11,7 +11,6 @@ import {
   Percent,
   Zap,
   Globe2,
-  TrendingUp,
   Shield,
   BarChart3,
   Clock,

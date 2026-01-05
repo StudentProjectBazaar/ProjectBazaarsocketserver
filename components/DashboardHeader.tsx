@@ -64,7 +64,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   activeView,
   buyerProjectView,
   setBuyerProjectView,
-  isSidebarOpen,
   toggleSidebar,
 }) => {
   const title = viewTitles[activeView] || 'Dashboard';

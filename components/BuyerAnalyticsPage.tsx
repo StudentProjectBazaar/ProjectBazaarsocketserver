@@ -181,7 +181,7 @@ const BuyerAnalyticsPage: React.FC = () => {
         };
 
         let currentPercent = 0;
-        const stops = categorySpendData.map((item, index) => {
+        const stops = categorySpendData.map((item: { category: string; amount: number; color: string }, _index: number) => {
             const start = currentPercent;
             currentPercent += item.amount;
             const color = colorMap[item.color] || '#f97316';
@@ -314,7 +314,7 @@ const BuyerAnalyticsPage: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Purchases</h3>
                 {recentPurchases.length > 0 ? (
                     <ul className="divide-y divide-gray-100">
-                        {recentPurchases.map((item, index) => (
+                        {recentPurchases.map((item: { title: string; price: number; date: string }, index: number) => (
                             <li key={`${item.title}-${index}`} className="py-3 flex justify-between items-center hover:bg-orange-50/30 px-2 rounded-lg transition-colors">
                                 <div>
                                     <p className="font-medium text-gray-800">{item.title}</p>

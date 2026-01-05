@@ -351,7 +351,7 @@ const EarningsPage: React.FC = () => {
                                 </div>
                             </div>
                             <ul className="space-y-2">
-                                {topProjectsData.map((item, index) => (
+                                {topProjectsData.map((item: { name: string; percentage: number; color: string; revenue: number }, _index: number) => (
                                     <li key={item.name} className="flex items-center gap-2">
                                         <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
                                         <span className="text-sm text-gray-600">{item.name}</span>
