@@ -10,6 +10,7 @@ import Referral from './components/Referral';
 import Pricing from './components/Pricing';
 import AuthPage from './components/AuthPage';
 import DashboardPage from './components/DashboardPage';
+import SellerDashboardPage from './components/SellerDashboardPage';
 import AdminDashboard from './components/admin/AdminDashboard';
 import Categories from './components/Categories';
 import TopSellers from './components/TopSellers';
@@ -22,7 +23,7 @@ import { CallToAction } from './components/ui/cta-3';
 import FAQWithSpiral from './components/ui/faq-section';
 
 type Theme = 'light' | 'dark';
-type Page = 'home' | 'auth' | 'dashboard' | 'admin' | 'faq';
+type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq';
 type UserRole = 'user' | 'admin';
 
 interface PremiumContextType {
@@ -163,6 +164,8 @@ const AppContent: React.FC = () => {
       return isLoggedIn && userRole === 'admin' ? <AdminDashboard /> : <AuthPage />;
     case 'dashboard':
       return isLoggedIn ? <DashboardPage /> : <AuthPage />;
+    case 'seller':
+      return isLoggedIn ? <SellerDashboardPage /> : <AuthPage />;
     case 'faq':
       return (
         <div className="bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 overflow-x-hidden transition-colors duration-300">

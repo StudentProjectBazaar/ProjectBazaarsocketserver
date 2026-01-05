@@ -542,6 +542,26 @@ const SellerDashboard: React.FC = () => {
         }
     };
 
+    // Check for pre-filled gitUrl and project name from navigation (e.g., from Settings page)
+    useEffect(() => {
+        const prefillGitUrl = localStorage.getItem('prefillGitUrl');
+        const prefillProjectName = localStorage.getItem('prefillProjectName');
+        
+        if (prefillGitUrl || prefillProjectName) {
+            // Pre-fill the gitUrl and project name in the form
+            setFormData(prev => ({
+                ...prev,
+                githubUrl: prefillGitUrl || prev.githubUrl,
+                title: prefillProjectName || prev.title,
+            }));
+            // Show the upload form
+            setShowUploadForm(true);
+            // Clear the localStorage values
+            if (prefillGitUrl) localStorage.removeItem('prefillGitUrl');
+            if (prefillProjectName) localStorage.removeItem('prefillProjectName');
+        }
+    }, []);
+
     // Fetch projects and user profile on component mount and when userId changes
     useEffect(() => {
         fetchProjects();

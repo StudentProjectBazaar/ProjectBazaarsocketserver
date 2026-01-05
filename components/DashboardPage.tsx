@@ -34,18 +34,25 @@ interface CartContextType {
     isLoading: boolean;
 }
 
-export const CartContext = createContext<CartContextType | undefined>(undefined);
+// Default cart context value
+const defaultCartContext: CartContextType = {
+    cart: [],
+    addToCart: () => {},
+    removeFromCart: () => {},
+    isInCart: () => false,
+    cartCount: 0,
+    refreshCart: async () => {},
+    isLoading: false,
+};
+
+export const CartContext = createContext<CartContextType>(defaultCartContext);
 
 export const useCart = (): CartContextType => {
-    const context = useContext(CartContext);
-    if (!context) {
-        throw new Error('useCart must be used within a CartProvider');
-    }
-    return context;
+    return useContext(CartContext);
 };
 
 
-const WishlistProvider: React.FC<{ children: ReactNode; userId: string | null }> = ({ children, userId }) => {
+export const WishlistProvider: React.FC<{ children: ReactNode; userId: string | null }> = ({ children, userId }) => {
     const [wishlist, setWishlist] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -115,7 +122,7 @@ const WishlistProvider: React.FC<{ children: ReactNode; userId: string | null }>
     )
 }
 
-const CartProvider: React.FC<{ children: ReactNode; userId: string | null }> = ({ children, userId }) => {
+export const CartProvider: React.FC<{ children: ReactNode; userId: string | null }> = ({ children, userId }) => {
     const [cart, setCart] = useState<string[]>([]);
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -219,6 +226,7 @@ const CartProvider: React.FC<{ children: ReactNode; userId: string | null }> = (
 const DashboardPage: React.FC = () => {
     const { theme } = useTheme();
     const { userId } = useAuth();
+    // Dashboard page defaults to buyer mode
     const [dashboardMode, setDashboardMode] = useState<'buyer' | 'seller'>('buyer');
     const [activeView, setActiveView] = useState<DashboardView>('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);

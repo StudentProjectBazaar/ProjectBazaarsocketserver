@@ -65,6 +65,8 @@ const Sidebar: React.FC<SidebarProps> = ({ dashboardMode, activeView, setActiveV
     const [isHovered, setIsHovered] = useState(false);
     const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
     const [userFullName, setUserFullName] = useState<string>('');
+    
+    // Always call the hook (React rules), but only use cartCount in buyer mode
     const cart = useCart();
     const cartCount = dashboardMode === 'buyer' ? cart.cartCount : 0;
 
