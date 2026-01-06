@@ -8,6 +8,7 @@ import PayoutSystemsPage from './PayoutSystemsPage';
 import AdminUserProfilePage from './AdminUserProfilePage';
 import AdminProjectDetailsPage from './AdminProjectDetailsPage';
 import AdminReportDetailsPage from './AdminReportDetailsPage';
+import CoursesManagementPage from './CoursesManagementPage';
 import type { BuyerProject } from '../BuyerProjectCard';
 
 interface AdminProject extends BuyerProject {
@@ -49,6 +50,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
         'user-management': 'User Management',
         'revenue-analytics': 'Revenue Analytics',
         'payout-systems': 'Payout Systems',
+        'courses': 'Courses Management',
         'user-profile': selectedUser ? `${selectedUser.name}'s Profile` : 'User Profile',
         'admin-project-details': selectedProject ? `Project: ${selectedProject.title}` : 'Project Details',
         'admin-report-details': 'Report Details',
@@ -237,6 +239,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
                 )}
                 {activeView === 'revenue-analytics' && <RevenueAnalyticsPage />}
                 {activeView === 'payout-systems' && <PayoutSystemsPage />}
+                {activeView === 'courses' && <CoursesManagementPage />}
             </div>
         </div>
     );
