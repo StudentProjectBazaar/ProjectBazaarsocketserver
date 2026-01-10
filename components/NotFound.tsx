@@ -6,17 +6,66 @@ const NotFound: React.FC = () => {
   const { navigateTo } = useNavigation();
   const [animationData, setAnimationData] = useState<any>(null);
   const [animationError, setAnimationError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Dynamically import the animation to handle large JSON files
-    import('../lottiefiles/Error 404.json')
-      .then((data) => {
-        setAnimationData(data.default || data);
-      })
-      .catch((error) => {
+    setIsLoading(true);
+    // Try multiple methods to load the Lottie animation
+    const loadAnimation = async () => {
+      try {
+        // Method 1: Try dynamic import first (works with bundlers like webpack/vite)
+        try {
+          const imported = await import('../lottiefiles/Error 404.json');
+          const data = imported.default || imported;
+          if (data && typeof data === 'object') {
+            setAnimationData(data);
+            setIsLoading(false);
+            return;
+          }
+        } catch (importError) {
+          // Dynamic import not supported or failed, try other methods
+          console.log('Dynamic import not available, trying fetch...');
+        }
+
+        // Method 2: Try fetching from public/lottiefiles (if in public folder)
+        const fetchPaths = [
+          '/lottiefiles/Error 404.json',
+          '/lottiefiles/Error%20404.json',
+          './lottiefiles/Error 404.json',
+          './lottiefiles/Error%20404.json',
+          '../lottiefiles/Error 404.json',
+          '/ProjectBazaar/lottiefiles/Error 404.json',
+        ];
+
+        for (const fetchPath of fetchPaths) {
+          try {
+            const response = await fetch(fetchPath);
+            if (response.ok) {
+              const data = await response.json();
+              if (data && typeof data === 'object') {
+                setAnimationData(data);
+                setIsLoading(false);
+                return;
+              }
+            }
+          } catch (fetchError) {
+            // Try next path
+            continue;
+          }
+        }
+
+        // If all methods fail, show error
+        console.warn('Could not load 404 Lottie animation, using fallback');
+        setAnimationError(true);
+        setIsLoading(false);
+      } catch (error) {
         console.error('Error loading 404 animation:', error);
         setAnimationError(true);
-      });
+        setIsLoading(false);
+      }
+    };
+
+    loadAnimation();
   }, []);
 
   return (
@@ -24,27 +73,28 @@ const NotFound: React.FC = () => {
       <div className="max-w-2xl w-full text-center">
         {/* Lottie Animation */}
         {!animationError && (
-          <div className="mb-8 flex justify-center">
-            <div className="w-full max-w-md">
-              {animationData ? (
+          <div className="mb-12 flex justify-center">
+            <div className="w-full max-w-lg h-96 md:h-[500px]">
+              {isLoading ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+                </div>
+              ) : animationData ? (
                 <Lottie 
                   animationData={animationData}
                   loop={true}
                   autoplay={true}
                   className="w-full h-full"
+                  style={{ width: '100%', height: '100%' }}
                 />
-              ) : (
-                <div className="w-full h-64 flex items-center justify-center">
-                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-                </div>
-              )}
+              ) : null}
             </div>
           </div>
         )}
         
         {/* Fallback 404 Illustration */}
         {animationError && (
-          <div className="mb-8 flex justify-center">
+          <div className="mb-12 flex justify-center">
             <div className="w-full max-w-md">
               <svg viewBox="0 0 400 300" className="w-full h-auto">
                 <circle cx="200" cy="150" r="100" fill="#EF4444" opacity="0.1"/>
@@ -59,58 +109,31 @@ const NotFound: React.FC = () => {
           </div>
         )}
 
-        {/* Error Message */}
-        <div className="space-y-4 mb-8">
-          <h1 className="text-6xl font-bold text-gray-900 dark:text-white mb-2">
-            404
-          </h1>
-          <h2 className="text-3xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
-            Page Not Found
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-            Oops! The page you're looking for doesn't exist. It might have been moved, deleted, or you entered the wrong URL.
-          </p>
-        </div>
-
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <button
             onClick={() => navigateTo('home')}
-            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1"
+            className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 active:scale-95 overflow-hidden"
           >
-            Go to Homepage
+            <span className="relative z-10 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              Go to Homepage
+            </span>
+            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
           </button>
           <button
             onClick={() => window.history.back()}
-            className="px-8 py-3 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-md hover:shadow-lg"
+            className="group relative px-8 py-4 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 active:scale-95"
           >
-            Go Back
+            <span className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Go Back
+            </span>
           </button>
-        </div>
-
-        {/* Quick Links */}
-        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Or try these pages:</p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button
-              onClick={() => navigateTo('dashboard')}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => navigateTo('faq')}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
-            >
-              FAQ
-            </button>
-            <button
-              onClick={() => navigateTo('auth')}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
-            >
-              Login
-            </button>
-          </div>
         </div>
       </div>
     </div>

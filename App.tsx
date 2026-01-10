@@ -225,7 +225,7 @@ const App: React.FC = () => {
       const searchParams = new URLSearchParams(window.location.search);
       const route = searchParams.get('page') || hash || path;
       
-      // Define valid routes
+      // Define valid routes (exact matches only)
       const validRoutes: Record<string, Page> = {
         '/': 'home',
         '/home': 'home',
@@ -235,6 +235,7 @@ const App: React.FC = () => {
         '/seller': 'seller',
         '/admin': 'admin',
         '/faq': 'faq',
+        '/404': 'notFound',
         'home': 'home',
         'auth': 'auth',
         'login': 'auth',
@@ -242,24 +243,55 @@ const App: React.FC = () => {
         'seller': 'seller',
         'admin': 'admin',
         'faq': 'faq',
+        'notFound': 'notFound',
       };
       
-      // Check if route is valid
-      const targetPage = validRoutes[route] || validRoutes[path];
+      // Extract base path (remove query params, hash, and trailing slashes)
+      const normalizedPath = path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+      const normalizedRoute = route.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+      
+      // Check if it's a static asset (should be handled by server, but check anyway)
+      const isStaticAsset = normalizedPath.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|map)$/i) ||
+                           normalizedPath.startsWith('/static') ||
+                           normalizedPath.startsWith('/assets') ||
+                           normalizedPath.startsWith('/_next') ||
+                           normalizedPath.startsWith('/api');
+      
+      // Don't interfere with static assets
+      if (isStaticAsset) {
+        return;
+      }
+      
+      // Check if route is valid (exact match)
+      const targetPage = validRoutes[normalizedRoute] || validRoutes[normalizedPath];
       
       if (targetPage) {
-        // Check auth requirements
+        // Special handling for 404 page - always show it regardless of auth
+        if (targetPage === 'notFound') {
+          setPage('notFound');
+          localStorage.setItem('currentPage', 'notFound');
+          return;
+        }
+        
+        // Check auth requirements for protected routes
         const storedAuth = localStorage.getItem('authSession');
         
         if ((targetPage === 'admin' || targetPage === 'dashboard' || targetPage === 'seller') && storedAuth !== 'true') {
           setPage('auth');
+          localStorage.setItem('currentPage', 'auth');
           return;
         }
         
         setPage(targetPage);
-      } else if (route && route !== '/' && !route.startsWith('/static') && !route.startsWith('/assets')) {
-        // Invalid route - show 404
+        localStorage.setItem('currentPage', targetPage);
+      } else {
+        // Invalid route - show 404 for any invalid path
         setPage('notFound');
+        localStorage.setItem('currentPage', 'notFound');
+        // Update URL to /404 for invalid routes
+        if (normalizedPath !== '/404') {
+          window.history.replaceState({ page: 'notFound' }, '', '/404');
+        }
       }
     };
     
@@ -276,7 +308,7 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Restore auth state from localStorage on mount
+  // Restore auth state from localStorage on mount (only once)
   useEffect(() => {
     const storedUserData = localStorage.getItem('userData');
     const storedAuth = localStorage.getItem('authSession');
@@ -291,7 +323,8 @@ const App: React.FC = () => {
           setUserRole(role);
           setIsLoggedIn(true);
           
-          // Only auto-navigate if we're on home page
+          // Only auto-navigate if we're on home page or auth page
+          // Don't override 404 pages - they should stay as 404
           if (page === 'home' || page === 'auth') {
             if (role === 'admin') {
               setPage('admin');
@@ -307,7 +340,7 @@ const App: React.FC = () => {
         localStorage.removeItem('authSession');
       }
     }
-  }, [page]);
+  }, []); // Run only once on mount, not on every page change
 
   const navigateTo = (targetPage: Page) => {
     setPage(targetPage);
@@ -325,7 +358,12 @@ const App: React.FC = () => {
     };
     
     const url = pageMap[targetPage] || '/';
-    window.history.pushState({ page: targetPage }, '', url);
+    // Use replaceState for 404 to avoid cluttering history, pushState for others
+    if (targetPage === 'notFound') {
+      window.history.replaceState({ page: 'notFound' }, '', url);
+    } else {
+      window.history.pushState({ page: targetPage }, '', url);
+    }
     window.scrollTo(0, 0);
   };
   
