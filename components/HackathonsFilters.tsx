@@ -42,11 +42,10 @@ const HackathonsFilters: React.FC<HackathonsFiltersProps> = ({
   };
 
   const toggleLocation = (location: string) => {
-    setLocationFilter((prev: string[]) =>
-      prev.includes(location)
-        ? prev.filter((l: string) => l !== location)
-        : [...prev, location]
-    );
+    const newLocations = locationFilter.includes(location)
+      ? locationFilter.filter((l: string) => l !== location)
+      : [...locationFilter, location];
+    setLocationFilter(newLocations);
   };
 
   // Status options based on actual API data (status field)
