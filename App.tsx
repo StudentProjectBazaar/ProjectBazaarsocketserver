@@ -12,6 +12,7 @@ import AuthPage from './components/AuthPage';
 import DashboardPage from './components/DashboardPage';
 import SellerDashboardPage from './components/SellerDashboardPage';
 import AdminDashboard from './components/admin/AdminDashboard';
+import NotFound from './components/NotFound';
 import Categories from './components/Categories';
 import TopSellers from './components/TopSellers';
 import Testimonials from './components/Testimonials';
@@ -23,7 +24,7 @@ import { CallToAction } from './components/ui/cta-3';
 import FAQWithSpiral from './components/ui/faq-section';
 
 type Theme = 'light' | 'dark';
-type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq';
+type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'notFound';
 type UserRole = 'user' | 'admin';
 
 interface PremiumContextType {
@@ -173,6 +174,8 @@ const AppContent: React.FC = () => {
           <FAQWithSpiral />
         </div>
       );
+    case 'notFound':
+      return <NotFound />;
     case 'home':
     default:
       return (
@@ -214,6 +217,65 @@ const App: React.FC = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
 
+  // Handle URL-based routing and 404 detection
+  useEffect(() => {
+    const handleRoute = () => {
+      const path = window.location.pathname;
+      const hash = window.location.hash.replace('#', '');
+      const searchParams = new URLSearchParams(window.location.search);
+      const route = searchParams.get('page') || hash || path;
+      
+      // Define valid routes
+      const validRoutes: Record<string, Page> = {
+        '/': 'home',
+        '/home': 'home',
+        '/auth': 'auth',
+        '/login': 'auth',
+        '/dashboard': 'dashboard',
+        '/seller': 'seller',
+        '/admin': 'admin',
+        '/faq': 'faq',
+        'home': 'home',
+        'auth': 'auth',
+        'login': 'auth',
+        'dashboard': 'dashboard',
+        'seller': 'seller',
+        'admin': 'admin',
+        'faq': 'faq',
+      };
+      
+      // Check if route is valid
+      const targetPage = validRoutes[route] || validRoutes[path];
+      
+      if (targetPage) {
+        // Check auth requirements
+        const storedAuth = localStorage.getItem('authSession');
+        
+        if ((targetPage === 'admin' || targetPage === 'dashboard' || targetPage === 'seller') && storedAuth !== 'true') {
+          setPage('auth');
+          return;
+        }
+        
+        setPage(targetPage);
+      } else if (route && route !== '/' && !route.startsWith('/static') && !route.startsWith('/assets')) {
+        // Invalid route - show 404
+        setPage('notFound');
+      }
+    };
+    
+    // Initial route check
+    handleRoute();
+    
+    // Listen for URL changes
+    window.addEventListener('popstate', handleRoute);
+    window.addEventListener('hashchange', handleRoute);
+    
+    return () => {
+      window.removeEventListener('popstate', handleRoute);
+      window.removeEventListener('hashchange', handleRoute);
+    };
+  }, []);
+
   // Restore auth state from localStorage on mount
   useEffect(() => {
     const storedUserData = localStorage.getItem('userData');
@@ -229,11 +291,13 @@ const App: React.FC = () => {
           setUserRole(role);
           setIsLoggedIn(true);
           
-          // Navigate to appropriate page based on role
-          if (role === 'admin') {
-            setPage('admin');
-          } else {
-            setPage('dashboard');
+          // Only auto-navigate if we're on home page
+          if (page === 'home' || page === 'auth') {
+            if (role === 'admin') {
+              setPage('admin');
+            } else {
+              setPage('dashboard');
+            }
           }
         }
       } catch (error) {
@@ -243,11 +307,25 @@ const App: React.FC = () => {
         localStorage.removeItem('authSession');
       }
     }
-  }, []);
+  }, [page]);
 
   const navigateTo = (targetPage: Page) => {
     setPage(targetPage);
     localStorage.setItem('currentPage', targetPage);
+    
+    // Update URL without full page reload
+    const pageMap: Record<Page, string> = {
+      'home': '/',
+      'auth': '/auth',
+      'dashboard': '/dashboard',
+      'seller': '/seller',
+      'admin': '/admin',
+      'faq': '/faq',
+      'notFound': '/404'
+    };
+    
+    const url = pageMap[targetPage] || '/';
+    window.history.pushState({ page: targetPage }, '', url);
     window.scrollTo(0, 0);
   };
   

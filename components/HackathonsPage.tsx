@@ -109,37 +109,42 @@ const HackathonsPage: React.FC = () => {
     window.open(hackathon.official_url, '_blank', 'noopener,noreferrer');
   };
 
-  // Platform logos and info
+  // Platform logos and info with reliable favicon URLs
   const platforms = [
     { 
       name: 'Unstop', 
       domain: 'unstop.com', 
-      logo: 'https://d8it4huxumps7.cloudfront.net/images/favicon/favicon-32x32.png',
-      fallback: 'U'
+      logo: `https://www.google.com/s2/favicons?domain=unstop.com&sz=128`,
+      fallback: 'U',
+      color: 'bg-gradient-to-br from-purple-500 to-purple-600'
     },
     { 
       name: 'Devfolio', 
       domain: 'devfolio.co', 
-      logo: 'https://assets.devfolio.co/favicon/favicon-32x32.png',
-      fallback: 'DF'
+      logo: `https://www.google.com/s2/favicons?domain=devfolio.co&sz=128`,
+      fallback: 'DF',
+      color: 'bg-gradient-to-br from-indigo-500 to-indigo-600'
     },
     { 
       name: 'HackerEarth', 
       domain: 'hackerearth.com', 
-      logo: 'https://static-fastly.hackerearth.com/static/images/favicon.ico',
-      fallback: 'HE'
+      logo: `https://www.google.com/s2/favicons?domain=hackerearth.com&sz=128`,
+      fallback: 'HE',
+      color: 'bg-gradient-to-br from-green-500 to-green-600'
     },
     { 
       name: 'TechGig', 
       domain: 'techgig.com', 
-      logo: 'https://www.techgig.com/favicon.ico',
-      fallback: 'TG'
+      logo: `https://www.google.com/s2/favicons?domain=techgig.com&sz=128`,
+      fallback: 'TG',
+      color: 'bg-gradient-to-br from-red-500 to-red-600'
     },
     { 
       name: 'Skillenza', 
       domain: 'skillenza.com', 
-      logo: 'https://www.skillenza.com/favicon.ico',
-      fallback: 'SK'
+      logo: `https://www.google.com/s2/favicons?domain=skillenza.com&sz=128`,
+      fallback: 'SK',
+      color: 'bg-gradient-to-br from-blue-500 to-blue-600'
     },
   ];
 
@@ -162,46 +167,52 @@ const HackathonsPage: React.FC = () => {
               Hackathons integrated from:
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            {platforms.map((platform) => (
-              <a
-                key={platform.domain}
-                href={`https://${platform.domain}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2.5 bg-white/90 backdrop-blur-sm px-4 py-2.5 rounded-full border border-gray-200/80 hover:border-blue-400 hover:bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group"
-                title={`Visit ${platform.name}`}
-              >
-                <div className="relative w-7 h-7 flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full overflow-hidden ring-1 ring-gray-200/50 group-hover:ring-blue-200 transition-all">
-                  {logoErrors[platform.domain] ? (
-                    <span className="text-xs font-bold text-gray-700 leading-none">
+          <div className="flex flex-wrap items-center gap-3">
+            {platforms.map((platform) => {
+              const hasError = logoErrors[platform.domain];
+              const [imageLoaded, setImageLoaded] = React.useState(false);
+              
+              return (
+                <a
+                  key={platform.domain}
+                  href={`https://${platform.domain}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200 group relative overflow-hidden ${
+                    hasError || !imageLoaded
+                      ? `${platform.color} border-transparent hover:shadow-lg hover:-translate-y-1 text-white`
+                      : 'bg-white border-gray-200 hover:border-blue-400 hover:bg-white hover:shadow-lg hover:-translate-y-1'
+                  }`}
+                  title={`${platform.name} (${platform.domain})`}
+                >
+                  {hasError || !imageLoaded ? (
+                    <span className="text-sm font-bold leading-none z-10">
                       {platform.fallback || platform.name.charAt(0)}
                     </span>
-                  ) : (
-                    <img
-                      src={platform.logo}
-                      alt={`${platform.name} logo`}
-                      className="w-5 h-5 object-contain"
-                      onError={() => {
-                        setLogoErrors(prev => ({ ...prev, [platform.domain]: true }));
-                      }}
-                    />
-                  )}
-                </div>
-                <span className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
-                  {platform.domain}
-                </span>
-                <svg 
-                  className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500 transition-all opacity-0 group-hover:opacity-100 transform translate-x-0 group-hover:translate-x-0.5" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            ))}
+                  ) : null}
+                  <img
+                    src={platform.logo}
+                    alt={`${platform.name} logo`}
+                    className={`w-7 h-7 object-contain transition-opacity duration-200 ${
+                      imageLoaded ? 'opacity-100' : 'opacity-0 absolute'
+                    }`}
+                    onError={() => {
+                      setLogoErrors(prev => ({ ...prev, [platform.domain]: true }));
+                      setImageLoaded(false);
+                    }}
+                    onLoad={() => {
+                      setImageLoaded(true);
+                      setLogoErrors(prev => {
+                        const newState = { ...prev };
+                        delete newState[platform.domain];
+                        return newState;
+                      });
+                    }}
+                    loading="lazy"
+                  />
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>
