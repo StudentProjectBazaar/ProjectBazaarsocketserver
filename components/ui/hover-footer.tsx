@@ -20,14 +20,20 @@ export const TextHoverEffect = ({
   const [maskPosition, setMaskPosition] = useState({ cx: "50%", cy: "50%" });
 
   useEffect(() => {
-    if (svgRef.current && cursor.x !== null && cursor.y !== null) {
+    if (svgRef.current && cursor.x !== null && cursor.y !== null && cursor.x !== 0 && cursor.y !== 0) {
       const svgRect = svgRef.current.getBoundingClientRect();
-      const cxPercentage = ((cursor.x - svgRect.left) / svgRect.width) * 100;
-      const cyPercentage = ((cursor.y - svgRect.top) / svgRect.height) * 100;
-      setMaskPosition({
-        cx: `${cxPercentage}%`,
-        cy: `${cyPercentage}%`,
-      });
+      if (svgRect.width > 0 && svgRect.height > 0) {
+        const cxPercentage = ((cursor.x - svgRect.left) / svgRect.width) * 100;
+        const cyPercentage = ((cursor.y - svgRect.top) / svgRect.height) * 100;
+        
+        // Ensure we have valid numbers (not NaN or Infinity)
+        if (!isNaN(cxPercentage) && !isNaN(cyPercentage) && isFinite(cxPercentage) && isFinite(cyPercentage)) {
+          setMaskPosition({
+            cx: `${Math.max(0, Math.min(100, cxPercentage))}%`,
+            cy: `${Math.max(0, Math.min(100, cyPercentage))}%`,
+          });
+        }
+      }
     }
   }, [cursor]);
 
@@ -47,9 +53,6 @@ export const TextHoverEffect = ({
         <linearGradient
           id="textGradient"
           gradientUnits="userSpaceOnUse"
-          cx="50%"
-          cy="50%"
-          r="25%"
         >
           {hovered && (
             <>
@@ -66,7 +69,10 @@ export const TextHoverEffect = ({
           gradientUnits="userSpaceOnUse"
           r="20%"
           initial={{ cx: "50%", cy: "50%" }}
-          animate={maskPosition}
+          animate={{
+            cx: maskPosition.cx || "50%",
+            cy: maskPosition.cy || "50%",
+          }}
           transition={{ duration: duration ?? 0, ease: "easeOut" }}
         >
           <stop offset="0%" stopColor="white" />

@@ -24,9 +24,10 @@ import { CallToAction } from './components/ui/cta-3';
 import FAQWithSpiral from './components/ui/faq-section';
 import BrowseFreelancers from './components/BrowseFreelancers';
 import BrowseProjects from './components/BrowseProjects';
+import BuildPortfolioPage from './components/BuildPortfolioPage';
 
 type Theme = 'light' | 'dark';
-type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browseFreelancers' | 'browseProjects' | 'notFound';
+type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browseFreelancers' | 'browseProjects' | 'buildPortfolio' | 'notFound';
 type UserRole = 'user' | 'admin';
 
 interface PremiumContextType {
@@ -180,6 +181,8 @@ const AppContent: React.FC = () => {
       return <BrowseFreelancers />;
     case 'browseProjects':
       return <BrowseProjects />;
+    case 'buildPortfolio':
+      return <BuildPortfolioPage />;
     case 'notFound':
       return <NotFound />;
     case 'home':
@@ -243,6 +246,7 @@ const App: React.FC = () => {
         '/faq': 'faq',
         '/browse-freelancers': 'browseFreelancers',
         '/browse-projects': 'browseProjects',
+        '/build-portfolio': 'buildPortfolio',
         '/404': 'notFound',
         'home': 'home',
         'auth': 'auth',
@@ -253,6 +257,7 @@ const App: React.FC = () => {
         'faq': 'faq',
         'browseFreelancers': 'browseFreelancers',
         'browseProjects': 'browseProjects',
+        'buildPortfolio': 'buildPortfolio',
         'notFound': 'notFound',
       };
       
@@ -366,6 +371,7 @@ const App: React.FC = () => {
       'faq': '/faq',
       'browseFreelancers': '/browse-freelancers',
       'browseProjects': '/browse-projects',
+      'buildPortfolio': '/build-portfolio',
       'notFound': '/404'
     };
     

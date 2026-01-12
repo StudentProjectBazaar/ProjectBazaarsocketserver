@@ -4,7 +4,7 @@ import DashboardContent from './DashboardContent';
 import { useAuth } from '../App';
 import { fetchUserData, likeProject, unlikeProject, addToCart as apiAddToCart, removeFromCart as apiRemoveFromCart, CartItem } from '../services/buyerApi';
 
-export type DashboardView = 'dashboard' | 'purchases' | 'wishlist' | 'cart' | 'analytics' | 'settings' | 'my-projects' | 'earnings' | 'payouts' | 'project-details' | 'seller-profile' | 'help-center' | 'courses' | 'course-details' | 'hackathons';
+export type DashboardView = 'dashboard' | 'purchases' | 'wishlist' | 'cart' | 'analytics' | 'settings' | 'my-projects' | 'earnings' | 'payouts' | 'project-details' | 'seller-profile' | 'help-center' | 'courses' | 'course-details' | 'hackathons' | 'build-portfolio';
 
 interface WishlistContextType {
     wishlist: string[];
@@ -14,14 +14,19 @@ interface WishlistContextType {
     isLoading: boolean;
 }
 
-export const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
+// Default wishlist context value (allows BuyerProjectCard to work outside DashboardPage)
+const defaultWishlistContext: WishlistContextType = {
+    wishlist: [],
+    toggleWishlist: () => {},
+    isInWishlist: () => false,
+    refreshWishlist: async () => {},
+    isLoading: false,
+};
+
+export const WishlistContext = createContext<WishlistContextType>(defaultWishlistContext);
 
 export const useWishlist = (): WishlistContextType => {
-    const context = useContext(WishlistContext);
-    if (!context) {
-        throw new Error('useWishlist must be used within a WishlistProvider');
-    }
-    return context;
+    return useContext(WishlistContext);
 };
 
 interface CartContextType {

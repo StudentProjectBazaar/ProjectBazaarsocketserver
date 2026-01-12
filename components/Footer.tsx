@@ -11,7 +11,7 @@ import {
   Linkedin,
   Github,
 } from "lucide-react";
-import { FooterBackgroundGradient, TextHoverEffect } from "./ui/hover-footer";
+import { FooterBackgroundGradient } from "./ui/hover-footer";
 
 const Footer: React.FC = () => {
 
@@ -168,11 +168,6 @@ const Footer: React.FC = () => {
             &copy; {new Date().getFullYear()} ProjectBazaar. All rights reserved.
           </p>
         </div>
-      </div>
-
-      {/* Text hover effect */}
-      <div className="lg:flex hidden h-[30rem] -mt-52 -mb-36 px-8">
-        <TextHoverEffect text="ProjectBazaar" className="z-50" />
       </div>
 
       <FooterBackgroundGradient />

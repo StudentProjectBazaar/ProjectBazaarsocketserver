@@ -3,12 +3,14 @@ import Header from './Header';
 import Footer from './Footer';
 import type { BrowseProject } from '../types/browse';
 import projectsData from '../mock/projects.json';
+import ProjectDetailsView from './ProjectDetailsView';
 
 type SortOption = 'latest' | 'budget-high-low';
 type ProjectTypeFilter = 'all' | 'fixed' | 'hourly';
 
 const BrowseProjects: React.FC = () => {
   const [projects] = useState<BrowseProject[]>(projectsData as BrowseProject[]);
+  const [selectedProject, setSelectedProject] = useState<BrowseProject | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [projectType, setProjectType] = useState<ProjectTypeFilter>('all');
   const [budgetRange, setBudgetRange] = useState<[number, number]>([0, 10000]);
@@ -92,6 +94,25 @@ const BrowseProjects: React.FC = () => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   };
+
+  const handleProjectClick = (project: BrowseProject) => {
+    setSelectedProject(project);
+  };
+
+  const handleBackToProjects = () => {
+    setSelectedProject(null);
+  };
+
+  // Show project details if a project is selected
+  if (selectedProject) {
+    return (
+      <div className="bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 overflow-x-hidden transition-colors duration-300 min-h-screen">
+        <Header />
+        <ProjectDetailsView project={selectedProject} onBack={handleBackToProjects} />
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 overflow-x-hidden transition-colors duration-300 min-h-screen">
@@ -340,7 +361,10 @@ const BrowseProjects: React.FC = () => {
                       {/* Left Content */}
                       <div className="flex-1">
                         {/* Title */}
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer">
+                        <h3 
+                          onClick={() => handleProjectClick(project)}
+                          className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer"
+                        >
                           {project.title}
                         </h3>
 
@@ -402,7 +426,10 @@ const BrowseProjects: React.FC = () => {
                         </div>
 
                         {/* CTA Button */}
-                        <button className="w-full md:w-auto px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors duration-200 whitespace-nowrap">
+                        <button 
+                          onClick={() => handleProjectClick(project)}
+                          className="w-full md:w-auto px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors duration-200 whitespace-nowrap"
+                        >
                           {project.bidsCount === 0 ? 'Be First to Bid' : 'Place Bid'}
                         </button>
                       </div>

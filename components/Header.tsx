@@ -141,9 +141,16 @@ const Header: React.FC = () => {
                     link.onClick?.();
                     setIsOpen(false);
                   }}
-                  className="text-white/70 hover:text-white transition-colors duration-200 font-medium py-2"
+                  className={`transition-colors duration-200 font-medium py-2 ${
+                    'highlight' in link && link.highlight
+                      ? 'text-violet-400'
+                      : 'text-white/70 hover:text-white'
+                  }`}
                 >
                   {link.name}
+                  {'highlight' in link && link.highlight && (
+                    <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-semibold bg-violet-500/20 text-violet-400 rounded">NEW</span>
+                  )}
                 </button>
                 ))}
               <div className="w-full h-px bg-white/10 my-2" />
