@@ -146,17 +146,33 @@ def handle_parse_resume(body: Dict[str, Any], headers: Dict[str, str]) -> Dict[s
     file_bytes = base64.b64decode(file_b64)
     resume_text = extract_text_from_resume(file_bytes, file_type, file_name)
     
-    if len(resume_text) < 50:
+    # Check if extraction failed (returned raw PDF marker)
+    is_raw_pdf = resume_text.startswith("[PDF_RAW_BASE64:")
+    
+    if not is_raw_pdf and len(resume_text) < 50:
         return error_response("Resume extraction failed - could not read text from document", headers)
 
     portfolio_data = extract_portfolio_data_with_ai(resume_text, user_email)
+    
+    # Prepare extracted text for response (don't send raw base64 back)
+    extracted_text = ""
+    if is_raw_pdf:
+        extracted_text = "[PDF processed directly by AI - text extraction was not possible]"
+    else:
+        # Return first 5000 chars of extracted text for user to review
+        extracted_text = resume_text[:5000]
+        if len(resume_text) > 5000:
+            extracted_text += f"\n\n... [truncated, {len(resume_text)} total characters extracted]"
 
     return {
         "statusCode": 200,
         "headers": headers,
         "body": json.dumps({
             "success": True,
-            "portfolioData": portfolio_data
+            "portfolioData": portfolio_data,
+            "extractedText": extracted_text,
+            "extractionMethod": "multimodal_ai" if is_raw_pdf else "text_extraction",
+            "textLength": len(resume_text) if not is_raw_pdf else 0
         })
     }
 
@@ -198,6 +214,8 @@ def handle_generate_portfolio(body: Dict[str, Any], headers: Dict[str, str]) -> 
     
     # Can also accept pre-parsed portfolio data
     portfolio_data = body.get("portfolioData")
+    extracted_text = ""
+    extraction_method = "pre_parsed"
 
     if not portfolio_data:
         # Need to parse resume first
@@ -207,10 +225,23 @@ def handle_generate_portfolio(body: Dict[str, Any], headers: Dict[str, str]) -> 
         file_bytes = base64.b64decode(file_b64)
         resume_text = extract_text_from_resume(file_bytes, file_type, file_name)
         
-        if len(resume_text) < 50:
+        # Check if extraction failed (returned raw PDF marker)
+        is_raw_pdf = resume_text.startswith("[PDF_RAW_BASE64:")
+        
+        if not is_raw_pdf and len(resume_text) < 50:
             return error_response("Resume extraction failed", headers)
 
         portfolio_data = extract_portfolio_data_with_ai(resume_text, user_email)
+        
+        # Prepare extracted text for response
+        if is_raw_pdf:
+            extracted_text = "[PDF processed directly by AI - text extraction was not possible]"
+            extraction_method = "multimodal_ai"
+        else:
+            extracted_text = resume_text[:5000]
+            if len(resume_text) > 5000:
+                extracted_text += f"\n\n... [truncated, {len(resume_text)} total characters extracted]"
+            extraction_method = "text_extraction"
 
     # Deploy with selected template
     deployment = deploy_to_vercel(portfolio_data, user_id, template_id)
@@ -239,7 +270,9 @@ def handle_generate_portfolio(body: Dict[str, Any], headers: Dict[str, str]) -> 
             "liveUrl": deployment["liveUrl"],
             "previewUrl": deployment["previewUrl"],
             "portfolioData": portfolio_data,
-            "templateId": template_id
+            "templateId": template_id,
+            "extractedText": extracted_text,
+            "extractionMethod": extraction_method
         })
     }
 
@@ -437,12 +470,45 @@ def extract_text_from_resume(content: bytes, file_type: str, file_name: str) -> 
 
 def extract_pdf_text_smart(pdf_path: str) -> str:
     """
-    Smart PDF text extraction with 2-step strategy:
-    1. pdfplumber (primary) - works for most text-based PDFs
-    2. OCR fallback (pytesseract) - for scanned/image-based PDFs
+    Smart PDF text extraction with 3-step strategy:
+    1. PyPDF2 (most compatible) - works in Lambda without extra dependencies
+    2. pdfplumber (more accurate) - if available
+    3. OCR fallback (pytesseract) - for scanned/image-based PDFs
     """
     
-    # Step 1: Try pdfplumber (fast, accurate for text-based PDFs)
+    # Step 1: Try PyPDF2 first (most compatible with Lambda)
+    try:
+        import PyPDF2
+        
+        print("Attempting PDF extraction with PyPDF2...")
+        all_text = []
+        
+        with open(pdf_path, 'rb') as pdf_file:
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            for page_num, page in enumerate(pdf_reader.pages):
+                try:
+                    page_text = page.extract_text()
+                    if page_text:
+                        all_text.append(page_text)
+                except Exception as e:
+                    print(f"PyPDF2 error on page {page_num + 1}: {e}")
+                    continue
+        
+        combined_text = "\n\n".join(all_text)
+        cleaned_text = clean_resume_text(combined_text)
+        
+        if len(cleaned_text) > 200:
+            print(f"PyPDF2 extraction successful: {len(cleaned_text)} chars")
+            return cleaned_text
+        else:
+            print(f"PyPDF2 extracted only {len(cleaned_text)} chars, trying pdfplumber...")
+            
+    except ImportError:
+        print("PyPDF2 not available, trying pdfplumber...")
+    except Exception as e:
+        print(f"PyPDF2 failed: {e}, trying pdfplumber...")
+    
+    # Step 2: Try pdfplumber (more accurate for complex layouts)
     try:
         import pdfplumber
         
@@ -479,7 +545,7 @@ def extract_pdf_text_smart(pdf_path: str) -> str:
     except Exception as e:
         print(f"pdfplumber failed: {e}, trying OCR...")
     
-    # Step 2: OCR fallback for scanned/image-based PDFs
+    # Step 3: OCR fallback for scanned/image-based PDFs
     try:
         from pdf2image import convert_from_path
         import pytesseract
@@ -515,7 +581,7 @@ def extract_pdf_text_smart(pdf_path: str) -> str:
     except Exception as e:
         print(f"OCR extraction failed: {e}")
     
-    # If both methods fail, return empty string (will trigger multimodal fallback)
+    # If all methods fail, return empty string (will trigger multimodal fallback)
     print("All PDF extraction methods failed")
     return ""
 
@@ -626,8 +692,18 @@ def extract_docx_text(path: str) -> str:
 # =========================
 # GEMINI AI (FIXED)
 # =========================
+# List of Gemini models to try in order (for fallback support)
+GEMINI_MODELS = [
+    "gemini-2.0-flash",           # Latest stable
+    "gemini-1.5-flash",           # Previous stable
+    "gemini-1.5-flash-latest",    # Latest 1.5 flash
+    "gemini-pro",                 # Fallback
+]
+
+
 def extract_portfolio_data_with_ai(resume_text: str, user_email: str) -> Dict[str, Any]:
     if not GEMINI_API_KEY:
+        print("No GEMINI_API_KEY configured, using fallback")
         return get_fallback_portfolio_data(resume_text, user_email)
 
     # Check if we received raw PDF content (extraction failed)
@@ -683,81 +759,108 @@ Required JSON Schema:
 }}
 """
 
-    try:
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/"
-            "gemini-1.5-flash:generateContent"
-            f"?key={GEMINI_API_KEY}"
-        )
+    # Build the content parts
+    parts = []
+    
+    if is_raw_pdf:
+        # Use multimodal: send PDF directly to Gemini
+        pdf_base64 = resume_text.replace("[PDF_RAW_BASE64:", "").rstrip("]")
+        parts.append({
+            "inline_data": {
+                "mime_type": "application/pdf",
+                "data": pdf_base64
+            }
+        })
+        parts.append({"text": prompt})
+        print("Using multimodal PDF processing with Gemini")
+    else:
+        # Send as text
+        full_prompt = prompt + f"\n\nResume Content:\n{resume_text[:12000]}"
+        parts.append({"text": full_prompt})
 
-        # Build the content parts
-        parts = []
-        
-        if is_raw_pdf:
-            # Use multimodal: send PDF directly to Gemini
-            pdf_base64 = resume_text.replace("[PDF_RAW_BASE64:", "").rstrip("]")
-            parts.append({
-                "inline_data": {
-                    "mime_type": "application/pdf",
-                    "data": pdf_base64
-                }
-            })
-            parts.append({"text": prompt})
-            print("Using multimodal PDF processing with Gemini")
-        else:
-            # Send as text
-            full_prompt = prompt + f"\n\nResume Content:\n{resume_text[:12000]}"
-            parts.append({"text": full_prompt})
+    payload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": parts
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.1,
+            "maxOutputTokens": 4096
+        },
+        "safetySettings": [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
+        ]
+    }
 
-        payload = {
-            "contents": [
-                {
-                    "role": "user",
-                    "parts": parts
-                }
-            ],
-            "generationConfig": {
-                "temperature": 0.1,
-                "maxOutputTokens": 4096
-            },
-            "safetySettings": [
-                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
-            ]
-        }
+    # Try each model in order until one works
+    last_error = None
+    for model_name in GEMINI_MODELS:
+        try:
+            # Try v1 API first (stable), then v1beta if needed
+            for api_version in ["v1", "v1beta"]:
+                url = (
+                    f"https://generativelanguage.googleapis.com/{api_version}/models/"
+                    f"{model_name}:generateContent"
+                    f"?key={GEMINI_API_KEY}"
+                )
+                
+                print(f"Trying Gemini model: {model_name} (API: {api_version})")
 
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST"
-        )
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST"
+                )
 
-        with urllib.request.urlopen(req, timeout=90) as r:
-            res = json.loads(r.read().decode("utf-8"))
+                try:
+                    with urllib.request.urlopen(req, timeout=90) as r:
+                        res = json.loads(r.read().decode("utf-8"))
 
-        text = res["candidates"][0]["content"]["parts"][0]["text"]
-        # Clean up JSON from markdown code blocks
-        text = re.sub(r"```json\s*", "", text)
-        text = re.sub(r"```\s*", "", text)
-        text = text.strip()
-        
-        # Find JSON object in the response
-        json_match = re.search(r'\{[\s\S]*\}', text)
-        if json_match:
-            text = json_match.group(0)
+                    text = res["candidates"][0]["content"]["parts"][0]["text"]
+                    # Clean up JSON from markdown code blocks
+                    text = re.sub(r"```json\s*", "", text)
+                    text = re.sub(r"```\s*", "", text)
+                    text = text.strip()
+                    
+                    # Find JSON object in the response
+                    json_match = re.search(r'\{[\s\S]*\}', text)
+                    if json_match:
+                        text = json_match.group(0)
 
-        result = json.loads(text)
-        print(f"Successfully extracted portfolio for: {result.get('personal', {}).get('name', 'Unknown')}")
-        return result
-
-    except Exception as e:
-        print(f"Gemini error: {e}")
-        import traceback
-        traceback.print_exc()
-        return get_fallback_portfolio_data(resume_text, user_email)
+                    result = json.loads(text)
+                    print(f"Successfully extracted portfolio using {model_name} ({api_version})")
+                    print(f"Portfolio name: {result.get('personal', {}).get('name', 'Unknown')}")
+                    return result
+                    
+                except urllib.error.HTTPError as e:
+                    if e.code == 404:
+                        # Model not found, try next
+                        print(f"Model {model_name} not found on {api_version}, trying next...")
+                        continue
+                    elif e.code == 400:
+                        # Bad request - might be wrong API version, try next
+                        error_body = e.read().decode() if e.fp else ""
+                        print(f"Bad request for {model_name} ({api_version}): {error_body[:200]}")
+                        continue
+                    else:
+                        raise
+                        
+        except Exception as e:
+            last_error = e
+            print(f"Error with model {model_name}: {e}")
+            continue
+    
+    # All models failed
+    print(f"All Gemini models failed. Last error: {last_error}")
+    import traceback
+    traceback.print_exc()
+    return get_fallback_portfolio_data(resume_text, user_email)
 
 # =========================
 # FALLBACK

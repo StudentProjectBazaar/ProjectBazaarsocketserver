@@ -1,0 +1,12 @@
+# Lambda function dependencies
+# Install in a layer or bundle with the deployment package
+
+# PDF extraction (PyPDF2 is the most compatible with Lambda)
+PyPDF2>=3.0.0
+
+# Optional: Better PDF extraction (requires system dependencies)
+# pdfplumber>=0.10.0
+
+# Optional: OCR support (requires poppler and tesseract)
+# pdf2image>=1.16.0
+# pytesseract>=0.3.10
