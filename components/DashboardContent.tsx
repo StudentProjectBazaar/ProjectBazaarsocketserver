@@ -641,6 +641,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 return <BuildPortfolioPage embedded />;
             case 'my-projects':
                 return <MyProjectsPage />;
+            case 'my-courses':
+                return <MyCoursesPage />;
             case 'earnings':
                 return <EarningsPage />;
             case 'payouts':
