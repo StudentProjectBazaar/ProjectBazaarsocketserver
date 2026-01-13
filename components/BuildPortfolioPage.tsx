@@ -1,13 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigation, useAuth } from '../App';
 
-// API Endpoint for portfolio generation
-// Local development: http://localhost:3001/generate-portfolio
-// Production: Your Lambda API Gateway URL
-const PORTFOLIO_API_ENDPOINT = 'http://localhost:3001/generate-portfolio';
+// API Endpoint for portfolio generation (AWS Lambda)
+const PORTFOLIO_API_ENDPOINT = 'https://tya60ig1pc.execute-api.ap-south-2.amazonaws.com/default/portfolio-generator';
 
-// Demo mode - set to false to use real backend, true for demo simulation
-const DEMO_MODE = true;
+// Demo mode - set to false to use real AWS Lambda backend
+const DEMO_MODE = false;
 
 interface PortfolioStatus {
   stage: 'idle' | 'uploading' | 'parsing' | 'extracting' | 'building' | 'deploying' | 'complete' | 'error';
@@ -152,27 +150,34 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
       }
 
       // PRODUCTION MODE: Call the Lambda API
+      updateStatus('building', 'Sending to AI for processing...', 55);
+      
+      const requestBody = {
+        action: 'generatePortfolio',
+        userId: userId || `guest_${Date.now()}`,
+        userEmail: userEmail || 'guest@example.com',
+        fileName: file.name,
+        fileType: file.type,
+        fileContent: base64,
+      };
+      
+      console.log('Sending request to Lambda:', { ...requestBody, fileContent: `[${base64.length} chars]` });
+      
       const response = await fetch(PORTFOLIO_API_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          action: 'generatePortfolio',
-          userId: userId || `guest_${Date.now()}`,
-          userEmail: userEmail || 'guest@example.com',
-          fileName: file.name,
-          fileType: file.type,
-          fileContent: base64,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      // Handle streaming progress updates if available
+      // Parse response body first to get error details
       const result = await response.json();
+      console.log('Lambda response:', result);
+
+      if (!response.ok) {
+        throw new Error(result.error || `API error: ${response.status}`);
+      }
 
       if (result.stage === 'building') {
         updateStatus('building', 'Building your portfolio website...', 65);
