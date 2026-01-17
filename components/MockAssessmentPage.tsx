@@ -4,7 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 // TYPES & INTERFACES
 // ============================================
 
-type AssessmentView = 'list' | 'test' | 'results' | 'certificate' | 'interview' | 'schedule';
+type AssessmentView = 'list' | 'test' | 'results' | 'certificate' | 'interview' | 'schedule' | 'leaderboard' | 'achievements' | 'daily-challenge' | 'study-resources';
+type DifficultyLevel = 'easy' | 'medium' | 'hard';
+type TestMode = 'timed' | 'practice';
 
 interface Assessment {
   id: string;
@@ -14,8 +16,11 @@ interface Assessment {
   objective: number;
   programming: number;
   registrations: number;
-  category: 'technical' | 'language' | 'framework' | 'database' | 'devops';
+  category: 'technical' | 'language' | 'framework' | 'database' | 'devops' | 'company';
   popular?: boolean;
+  difficulty?: DifficultyLevel;
+  company?: string;
+  xpReward?: number;
 }
 
 interface Question {
@@ -24,6 +29,8 @@ interface Question {
   options: string[];
   correctAnswer: number;
   topic: string;
+  explanation?: string;
+  difficulty?: DifficultyLevel;
 }
 
 interface TestResult {
@@ -35,6 +42,8 @@ interface TestResult {
   solved: number;
   duration: string;
   startTime: string;
+  difficulty?: DifficultyLevel;
+  xpEarned?: number;
   questionResults: {
     questionId: number;
     topic: string;
@@ -42,6 +51,58 @@ interface TestResult {
     userAnswer: number;
     correctAnswer: number;
   }[];
+}
+
+interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  earned: boolean;
+  earnedDate?: string;
+  requirement: string;
+  xpReward: number;
+}
+
+interface LeaderboardEntry {
+  rank: number;
+  name: string;
+  avatar: string;
+  xp: number;
+  testsCompleted: number;
+  avgScore: number;
+  badges: number;
+}
+
+interface DailyChallenge {
+  id: string;
+  title: string;
+  topic: string;
+  difficulty: DifficultyLevel;
+  xpReward: number;
+  timeLimit: number;
+  completed: boolean;
+  expiresAt: string;
+}
+
+interface UserProgress {
+  level: number;
+  currentXP: number;
+  nextLevelXP: number;
+  totalXP: number;
+  streak: number;
+  testsCompleted: number;
+  avgScore: number;
+  badges: Badge[];
+}
+
+interface StudyResource {
+  id: string;
+  title: string;
+  type: 'video' | 'article' | 'flashcard' | 'practice';
+  topic: string;
+  duration: string;
+  url?: string;
 }
 
 // ============================================
@@ -72,27 +133,91 @@ const assessments: Assessment[] = [
   { id: 'softwaretesting', title: 'Software Testing', logo: '/mock_assessments_logo/software_testing.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 2200, category: 'technical' },
 ];
 
+// Company-specific assessments
+const companyAssessments: Assessment[] = [
+  { id: 'google', title: 'Google Interview Prep', logo: '/company_logos/google.jpg', time: '45 Minutes', objective: 20, programming: 5, registrations: 25000, category: 'company', company: 'Google', xpReward: 200 },
+  { id: 'amazon', title: 'Amazon SDE Assessment', logo: '/company_logos/amazon.jpg', time: '60 Minutes', objective: 25, programming: 5, registrations: 32000, category: 'company', company: 'Amazon', xpReward: 250 },
+  { id: 'microsoft', title: 'Microsoft Coding Round', logo: '/company_logos/microsoft.jpg', time: '45 Minutes', objective: 20, programming: 3, registrations: 28000, category: 'company', company: 'Microsoft', xpReward: 200 },
+  { id: 'meta', title: 'Meta Interview Prep', logo: '/company_logos/meta.jpg', time: '50 Minutes', objective: 18, programming: 4, registrations: 18000, category: 'company', company: 'Meta', xpReward: 220 },
+  { id: 'flipkart', title: 'Flipkart SDE Test', logo: '/company_logos/flipkart.jpg', time: '40 Minutes', objective: 15, programming: 3, registrations: 15000, category: 'company', company: 'Flipkart', xpReward: 180 },
+  { id: 'infosys', title: 'Infosys Assessment', logo: '/company_logos/infosys.jpg', time: '35 Minutes', objective: 20, programming: 2, registrations: 45000, category: 'company', company: 'Infosys', xpReward: 150 },
+  { id: 'tcs', title: 'TCS NQT Prep', logo: '/company_logos/tcs.jpg', time: '40 Minutes', objective: 25, programming: 2, registrations: 55000, category: 'company', company: 'TCS', xpReward: 150 },
+  { id: 'wipro', title: 'Wipro NLTH Test', logo: '/company_logos/wipro.jpg', time: '35 Minutes', objective: 20, programming: 2, registrations: 38000, category: 'company', company: 'Wipro', xpReward: 140 },
+];
+
+// Badges data
+const allBadges: Badge[] = [
+  { id: 'first-test', name: 'First Steps', description: 'Complete your first assessment', icon: '🎯', earned: true, earnedDate: '2026-01-10', requirement: 'Complete 1 test', xpReward: 50 },
+  { id: 'streak-7', name: 'Week Warrior', description: 'Maintain a 7-day streak', icon: '🔥', earned: true, earnedDate: '2026-01-15', requirement: '7 day streak', xpReward: 100 },
+  { id: 'perfect-score', name: 'Perfectionist', description: 'Score 100% on any test', icon: '💯', earned: false, requirement: '100% score', xpReward: 200 },
+  { id: 'java-master', name: 'Java Master', description: 'Complete all Java assessments with 80%+', icon: '☕', earned: true, earnedDate: '2026-01-12', requirement: 'Master Java', xpReward: 150 },
+  { id: 'speed-demon', name: 'Speed Demon', description: 'Complete a test in under 5 minutes', icon: '⚡', earned: false, requirement: 'Finish < 5 mins', xpReward: 75 },
+  { id: 'streak-30', name: 'Monthly Master', description: 'Maintain a 30-day streak', icon: '🏆', earned: false, requirement: '30 day streak', xpReward: 300 },
+  { id: 'ten-tests', name: 'Dedicated Learner', description: 'Complete 10 assessments', icon: '📚', earned: true, earnedDate: '2026-01-14', requirement: 'Complete 10 tests', xpReward: 100 },
+  { id: 'all-topics', name: 'Well Rounded', description: 'Complete tests in 5 different categories', icon: '🌟', earned: false, requirement: '5 categories', xpReward: 150 },
+  { id: 'night-owl', name: 'Night Owl', description: 'Complete a test after midnight', icon: '🦉', earned: false, requirement: 'Test after 12 AM', xpReward: 50 },
+  { id: 'early-bird', name: 'Early Bird', description: 'Complete a test before 6 AM', icon: '🐦', earned: false, requirement: 'Test before 6 AM', xpReward: 50 },
+  { id: 'company-ready', name: 'Company Ready', description: 'Complete 3 company-specific assessments', icon: '💼', earned: false, requirement: '3 company tests', xpReward: 200 },
+  { id: 'daily-champ', name: 'Daily Champion', description: 'Complete 10 daily challenges', icon: '📅', earned: false, requirement: '10 daily challenges', xpReward: 150 },
+];
+
+// Leaderboard data
+const leaderboardData: LeaderboardEntry[] = [
+  { rank: 1, name: 'Rahul Sharma', avatar: '👨‍💻', xp: 12500, testsCompleted: 85, avgScore: 92, badges: 10 },
+  { rank: 2, name: 'Priya Patel', avatar: '👩‍💻', xp: 11200, testsCompleted: 78, avgScore: 89, badges: 9 },
+  { rank: 3, name: 'Amit Kumar', avatar: '🧑‍💻', xp: 10800, testsCompleted: 72, avgScore: 88, badges: 8 },
+  { rank: 4, name: 'Sneha Gupta', avatar: '👩‍🎓', xp: 9500, testsCompleted: 65, avgScore: 86, badges: 7 },
+  { rank: 5, name: 'Vikram Singh', avatar: '👨‍🎓', xp: 8900, testsCompleted: 60, avgScore: 85, badges: 7 },
+  { rank: 6, name: 'Ananya Reddy', avatar: '👩‍💼', xp: 8200, testsCompleted: 55, avgScore: 84, badges: 6 },
+  { rank: 7, name: 'Karthik Nair', avatar: '👨‍💼', xp: 7800, testsCompleted: 52, avgScore: 83, badges: 6 },
+  { rank: 8, name: 'Divya Menon', avatar: '👩‍🔬', xp: 7200, testsCompleted: 48, avgScore: 82, badges: 5 },
+  { rank: 9, name: 'Arjun Verma', avatar: '👨‍🔬', xp: 6800, testsCompleted: 45, avgScore: 81, badges: 5 },
+  { rank: 10, name: 'Meera Joshi', avatar: '👩‍🏫', xp: 6500, testsCompleted: 42, avgScore: 80, badges: 4 },
+];
+
+// Daily challenge data
+const dailyChallengeData: DailyChallenge = {
+  id: 'daily-2026-01-18',
+  title: 'React Hooks Challenge',
+  topic: 'React',
+  difficulty: 'medium',
+  xpReward: 50,
+  timeLimit: 300,
+  completed: false,
+  expiresAt: '2026-01-18T23:59:59',
+};
+
+// Study resources
+const studyResources: StudyResource[] = [
+  { id: '1', title: 'Understanding Java Collections', type: 'video', topic: 'Java', duration: '15 min' },
+  { id: '2', title: 'React Hooks Deep Dive', type: 'article', topic: 'React', duration: '10 min' },
+  { id: '3', title: 'SQL Joins Flashcards', type: 'flashcard', topic: 'SQL', duration: '5 min' },
+  { id: '4', title: 'Python Basics Practice', type: 'practice', topic: 'Python', duration: '20 min' },
+  { id: '5', title: 'Data Structures Overview', type: 'video', topic: 'DSA', duration: '25 min' },
+  { id: '6', title: 'System Design Fundamentals', type: 'article', topic: 'System Design', duration: '15 min' },
+];
+
 // ============================================
 // QUESTION BANKS
 // ============================================
 
 const questionBanks: Record<string, Question[]> = {
   java: [
-    { id: 1, question: 'Which statement is true about Java?', options: ['Platform independent programming language', 'Sequence dependent programming language', 'Code dependent programming language', 'Platform dependent programming language'], correctAnswer: 0, topic: 'Java Basics' },
-    { id: 2, question: 'What is the component used for compiling, debugging, and executing Java programs?', options: ['JRE', 'JVM', 'JDK', 'JIT'], correctAnswer: 2, topic: 'Java Architecture' },
-    { id: 3, question: 'Which of the following is not a Java feature?', options: ['Object-oriented', 'Use of pointers', 'Portable', 'Dynamic and Extensible'], correctAnswer: 1, topic: 'Java Features' },
-    { id: 4, question: 'What is the default value of a boolean variable in Java?', options: ['true', 'false', '0', 'null'], correctAnswer: 1, topic: 'Data Types' },
-    { id: 5, question: 'Which keyword is used to prevent method overriding in Java?', options: ['static', 'final', 'abstract', 'const'], correctAnswer: 1, topic: 'OOP Concepts' },
-    { id: 6, question: 'What is the parent class of all classes in Java?', options: ['Object', 'Class', 'Main', 'Parent'], correctAnswer: 0, topic: 'Inheritance' },
-    { id: 7, question: 'Which collection class allows you to grow or shrink its size and provides indexed access?', options: ['HashSet', 'HashMap', 'ArrayList', 'LinkedList'], correctAnswer: 2, topic: 'Collections' },
-    { id: 8, question: 'What is the purpose of the "this" keyword in Java?', options: ['To refer to the parent class', 'To refer to the current object', 'To create a new object', 'To refer to a static method'], correctAnswer: 1, topic: 'Keywords' },
-    { id: 9, question: 'Which exception is thrown when dividing by zero in Java?', options: ['NullPointerException', 'ArithmeticException', 'NumberFormatException', 'ClassNotFoundException'], correctAnswer: 1, topic: 'Exception Handling' },
-    { id: 10, question: 'What is method overloading?', options: ['Methods with same name in parent and child class', 'Methods with same name but different parameters', 'Methods with different names', 'None of the above'], correctAnswer: 1, topic: 'Polymorphism' },
-    { id: 11, question: 'Which access modifier makes a member accessible only within the same class?', options: ['public', 'protected', 'private', 'default'], correctAnswer: 2, topic: 'Access Modifiers' },
-    { id: 12, question: 'What is the output of 10 + 20 + "Hello" in Java?', options: ['1020Hello', '30Hello', 'Hello1020', 'Compilation Error'], correctAnswer: 1, topic: 'String Operations' },
-    { id: 13, question: 'Which interface must be implemented for serialization in Java?', options: ['Runnable', 'Comparable', 'Serializable', 'Cloneable'], correctAnswer: 2, topic: 'Serialization' },
-    { id: 14, question: 'What is the default value of an int variable in Java?', options: ['0', '1', 'null', 'undefined'], correctAnswer: 0, topic: 'Data Types' },
-    { id: 15, question: 'Which keyword is used to create a thread in Java?', options: ['thread', 'runnable', 'extends Thread', 'All of the above'], correctAnswer: 3, topic: 'Multithreading' },
+    { id: 1, question: 'Which statement is true about Java?', options: ['Platform independent programming language', 'Sequence dependent programming language', 'Code dependent programming language', 'Platform dependent programming language'], correctAnswer: 0, topic: 'Java Basics', explanation: 'Java is platform independent because Java code is compiled to bytecode which runs on the JVM (Java Virtual Machine). The JVM is available for different platforms, making Java "Write Once, Run Anywhere".', difficulty: 'easy' },
+    { id: 2, question: 'What is the component used for compiling, debugging, and executing Java programs?', options: ['JRE', 'JVM', 'JDK', 'JIT'], correctAnswer: 2, topic: 'Java Architecture', explanation: 'JDK (Java Development Kit) contains JRE + development tools like compiler (javac), debugger, etc. JRE is for running Java programs, JVM is the virtual machine, and JIT is the Just-In-Time compiler.', difficulty: 'easy' },
+    { id: 3, question: 'Which of the following is not a Java feature?', options: ['Object-oriented', 'Use of pointers', 'Portable', 'Dynamic and Extensible'], correctAnswer: 1, topic: 'Java Features', explanation: 'Java does not support pointers explicitly for security reasons. Pointers can be used to access memory directly which can lead to security vulnerabilities. Java uses references instead.', difficulty: 'easy' },
+    { id: 4, question: 'What is the default value of a boolean variable in Java?', options: ['true', 'false', '0', 'null'], correctAnswer: 1, topic: 'Data Types', explanation: 'In Java, boolean instance variables are initialized to false by default. Local variables must be explicitly initialized before use.', difficulty: 'easy' },
+    { id: 5, question: 'Which keyword is used to prevent method overriding in Java?', options: ['static', 'final', 'abstract', 'const'], correctAnswer: 1, topic: 'OOP Concepts', explanation: 'The "final" keyword prevents method overriding. When a method is declared final, it cannot be overridden by subclasses. "const" is not a keyword in Java.', difficulty: 'medium' },
+    { id: 6, question: 'What is the parent class of all classes in Java?', options: ['Object', 'Class', 'Main', 'Parent'], correctAnswer: 0, topic: 'Inheritance', explanation: 'java.lang.Object is the root of the class hierarchy. Every class has Object as a superclass. All objects inherit methods like toString(), equals(), hashCode() from Object.', difficulty: 'easy' },
+    { id: 7, question: 'Which collection class allows you to grow or shrink its size and provides indexed access?', options: ['HashSet', 'HashMap', 'ArrayList', 'LinkedList'], correctAnswer: 2, topic: 'Collections', explanation: 'ArrayList is a resizable array implementation of the List interface. It provides O(1) indexed access and dynamic resizing. LinkedList also allows dynamic sizing but has O(n) indexed access.', difficulty: 'medium' },
+    { id: 8, question: 'What is the purpose of the "this" keyword in Java?', options: ['To refer to the parent class', 'To refer to the current object', 'To create a new object', 'To refer to a static method'], correctAnswer: 1, topic: 'Keywords', explanation: '"this" is a reference variable that refers to the current object. It is used to differentiate between instance variables and parameters when they have the same name.', difficulty: 'easy' },
+    { id: 9, question: 'Which exception is thrown when dividing by zero in Java?', options: ['NullPointerException', 'ArithmeticException', 'NumberFormatException', 'ClassNotFoundException'], correctAnswer: 1, topic: 'Exception Handling', explanation: 'ArithmeticException is thrown when an exceptional arithmetic condition occurs, such as dividing an integer by zero. Note: Dividing a float/double by zero gives Infinity, not an exception.', difficulty: 'easy' },
+    { id: 10, question: 'What is method overloading?', options: ['Methods with same name in parent and child class', 'Methods with same name but different parameters', 'Methods with different names', 'None of the above'], correctAnswer: 1, topic: 'Polymorphism', explanation: 'Method overloading is compile-time polymorphism where multiple methods have the same name but different parameters (number, type, or order). It is different from overriding which involves inheritance.', difficulty: 'medium' },
+    { id: 11, question: 'Which access modifier makes a member accessible only within the same class?', options: ['public', 'protected', 'private', 'default'], correctAnswer: 2, topic: 'Access Modifiers', explanation: 'private access modifier restricts access to the declaring class only. public allows access from anywhere, protected allows same package + subclasses, default (no modifier) allows same package only.', difficulty: 'easy' },
+    { id: 12, question: 'What is the output of 10 + 20 + "Hello" in Java?', options: ['1020Hello', '30Hello', 'Hello1020', 'Compilation Error'], correctAnswer: 1, topic: 'String Operations', explanation: 'Java evaluates left to right. 10 + 20 = 30 (integer addition), then 30 + "Hello" = "30Hello" (string concatenation). If it was "Hello" + 10 + 20, result would be "Hello1020".', difficulty: 'medium' },
+    { id: 13, question: 'Which interface must be implemented for serialization in Java?', options: ['Runnable', 'Comparable', 'Serializable', 'Cloneable'], correctAnswer: 2, topic: 'Serialization', explanation: 'Serializable is a marker interface (no methods) that indicates a class can be serialized. Serialization is the process of converting an object to a byte stream for storage or transmission.', difficulty: 'medium' },
+    { id: 14, question: 'What is the default value of an int variable in Java?', options: ['0', '1', 'null', 'undefined'], correctAnswer: 0, topic: 'Data Types', explanation: 'All numeric primitive types (byte, short, int, long, float, double) have a default value of 0 (or 0.0 for floating-point). Only object references have null as default.', difficulty: 'easy' },
+    { id: 15, question: 'Which keyword is used to create a thread in Java?', options: ['thread', 'runnable', 'extends Thread', 'All of the above'], correctAnswer: 3, topic: 'Multithreading', explanation: 'Threads can be created by extending the Thread class or implementing Runnable interface. Both approaches are valid. The class can then be instantiated and started with start() method.', difficulty: 'hard' },
   ],
   python: [
     { id: 1, question: 'What is Python?', options: ['A compiled language', 'An interpreted high-level language', 'A low-level language', 'A markup language'], correctAnswer: 1, topic: 'Python Basics' },
@@ -323,6 +448,24 @@ const MockAssessmentPage: React.FC = () => {
     },
   ]);
 
+  // New feature states
+  const [testMode, setTestMode] = useState<TestMode>('timed');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('medium');
+  const [showExplanations, setShowExplanations] = useState(false);
+  const [userProgress, setUserProgress] = useState<UserProgress>({
+    level: 5,
+    currentXP: 2350,
+    nextLevelXP: 3000,
+    totalXP: 2350,
+    streak: 7,
+    testsCompleted: 12,
+    avgScore: 78,
+    badges: allBadges.filter(b => b.earned),
+  });
+  const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge>(dailyChallengeData);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showCompanyTests, setShowCompanyTests] = useState(false);
+
   // Get questions for current assessment
   const getQuestions = useCallback(() => {
     if (!selectedAssessment) return defaultQuestions;
@@ -549,25 +692,420 @@ const MockAssessmentPage: React.FC = () => {
       </div>
 
       {activeTab === 'assessment' && (
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Hero Section */}
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Explore All Mock Assessments
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Take popular mock tests for free with real life interview questions from top tech companies
-            </p>
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          {/* Top Stats Bar */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            {/* XP Progress Card */}
+            <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl p-4 text-white">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">⚡</span>
+                  <div>
+                    <p className="text-xs opacity-80">Level {userProgress.level}</p>
+                    <p className="font-semibold">{userProgress.currentXP} / {userProgress.nextLevelXP} XP</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs opacity-80">Streak</p>
+                  <p className="font-bold text-lg">🔥 {userProgress.streak} days</p>
+                </div>
+              </div>
+              <div className="w-full bg-white/30 rounded-full h-2">
+                <div 
+                  className="bg-white rounded-full h-2 transition-all duration-500"
+                  style={{ width: `${(userProgress.currentXP / userProgress.nextLevelXP) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Daily Challenge Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center text-lg">📅</div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Daily Challenge</p>
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">{dailyChallenge.title}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">+{dailyChallenge.xpReward} XP</p>
+                  <button 
+                    onClick={() => setView('daily-challenge')}
+                    className="text-xs px-3 py-1 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition mt-1"
+                  >
+                    {dailyChallenge.completed ? 'Completed ✓' : 'Start'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Stats Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex gap-4">
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-gray-900 dark:text-white">{userProgress.testsCompleted}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Tests</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-emerald-600">{userProgress.avgScore}%</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Avg Score</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-amber-600">{userProgress.badges.length}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Badges</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setView('leaderboard')}
+                  className="text-xs px-3 py-1.5 border border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-400 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 transition"
+                >
+                  Leaderboard →
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Assessment Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-            {assessments.map(renderAssessmentCard)}
+          {/* Badges Preview */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-gray-900 dark:text-white">Your Badges</h3>
+              <button 
+                onClick={() => setView('achievements')}
+                className="text-xs text-orange-600 dark:text-orange-400 hover:underline"
+              >
+                View All ({allBadges.length})
+              </button>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {allBadges.slice(0, 8).map((badge) => (
+                <div 
+                  key={badge.id}
+                  className={`flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center ${
+                    badge.earned 
+                      ? 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700' 
+                      : 'bg-gray-100 dark:bg-gray-700 opacity-50'
+                  }`}
+                  title={badge.name}
+                >
+                  <span className="text-xl">{badge.icon}</span>
+                  {badge.earned && <span className="text-[8px] text-amber-600 dark:text-amber-400">✓</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Category Tabs & Filters */}
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              {['all', 'technical', 'language', 'framework', 'database', 'devops'].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => { setSelectedCategory(cat); setShowCompanyTests(false); }}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition capitalize ${
+                    selectedCategory === cat && !showCompanyTests
+                      ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  {cat === 'all' ? 'All Tests' : cat}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowCompanyTests(!showCompanyTests)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
+                showCompanyTests
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700'
+              }`}
+            >
+              💼 Company Tests
+            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Mode:</span>
+              <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
+                <button
+                  onClick={() => setTestMode('timed')}
+                  className={`px-2.5 py-1 rounded text-xs transition ${
+                    testMode === 'timed' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500'
+                  }`}
+                >
+                  ⏱️ Timed
+                </button>
+                <button
+                  onClick={() => setTestMode('practice')}
+                  className={`px-2.5 py-1 rounded text-xs transition ${
+                    testMode === 'practice' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500'
+                  }`}
+                >
+                  📚 Practice
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Difficulty Selector */}
+          <div className="flex items-center gap-2 mb-6">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Difficulty:</span>
+            {(['easy', 'medium', 'hard'] as DifficultyLevel[]).map((diff) => (
+              <button
+                key={diff}
+                onClick={() => setSelectedDifficulty(diff)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition capitalize ${
+                  selectedDifficulty === diff
+                    ? diff === 'easy' ? 'bg-emerald-500 text-white' : diff === 'medium' ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {diff}
+              </button>
+            ))}
+          </div>
+
+          {/* Company Tests Section */}
+          {showCompanyTests && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                💼 Company-Specific Assessments
+                <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">Interview Prep</span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {companyAssessments.map((assessment) => (
+                  <div
+                    key={assessment.id}
+                    onClick={() => { setSelectedAssessment(assessment); setShowInstructions(true); }}
+                    className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 transition cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+                        <img src={assessment.logo} alt={assessment.title} className="w-full h-full object-contain" onError={(e) => { (e.target as HTMLImageElement).src = '/mock_assessments_logo/sde_interview.png'; }} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400">{assessment.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{assessment.company}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>⏱️ {assessment.time}</span>
+                      <span className="text-blue-600 dark:text-blue-400 font-medium">+{assessment.xpReward} XP</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Regular Assessment Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            {assessments
+              .filter(a => selectedCategory === 'all' || a.category === selectedCategory)
+              .map(renderAssessmentCard)}
+          </div>
+
+          {/* Study Resources Section */}
+          <div className="mt-10 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-850 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                📚 Study Resources
+                <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">Learn & Practice</span>
+              </h3>
+              <button className="text-xs text-orange-600 dark:text-orange-400 hover:underline">View All →</button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {studyResources.map((resource) => (
+                <div key={resource.id} className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 hover:shadow-md transition cursor-pointer">
+                  <div className="text-xl mb-2">
+                    {resource.type === 'video' ? '🎥' : resource.type === 'article' ? '📄' : resource.type === 'flashcard' ? '🃏' : '💻'}
+                  </div>
+                  <p className="text-xs font-medium text-gray-900 dark:text-white line-clamp-2">{resource.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{resource.duration}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
       {activeTab === 'interview' && renderMockInterviewSection()}
       {activeTab === 'history' && renderHistorySection()}
+      
+      {/* Leaderboard View */}
+      {view === 'leaderboard' && (
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-3 mb-6">
+            <button onClick={() => setView('list')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <ArrowLeftIcon />
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">🏆 Leaderboard</h2>
+          </div>
+          
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {/* Top 3 */}
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-6">
+              <div className="flex justify-center items-end gap-4">
+                {/* 2nd Place */}
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-2xl mb-2 mx-auto border-4 border-gray-300 dark:border-gray-500">
+                    {leaderboardData[1].avatar}
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{leaderboardData[1].name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{leaderboardData[1].xp} XP</p>
+                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-lg font-bold">2</div>
+                </div>
+                {/* 1st Place */}
+                <div className="text-center -mt-4">
+                  <div className="text-2xl mb-1">👑</div>
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl mb-2 mx-auto border-4 border-amber-300">
+                    {leaderboardData[0].avatar}
+                  </div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{leaderboardData[0].name}</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">{leaderboardData[0].xp} XP</p>
+                  <div className="w-12 h-14 bg-gradient-to-b from-amber-400 to-amber-500 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-xl font-bold text-white">1</div>
+                </div>
+                {/* 3rd Place */}
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-2xl mb-2 mx-auto border-4 border-amber-200 dark:border-amber-700">
+                    {leaderboardData[2].avatar}
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{leaderboardData[2].name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{leaderboardData[2].xp} XP</p>
+                  <div className="w-10 h-8 bg-amber-200 dark:bg-amber-800 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-lg font-bold text-amber-800 dark:text-amber-200">3</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Rest of leaderboard */}
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+              {leaderboardData.slice(3).map((entry) => (
+                <div key={entry.rank} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <span className="w-8 text-center font-bold text-gray-400">{entry.rank}</span>
+                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-lg">
+                    {entry.avatar}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">{entry.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{entry.testsCompleted} tests • {entry.avgScore}% avg</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-orange-600 dark:text-orange-400">{entry.xp} XP</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{entry.badges} badges</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Achievements View */}
+      {view === 'achievements' && (
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-3 mb-6">
+            <button onClick={() => setView('list')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <ArrowLeftIcon />
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">🎖️ Achievements & Badges</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {allBadges.map((badge) => (
+              <div
+                key={badge.id}
+                className={`bg-white dark:bg-gray-800 rounded-xl p-4 border ${
+                  badge.earned
+                    ? 'border-amber-200 dark:border-amber-700 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-900/10 dark:to-orange-900/10'
+                    : 'border-gray-200 dark:border-gray-700 opacity-60'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
+                    badge.earned ? 'bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30' : 'bg-gray-100 dark:bg-gray-700'
+                  }`}>
+                    {badge.icon}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{badge.name}</h3>
+                      {badge.earned && <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">Earned ✓</span>}
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{badge.description}</p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-500">{badge.requirement}</span>
+                      <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">+{badge.xpReward} XP</span>
+                    </div>
+                    {badge.earned && badge.earnedDate && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Earned on {new Date(badge.earnedDate).toLocaleDateString()}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Daily Challenge View */}
+      {view === 'daily-challenge' && (
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-3 mb-6">
+            <button onClick={() => setView('list')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <ArrowLeftIcon />
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">📅 Daily Challenge</h2>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-6 text-white mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-sm opacity-80">Today's Challenge</p>
+                <h3 className="text-xl font-bold">{dailyChallenge.title}</h3>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold">+{dailyChallenge.xpReward}</p>
+                <p className="text-xs opacity-80">XP Reward</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+              <span className="px-2 py-1 bg-white/20 rounded text-xs">{dailyChallenge.topic}</span>
+              <span className="px-2 py-1 bg-white/20 rounded text-xs capitalize">{dailyChallenge.difficulty}</span>
+              <span className="px-2 py-1 bg-white/20 rounded text-xs">⏱️ {Math.floor(dailyChallenge.timeLimit / 60)} min</span>
+            </div>
+            <button
+              onClick={() => {
+                const challengeAssessment = assessments.find(a => a.title.toLowerCase().includes(dailyChallenge.topic.toLowerCase())) || assessments[0];
+                setSelectedAssessment(challengeAssessment);
+                setShowInstructions(true);
+              }}
+              className="w-full py-3 bg-white text-purple-600 font-semibold rounded-xl hover:bg-gray-100 transition"
+            >
+              {dailyChallenge.completed ? 'Challenge Completed! ✓' : 'Start Challenge'}
+            </button>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Challenge Rules</h4>
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+              <li className="flex items-start gap-2">
+                <span className="text-purple-500">•</span>
+                Complete the challenge within the time limit
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-purple-500">•</span>
+                Score at least 70% to earn the full XP reward
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-purple-500">•</span>
+                Challenge resets daily at midnight
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-purple-500">•</span>
+                Complete 10 daily challenges to earn the "Daily Champion" badge
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -884,12 +1422,20 @@ const MockAssessmentPage: React.FC = () => {
 
   const renderInstructionsModal = () => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto">
+        <button
+          onClick={() => setShowInstructions(false)}
+          className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-500"
+        >
+          ✕
+        </button>
+        
         <div className="flex items-center gap-3 mb-6">
           <img
             src={selectedAssessment?.logo}
             alt={selectedAssessment?.title}
             className="w-12 h-12 object-contain"
+            onError={(e) => { (e.target as HTMLImageElement).src = '/mock_assessments_logo/sde_interview.png'; }}
           />
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Powered by</p>
@@ -898,31 +1444,109 @@ const MockAssessmentPage: React.FC = () => {
         </div>
 
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-          Mock Coding Interview Assessment - {selectedAssessment?.title}
+          {selectedAssessment?.title} Assessment
         </h2>
 
-        <div className="mb-6">
+        {/* Test Mode Selection */}
+        <div className="mb-5">
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+            <span>📝</span> Test Mode
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setTestMode('timed')}
+              className={`p-4 rounded-xl border-2 transition ${
+                testMode === 'timed'
+                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              <div className="text-2xl mb-1">⏱️</div>
+              <p className="font-medium text-gray-900 dark:text-white text-sm">Timed Test</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Real exam experience</p>
+            </button>
+            <button
+              onClick={() => setTestMode('practice')}
+              className={`p-4 rounded-xl border-2 transition ${
+                testMode === 'practice'
+                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              <div className="text-2xl mb-1">📚</div>
+              <p className="font-medium text-gray-900 dark:text-white text-sm">Practice Mode</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">No timer, learn at your pace</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Difficulty Selection */}
+        <div className="mb-5">
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+            <span>🎯</span> Difficulty Level
+          </h4>
+          <div className="flex gap-2">
+            {(['easy', 'medium', 'hard'] as DifficultyLevel[]).map((diff) => (
+              <button
+                key={diff}
+                onClick={() => setSelectedDifficulty(diff)}
+                className={`flex-1 py-3 px-4 rounded-xl border-2 transition capitalize ${
+                  selectedDifficulty === diff
+                    ? diff === 'easy' 
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' 
+                      : diff === 'medium' 
+                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' 
+                      : 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <div className="text-lg mb-0.5">
+                  {diff === 'easy' ? '🌱' : diff === 'medium' ? '🌿' : '🌳'}
+                </div>
+                <p className="font-medium text-sm">{diff}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* XP Reward Preview */}
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-4 mb-5 border border-purple-200 dark:border-purple-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">⚡</span>
+              <span className="text-sm text-purple-700 dark:text-purple-400">Potential XP Reward</span>
+            </div>
+            <span className="font-bold text-purple-700 dark:text-purple-400">
+              +{selectedDifficulty === 'easy' ? 50 : selectedDifficulty === 'medium' ? 100 : 150} - {selectedDifficulty === 'easy' ? 100 : selectedDifficulty === 'medium' ? 200 : 300} XP
+            </span>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="mb-5">
           <h4 className="font-semibold text-orange-600 dark:text-orange-400 mb-3">Instructions</h4>
-          <ol className="space-y-3 text-gray-600 dark:text-gray-400">
+          <ol className="space-y-2 text-gray-600 dark:text-gray-400 text-sm">
             <li className="flex gap-2">
-              <span className="font-medium">1.</span>
-              <span>You will have <strong>{selectedAssessment?.time}</strong> to complete the test and it <strong>cannot be paused once started.</strong></span>
+              <span className="font-medium text-gray-900 dark:text-white">1.</span>
+              <span>You will have <strong>{testMode === 'practice' ? 'unlimited time' : selectedAssessment?.time}</strong> to complete the test.</span>
             </li>
             <li className="flex gap-2">
-              <span className="font-medium">2.</span>
-              <span>Please refrain from performing the following <strong className="text-red-500">restricted events.</strong></span>
+              <span className="font-medium text-gray-900 dark:text-white">2.</span>
+              <span>Score at least 60% to pass and earn your certificate.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-medium text-gray-900 dark:text-white">3.</span>
+              <span>Review explanations after the test to learn from mistakes.</span>
             </li>
           </ol>
-          <p className="mt-3 text-sm italic text-gray-500 dark:text-gray-500">
-            Text Selection, Copy & Paste, Right Click, Opening Inspector, Debugging Console, Browser Settings, Switching Tabs, Closing the Session Tab
-          </p>
         </div>
 
         <button
           onClick={handleBeginTest}
-          className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium rounded-xl hover:shadow-lg shadow-orange-500/30 transition"
+          className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium rounded-xl hover:shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2"
         >
-          Start Test
+          <span>🚀</span>
+          Start {testMode === 'practice' ? 'Practice' : 'Test'}
         </button>
       </div>
     </div>
@@ -1454,6 +2078,147 @@ const MockAssessmentPage: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+
+          {/* Topic-wise Performance Analytics */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">📊 TOPIC-WISE PERFORMANCE</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Identify your strengths and areas for improvement</p>
+            </div>
+            <div className="p-6">
+              {(() => {
+                const topicStats: Record<string, { correct: number; total: number }> = {};
+                testResult.questionResults.forEach(r => {
+                  if (!topicStats[r.topic]) topicStats[r.topic] = { correct: 0, total: 0 };
+                  topicStats[r.topic].total++;
+                  if (r.isCorrect) topicStats[r.topic].correct++;
+                });
+                return Object.entries(topicStats).map(([topic, stats]) => {
+                  const percentage = Math.round((stats.correct / stats.total) * 100);
+                  return (
+                    <div key={topic} className="mb-4 last:mb-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{topic}</span>
+                        <span className={`text-sm font-medium ${percentage >= 70 ? 'text-emerald-600' : percentage >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
+                          {stats.correct}/{stats.total} ({percentage}%)
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div
+                          className={`h-2.5 rounded-full transition-all duration-500 ${
+                            percentage >= 70 ? 'bg-emerald-500' : percentage >= 40 ? 'bg-amber-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+
+          {/* XP Earned Card */}
+          <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-6 mb-8 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-80">XP Earned from this test</p>
+                <p className="text-3xl font-bold">+{Math.round(testResult.score * 2)} XP</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm opacity-80">New Level Progress</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 bg-white/30 rounded-full h-2">
+                    <div className="bg-white rounded-full h-2" style={{ width: '78%' }} />
+                  </div>
+                  <span className="text-sm font-medium">Level 5</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Show Explanations Toggle */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">📚 ANSWER EXPLANATIONS</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Learn from your mistakes with detailed explanations</p>
+              </div>
+              <button
+                onClick={() => setShowExplanations(!showExplanations)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  showExplanations
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {showExplanations ? 'Hide Explanations' : 'Show Explanations'}
+              </button>
+            </div>
+            {showExplanations && (
+              <div className="p-6 space-y-4">
+                {getQuestions().map((q, idx) => {
+                  const result = testResult.questionResults.find(r => r.questionId === q.id);
+                  const isCorrect = result?.isCorrect;
+                  return (
+                    <div key={q.id} className={`p-4 rounded-xl border ${isCorrect ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10'}`}>
+                      <div className="flex items-start gap-3">
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isCorrect ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 dark:text-white text-sm mb-2">{q.question}</p>
+                          <div className="grid grid-cols-2 gap-2 mb-3">
+                            {q.options.map((opt, optIdx) => (
+                              <div
+                                key={optIdx}
+                                className={`px-3 py-2 rounded-lg text-xs ${
+                                  optIdx === q.correctAnswer
+                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                                    : optIdx === result?.userAnswer && !isCorrect
+                                    ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                }`}
+                              >
+                                <span className="font-medium">{String.fromCharCode(65 + optIdx)}.</span> {opt}
+                                {optIdx === q.correctAnswer && <span className="ml-1">✓</span>}
+                                {optIdx === result?.userAnswer && !isCorrect && <span className="ml-1">✗</span>}
+                              </div>
+                            ))}
+                          </div>
+                          {q.explanation && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                              <p className="text-xs font-medium text-blue-800 dark:text-blue-300 mb-1">💡 Explanation:</p>
+                              <p className="text-xs text-blue-700 dark:text-blue-400">{q.explanation}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Recommended Resources */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">📖 RECOMMENDED RESOURCES</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Based on your weak areas</p>
+            </div>
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {studyResources.slice(0, 3).map((resource) => (
+                <div key={resource.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 hover:shadow-md transition cursor-pointer">
+                  <div className="text-2xl mb-2">
+                    {resource.type === 'video' ? '🎥' : resource.type === 'article' ? '📄' : resource.type === 'flashcard' ? '🃏' : '💻'}
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{resource.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{resource.duration}</p>
+                </div>
+              ))}
             </div>
           </div>
 
