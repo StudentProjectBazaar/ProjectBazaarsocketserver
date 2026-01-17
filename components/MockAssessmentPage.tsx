@@ -263,7 +263,65 @@ const MockAssessmentPage: React.FC = () => {
   const [showRules, setShowRules] = useState(false);
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
   const [testStartTime, setTestStartTime] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState<'assessment' | 'interview'>('assessment');
+  const [activeTab, setActiveTab] = useState<'assessment' | 'interview' | 'history'>('assessment');
+  const [historyViewMode, setHistoryViewMode] = useState<'list' | 'grid'>('grid');
+  const [testHistory, setTestHistory] = useState<TestResult[]>([
+    {
+      assessmentId: 'react',
+      assessmentTitle: 'React',
+      score: 13,
+      totalQuestions: 15,
+      attempted: 15,
+      solved: 13,
+      duration: '24 mins',
+      startTime: '2026-01-15T10:30:00',
+      questionResults: []
+    },
+    {
+      assessmentId: 'java',
+      assessmentTitle: 'Java',
+      score: 12,
+      totalQuestions: 15,
+      attempted: 15,
+      solved: 12,
+      duration: '28 mins',
+      startTime: '2026-01-12T14:15:00',
+      questionResults: []
+    },
+    {
+      assessmentId: 'python',
+      assessmentTitle: 'Python',
+      score: 14,
+      totalQuestions: 15,
+      attempted: 15,
+      solved: 14,
+      duration: '22 mins',
+      startTime: '2026-01-10T09:00:00',
+      questionResults: []
+    },
+    {
+      assessmentId: 'sql',
+      assessmentTitle: 'SQL',
+      score: 8,
+      totalQuestions: 15,
+      attempted: 14,
+      solved: 8,
+      duration: '30 mins',
+      startTime: '2026-01-08T16:45:00',
+      questionResults: []
+    },
+    {
+      assessmentId: 'javascript',
+      assessmentTitle: 'JavaScript',
+      score: 11,
+      totalQuestions: 15,
+      attempted: 15,
+      solved: 11,
+      duration: '26 mins',
+      startTime: '2026-01-05T11:20:00',
+      questionResults: []
+    },
+  ]);
 
   // Get questions for current assessment
   const getQuestions = useCallback(() => {
@@ -359,6 +417,7 @@ const MockAssessmentPage: React.FC = () => {
     };
 
     setTestResult(result);
+    setTestHistory(prev => [result, ...prev]); // Save to history
     setView('results');
   };
 
@@ -456,7 +515,7 @@ const MockAssessmentPage: React.FC = () => {
             <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
               <button
                 onClick={() => setActiveTab('assessment')}
-                className={`px-6 py-2 rounded-lg font-medium transition ${
+                className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
                   activeTab === 'assessment'
                     ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -466,7 +525,7 @@ const MockAssessmentPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveTab('interview')}
-                className={`px-6 py-2 rounded-lg font-medium transition ${
+                className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
                   activeTab === 'interview'
                     ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -474,12 +533,22 @@ const MockAssessmentPage: React.FC = () => {
               >
                 Mock Interview
               </button>
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`px-5 py-2 rounded-lg font-medium transition text-sm ${
+                  activeTab === 'history'
+                    ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                History
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {activeTab === 'assessment' ? (
+      {activeTab === 'assessment' && (
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Hero Section */}
           <div className="text-center mb-12">
@@ -496,9 +565,9 @@ const MockAssessmentPage: React.FC = () => {
             {assessments.map(renderAssessmentCard)}
           </div>
         </div>
-      ) : (
-        renderMockInterviewSection()
       )}
+      {activeTab === 'interview' && renderMockInterviewSection()}
+      {activeTab === 'history' && renderHistorySection()}
     </div>
   );
 
@@ -551,6 +620,267 @@ const MockAssessmentPage: React.FC = () => {
       </div>
     </div>
   );
+
+  const renderHistorySection = () => {
+    const renderHistoryCard = (result: TestResult, index: number) => {
+      const percentage = Math.round((result.score / result.totalQuestions) * 100);
+      const isPassed = percentage >= 60;
+      const assessment = assessments.find(a => a.id === result.assessmentId);
+      
+      return (
+        <div
+          key={index}
+          className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gray-50 dark:bg-gray-700 rounded-lg p-2 flex-shrink-0">
+              <img
+                src={assessment?.logo || '/mock_assessments_logo/sde_interview.png'}
+                alt={result.assessmentTitle}
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                {result.assessmentTitle}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {new Date(result.startTime).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </p>
+            </div>
+            <span className={`px-2 py-0.5 rounded text-xs ${
+              isPassed
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+            }`}>
+              {isPassed ? 'Passed' : 'Failed'}
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-2 mb-4 text-center">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg py-2">
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">{result.score}/{result.totalQuestions}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Score</p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg py-2">
+              <p className={`text-lg font-semibold ${isPassed ? 'text-emerald-600' : 'text-red-500'}`}>{percentage}%</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Accuracy</p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg py-2">
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">{result.duration}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Duration</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            {isPassed && (
+              <button
+                onClick={() => {
+                  setTestResult(result);
+                  setView('certificate');
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-orange-500 text-white text-xs rounded-lg hover:bg-orange-600 transition"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Certificate
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setTestResult(result);
+                setView('results');
+              }}
+              className={`${isPassed ? 'flex-1' : 'w-full'} flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition`}
+            >
+              View Details
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    const renderHistoryList = (result: TestResult, index: number) => {
+      const percentage = Math.round((result.score / result.totalQuestions) * 100);
+      const isPassed = percentage >= 60;
+      const assessment = assessments.find(a => a.id === result.assessmentId);
+      
+      return (
+        <div
+          key={index}
+          className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-11 h-11 bg-gray-50 dark:bg-gray-700 rounded-lg p-2 flex-shrink-0">
+                <img
+                  src={assessment?.logo || '/mock_assessments_logo/sde_interview.png'}
+                  alt={result.assessmentTitle}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{result.assessmentTitle} Assessment</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Completed on {new Date(result.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-5 sm:gap-6">
+              <div className="text-center">
+                <p className="text-base font-semibold text-gray-900 dark:text-white">{result.score}/{result.totalQuestions}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Score</p>
+              </div>
+              <div className="text-center">
+                <p className={`text-base font-semibold ${isPassed ? 'text-emerald-600' : 'text-red-500'}`}>{percentage}%</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Accuracy</p>
+              </div>
+              <div className="text-center">
+                <p className="text-base font-semibold text-gray-900 dark:text-white">{result.duration}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Duration</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className={`px-2.5 py-1 rounded text-xs ${
+                isPassed
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+              }`}>
+                {isPassed ? 'Passed' : 'Failed'}
+              </span>
+              {isPassed && (
+                <button
+                  onClick={() => { setTestResult(result); setView('certificate'); }}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-orange-500 text-white text-xs rounded hover:bg-orange-600 transition"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Certificate
+                </button>
+              )}
+              <button
+                onClick={() => { setTestResult(result); setView('results'); }}
+                className="px-2.5 py-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              >
+                Details
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header with View Toggle */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Your Assessment History</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">View your attempted assessments, scores, and download certificates</p>
+          </div>
+          
+          {testHistory.length > 0 && (
+            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <button
+                onClick={() => setHistoryViewMode('list')}
+                className={`px-3 py-1.5 rounded text-xs transition ${
+                  historyViewMode === 'list'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setHistoryViewMode('grid')}
+                className={`px-3 py-1.5 rounded text-xs transition ${
+                  historyViewMode === 'grid'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {testHistory.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-10 text-center">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No Assessments Attempted Yet</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Start taking mock assessments to build your history!</p>
+            <button
+              onClick={() => setActiveTab('assessment')}
+              className="px-5 py-2 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 transition"
+            >
+              Take Your First Assessment
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* List View */}
+            {historyViewMode === 'list' && (
+              <div className="space-y-3">
+                {testHistory.map(renderHistoryList)}
+              </div>
+            )}
+
+            {/* Grid View */}
+            {historyViewMode === 'grid' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {testHistory.map(renderHistoryCard)}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Summary Stats */}
+        {testHistory.length > 0 && (
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{testHistory.length}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Tests Attempted</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
+              <p className="text-2xl font-semibold text-emerald-600">
+                {testHistory.filter(r => Math.round((r.score / r.totalQuestions) * 100) >= 60).length}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Tests Passed</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
+              <p className="text-2xl font-semibold text-orange-600">
+                {Math.round(testHistory.reduce((acc, r) => acc + (r.score / r.totalQuestions) * 100, 0) / testHistory.length)}%
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Avg. Score</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
+              <p className="text-2xl font-semibold text-amber-600">
+                {testHistory.filter(r => Math.round((r.score / r.totalQuestions) * 100) >= 60).length}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Certificates</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderInstructionsModal = () => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
