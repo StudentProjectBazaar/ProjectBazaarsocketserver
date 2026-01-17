@@ -62,6 +62,7 @@ const viewTitles: Record<DashboardView, string> = {
   'course-details': 'Course Details',
   'build-portfolio': 'Build Portfolio',
   'build-resume': 'AI Resume Builder',
+  'career-guidance': 'Career Guidance Hub',
 };
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({
