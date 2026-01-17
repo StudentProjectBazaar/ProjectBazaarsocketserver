@@ -1,5 +1,73 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
+// Confetti celebration functions (dynamically imported)
+const triggerConfetti = async () => {
+  const confetti = (await import('canvas-confetti')).default;
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 }
+  });
+};
+
+const triggerSuccessConfetti = async () => {
+  const confetti = (await import('canvas-confetti')).default;
+  const count = 200;
+  const defaults = { origin: { y: 0.7 } };
+
+  const fire = (particleRatio: number, opts: Record<string, unknown>) => {
+    confetti({
+      ...defaults,
+      ...opts,
+      particleCount: Math.floor(count * particleRatio)
+    });
+  };
+
+  fire(0.25, { spread: 26, startVelocity: 55 });
+  fire(0.2, { spread: 60 });
+  fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+  fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+  fire(0.1, { spread: 120, startVelocity: 45 });
+};
+
+const triggerBadgeConfetti = async () => {
+  const confetti = (await import('canvas-confetti')).default;
+  confetti({
+    particleCount: 150,
+    spread: 90,
+    origin: { y: 0.5 },
+    colors: ['#FFD700', '#FFA500', '#FF8C00', '#FFB347', '#FFDAB9']
+  });
+};
+
+const triggerCertificateConfetti = async () => {
+  const confetti = (await import('canvas-confetti')).default;
+  const end = Date.now() + 2000;
+  const colors = ['#FFD700', '#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42'];
+
+  const frame = () => {
+    confetti({
+      particleCount: 3,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors: colors
+    });
+    confetti({
+      particleCount: 3,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors: colors
+    });
+
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  };
+  frame();
+};
+
 // Navigation helper for updating URL
 const navigateToRoute = (path: string) => {
   window.history.pushState({}, '', path);
@@ -64,6 +132,7 @@ interface Badge {
   name: string;
   description: string;
   icon: string;
+  image?: string; // Path to badge image
   earned: boolean;
   earnedDate?: string;
   requirement: string;
@@ -157,18 +226,18 @@ const companyAssessments: Assessment[] = [
 
 // Badges data
 const allBadges: Badge[] = [
-  { id: 'first-test', name: 'First Steps', description: 'Complete your first assessment', icon: '🎯', earned: true, earnedDate: '2026-01-10', requirement: 'Complete 1 test', xpReward: 50 },
-  { id: 'streak-7', name: 'Week Warrior', description: 'Maintain a 7-day streak', icon: '🔥', earned: true, earnedDate: '2026-01-15', requirement: '7 day streak', xpReward: 100 },
-  { id: 'perfect-score', name: 'Perfectionist', description: 'Score 100% on any test', icon: '💯', earned: false, requirement: '100% score', xpReward: 200 },
-  { id: 'java-master', name: 'Java Master', description: 'Complete all Java assessments with 80%+', icon: '☕', earned: true, earnedDate: '2026-01-12', requirement: 'Master Java', xpReward: 150 },
-  { id: 'speed-demon', name: 'Speed Demon', description: 'Complete a test in under 5 minutes', icon: '⚡', earned: false, requirement: 'Finish < 5 mins', xpReward: 75 },
-  { id: 'streak-30', name: 'Monthly Master', description: 'Maintain a 30-day streak', icon: '🏆', earned: false, requirement: '30 day streak', xpReward: 300 },
-  { id: 'ten-tests', name: 'Dedicated Learner', description: 'Complete 10 assessments', icon: '📚', earned: true, earnedDate: '2026-01-14', requirement: 'Complete 10 tests', xpReward: 100 },
-  { id: 'all-topics', name: 'Well Rounded', description: 'Complete tests in 5 different categories', icon: '🌟', earned: false, requirement: '5 categories', xpReward: 150 },
-  { id: 'night-owl', name: 'Night Owl', description: 'Complete a test after midnight', icon: '🦉', earned: false, requirement: 'Test after 12 AM', xpReward: 50 },
-  { id: 'early-bird', name: 'Early Bird', description: 'Complete a test before 6 AM', icon: '🐦', earned: false, requirement: 'Test before 6 AM', xpReward: 50 },
-  { id: 'company-ready', name: 'Company Ready', description: 'Complete 3 company-specific assessments', icon: '💼', earned: false, requirement: '3 company tests', xpReward: 200 },
-  { id: 'daily-champ', name: 'Daily Champion', description: 'Complete 10 daily challenges', icon: '📅', earned: false, requirement: '10 daily challenges', xpReward: 150 },
+  { id: 'first-test', name: 'First Steps', description: 'Complete your first assessment', icon: '🎯', image: '/badge_logo/target.png', earned: true, earnedDate: '2026-01-10', requirement: 'Complete 1 test', xpReward: 50 },
+  { id: 'streak-7', name: 'Week Warrior', description: 'Maintain a 7-day streak', icon: '🔥', image: '/badge_logo/fire.png', earned: true, earnedDate: '2026-01-15', requirement: '7 day streak', xpReward: 100 },
+  { id: 'perfect-score', name: 'Perfectionist', description: 'Score 100% on any test', icon: '💯', image: '/badge_logo/first_place.png', earned: false, requirement: '100% score', xpReward: 200 },
+  { id: 'java-master', name: 'Java Master', description: 'Complete all Java assessments with 80%+', icon: '☕', image: '/badge_logo/java.png', earned: true, earnedDate: '2026-01-12', requirement: 'Master Java', xpReward: 150 },
+  { id: 'speed-demon', name: 'Speed Demon', description: 'Complete a test in under 5 minutes', icon: '⚡', image: '/badge_logo/lightning.png', earned: false, requirement: 'Finish < 5 mins', xpReward: 75 },
+  { id: 'streak-30', name: 'Monthly Master', description: 'Maintain a 30-day streak', icon: '🏆', image: '/badge_logo/trophy.png', earned: false, requirement: '30 day streak', xpReward: 300 },
+  { id: 'ten-tests', name: 'Dedicated Learner', description: 'Complete 10 assessments', icon: '📚', image: '/badge_logo/books.png', earned: true, earnedDate: '2026-01-14', requirement: 'Complete 10 tests', xpReward: 100 },
+  { id: 'all-topics', name: 'Well Rounded', description: 'Complete tests in 5 different categories', icon: '🌟', image: '/badge_logo/star.png', earned: false, requirement: '5 categories', xpReward: 150 },
+  { id: 'night-owl', name: 'Night Owl', description: 'Complete a test after midnight', icon: '🦉', image: '/badge_logo/owl.png', earned: false, requirement: 'Test after 12 AM', xpReward: 50 },
+  { id: 'early-bird', name: 'Early Bird', description: 'Complete a test before 6 AM', icon: '🐦', image: '/badge_logo/bird.png', earned: false, requirement: 'Test before 6 AM', xpReward: 50 },
+  { id: 'company-ready', name: 'Company Ready', description: 'Complete 3 company-specific assessments', icon: '💼', image: '/badge_logo/briefcase.png', earned: false, requirement: '3 company tests', xpReward: 200 },
+  { id: 'daily-champ', name: 'Daily Champion', description: 'Complete 10 daily challenges', icon: '📅', image: '/badge_logo/calendar.png', earned: false, requirement: '10 daily challenges', xpReward: 150 },
 ];
 
 // Leaderboard data
@@ -432,6 +501,13 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
       'study-resources': '/mock-assessment'
     };
     navigateToRoute(routes[targetView] || '/mock-assessment');
+    
+    // Trigger confetti for achievements view
+    if (targetView === 'achievements') {
+      setTimeout(() => {
+        triggerBadgeConfetti();
+      }, 400);
+    }
   }, []);
 
   const [testHistory, setTestHistory] = useState<TestResult[]>([
@@ -622,6 +698,15 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     }
     
     setView('results');
+    
+    // Trigger confetti based on score
+    setTimeout(() => {
+      if (score >= 80) {
+        triggerSuccessConfetti();
+      } else if (score >= 50) {
+        triggerConfetti();
+      }
+    }, 300);
   };
 
   const handleBackToList = () => {
@@ -634,6 +719,10 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
 
   const handleViewCertificate = () => {
     setView('certificate');
+    // Trigger celebration confetti for certificate
+    setTimeout(() => {
+      triggerCertificateConfetti();
+    }, 500);
   };
 
   // ============================================
@@ -828,29 +917,44 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
           </div>
 
           {/* Badges Preview */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium text-gray-900 dark:text-white">Your Badges</h3>
+          <div className="bg-gradient-to-br from-white to-amber-50/30 dark:from-gray-800 dark:to-amber-900/10 rounded-2xl p-5 border border-amber-100 dark:border-amber-800/30 mb-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🏆</span>
+                <h3 className="font-semibold text-gray-900 dark:text-white">Your Badges</h3>
+                <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
+                  {allBadges.filter(b => b.earned).length}/{allBadges.length}
+                </span>
+              </div>
               <button 
                 onClick={() => navigateToView('achievements')}
-                className="text-xs text-orange-600 dark:text-orange-400 hover:underline"
+                className="text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium transition-colors flex items-center gap-1"
               >
-                View All ({allBadges.length})
+                View All
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </button>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {allBadges.slice(0, 8).map((badge) => (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {allBadges.slice(0, 8).map((badge, index) => (
                 <div 
                   key={badge.id}
-                  className={`flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center ${
+                  className={`group flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center cursor-pointer transition-all duration-300 ease-out hover:scale-110 hover:-translate-y-1 ${
                     badge.earned 
-                      ? 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700' 
-                      : 'bg-gray-100 dark:bg-gray-700 opacity-50'
+                      ? 'bg-gradient-to-br from-amber-100 via-orange-50 to-yellow-100 dark:from-amber-800/40 dark:via-orange-800/30 dark:to-yellow-800/40 border-2 border-amber-300 dark:border-amber-600 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/30' 
+                      : 'bg-gray-100 dark:bg-gray-700/50 border-2 border-gray-200 dark:border-gray-600 grayscale opacity-40 hover:opacity-60'
                   }`}
-                  title={badge.name}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  title={`${badge.name}${badge.earned ? ' ✓' : ' (Locked)'}`}
                 >
-                  <span className="text-xl">{badge.icon}</span>
-                  {badge.earned && <span className="text-[8px] text-amber-600 dark:text-amber-400">✓</span>}
+                  {badge.image ? (
+                    <img 
+                      src={badge.image} 
+                      alt={badge.name} 
+                      className={`w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110 ${badge.earned ? 'drop-shadow-md' : ''}`} 
+                    />
+                  ) : (
+                    <span className="text-2xl transition-transform duration-300 group-hover:scale-110">{badge.icon}</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -1061,41 +1165,116 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
       {/* Achievements View */}
       {view === 'achievements' && (
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => navigateToView('list')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-8">
+            <button 
+              onClick={() => navigateToView('list')} 
+              className="p-2.5 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:scale-105"
+            >
               <ArrowLeftIcon />
             </button>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">🎖️ Achievements & Badges</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Achievements & Badges</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                {allBadges.filter(b => b.earned).length} of {allBadges.length} badges unlocked
+              </p>
+            </div>
           </div>
 
+          {/* Progress Bar */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 mb-6 border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Collection Progress</span>
+              <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                {Math.round((allBadges.filter(b => b.earned).length / allBadges.length) * 100)}%
+              </span>
+            </div>
+            <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${(allBadges.filter(b => b.earned).length / allBadges.length) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Badges Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {allBadges.map((badge) => (
+            {allBadges.map((badge, index) => (
               <div
                 key={badge.id}
-                className={`bg-white dark:bg-gray-800 rounded-xl p-4 border ${
+                className={`group relative bg-white dark:bg-gray-800 rounded-2xl p-5 border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
                   badge.earned
-                    ? 'border-amber-200 dark:border-amber-700 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-900/10 dark:to-orange-900/10'
-                    : 'border-gray-200 dark:border-gray-700 opacity-60'
+                    ? 'border-amber-200 dark:border-amber-700/50 hover:border-amber-400 dark:hover:border-amber-500'
+                    : 'border-gray-200 dark:border-gray-700 opacity-70 hover:opacity-100'
                 }`}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div className="flex items-start gap-4">
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
-                    badge.earned ? 'bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30' : 'bg-gray-100 dark:bg-gray-700'
+                {/* Earned Glow Effect */}
+                {badge.earned && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-100/50 via-transparent to-orange-100/50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl pointer-events-none" />
+                )}
+                
+                <div className="relative flex items-start gap-4">
+                  {/* Badge Icon */}
+                  <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${
+                    badge.earned 
+                      ? 'bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-amber-800/40 dark:via-orange-800/30 dark:to-yellow-800/40 shadow-lg' 
+                      : 'bg-gray-100 dark:bg-gray-700 grayscale'
                   }`}>
-                    {badge.icon}
+                    {badge.image ? (
+                      <img 
+                        src={badge.image} 
+                        alt={badge.name} 
+                        className={`w-11 h-11 object-contain ${badge.earned ? 'drop-shadow-md' : 'opacity-50'}`} 
+                      />
+                    ) : (
+                      <span className="text-3xl">{badge.icon}</span>
+                    )}
+                    {/* Lock Icon for unearned */}
+                    {!badge.earned && (
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gray-400 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                  
+                  {/* Badge Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-gray-900 dark:text-white">{badge.name}</h3>
-                      {badge.earned && <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">Earned ✓</span>}
+                      {badge.earned && (
+                        <span className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-emerald-500 to-green-500 text-white px-2 py-0.5 rounded-full font-medium shadow-sm">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          Earned
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{badge.description}</p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-500">{badge.requirement}</span>
-                      <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">+{badge.xpReward} XP</span>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{badge.description}</p>
+                    <div className="flex items-center gap-3 mt-3">
+                      <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {badge.requirement}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded-lg font-medium">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM8 12a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3a.5.5 0 01-.5-.5zm0-3a.5.5 0 01.5-.5h3a.5.5 0 010 1h-3A.5.5 0 018 9z" />
+                        </svg>
+                        +{badge.xpReward} XP
+                      </span>
                     </div>
                     {badge.earned && badge.earnedDate && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Earned on {new Date(badge.earnedDate).toLocaleDateString()}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Earned on {new Date(badge.earnedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -2559,6 +2738,115 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     </div>
   );
 
+  // Achievements View
+  const renderAchievements = () => (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-8">
+        <button 
+          onClick={() => navigateToView('list')} 
+          className="p-2.5 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:scale-105"
+        >
+          <ArrowLeftIcon />
+        </button>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Achievements & Badges</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            {allBadges.filter(b => b.earned).length} of {allBadges.length} badges unlocked
+          </p>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 mb-6 border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Collection Progress</span>
+          <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+            {Math.round((allBadges.filter(b => b.earned).length / allBadges.length) * 100)}%
+          </span>
+        </div>
+        <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 rounded-full transition-all duration-1000 ease-out"
+            style={{ width: `${(allBadges.filter(b => b.earned).length / allBadges.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Badges Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {allBadges.map((badge, index) => (
+          <div
+            key={badge.id}
+            className={`group relative bg-white dark:bg-gray-800 rounded-2xl p-5 border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+              badge.earned
+                ? 'border-amber-200 dark:border-amber-700/50 hover:border-amber-400 dark:hover:border-amber-500'
+                : 'border-gray-200 dark:border-gray-700 opacity-70 hover:opacity-100'
+            }`}
+            style={{ animationDelay: `${index * 50}ms` }}
+          >
+            {badge.earned && (
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-100/50 via-transparent to-orange-100/50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl pointer-events-none" />
+            )}
+            
+            <div className="relative flex items-start gap-4">
+              <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${
+                badge.earned 
+                  ? 'bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-amber-800/40 dark:via-orange-800/30 dark:to-yellow-800/40 shadow-lg' 
+                  : 'bg-gray-100 dark:bg-gray-700 grayscale'
+              }`}>
+                {badge.image ? (
+                  <img 
+                    src={badge.image} 
+                    alt={badge.name} 
+                    className={`w-11 h-11 object-contain ${badge.earned ? 'drop-shadow-md' : 'opacity-50'}`} 
+                  />
+                ) : (
+                  <span className="text-3xl">{badge.icon}</span>
+                )}
+                {!badge.earned && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gray-400 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{badge.name}</h3>
+                  {badge.earned && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-emerald-500 to-green-500 text-white px-2 py-0.5 rounded-full font-medium shadow-sm">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Earned
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{badge.description}</p>
+                <div className="flex items-center gap-3 mt-3">
+                  <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg">
+                    {badge.requirement}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded-lg font-medium">
+                    +{badge.xpReward} XP
+                  </span>
+                </div>
+                {badge.earned && badge.earnedDate && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                    Earned on {new Date(badge.earnedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   // Main render
   return (
     <>
@@ -2570,6 +2858,96 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
       {view === 'results' && renderResults()}
       {view === 'certificate' && renderCertificate()}
       {view === 'schedule' && renderScheduleInterview()}
+      {view === 'achievements' && renderAchievements()}
+      
+      {/* Leaderboard View */}
+      {view === 'leaderboard' && (
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-3 mb-6">
+            <button onClick={() => navigateToView('list')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <ArrowLeftIcon />
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">🏆 Leaderboard</h2>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-6">
+              <div className="flex justify-center items-end gap-4">
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-2xl mb-2 mx-auto border-4 border-gray-300 dark:border-gray-500">
+                    {leaderboardData[1]?.avatar}
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{leaderboardData[1]?.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{leaderboardData[1]?.xp} XP</p>
+                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-lg font-bold">2</div>
+                </div>
+                <div className="text-center -mb-4">
+                  <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-3xl mb-2 mx-auto border-4 border-amber-400">
+                    {leaderboardData[0]?.avatar}
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{leaderboardData[0]?.name}</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">{leaderboardData[0]?.xp} XP</p>
+                  <div className="w-12 h-14 bg-amber-400 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-xl font-bold text-white">👑</div>
+                </div>
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-xl mb-2 mx-auto border-4 border-orange-300">
+                    {leaderboardData[2]?.avatar}
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{leaderboardData[2]?.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{leaderboardData[2]?.xp} XP</p>
+                  <div className="w-8 h-8 bg-orange-300 dark:bg-orange-700 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-lg font-bold">3</div>
+                </div>
+              </div>
+            </div>
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+              {leaderboardData.slice(3).map((entry) => (
+                <div key={entry.rank} className="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <span className="w-8 text-center font-semibold text-gray-500 dark:text-gray-400">{entry.rank}</span>
+                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl">{entry.avatar}</div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white">{entry.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{entry.testsCompleted} tests • {entry.avgScore}% avg</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-orange-600 dark:text-orange-400">{entry.xp} XP</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{entry.badges} badges</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Daily Challenge View */}
+      {view === 'daily-challenge' && (
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-3 mb-6">
+            <button onClick={() => navigateToView('list')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <ArrowLeftIcon />
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">📅 Daily Challenge</h2>
+          </div>
+          <div className={`bg-white dark:bg-gray-800 rounded-2xl p-6 border-2 ${dailyChallenge.completed ? 'border-green-300 dark:border-green-700' : 'border-orange-300 dark:border-orange-700'}`}>
+            <div className="flex items-center justify-between mb-4">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${dailyChallenge.completed ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'}`}>
+                {dailyChallenge.completed ? '✓ Completed' : 'Available'}
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">Expires in 12h</span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{dailyChallenge.title}</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Topic: {dailyChallenge.topic}</p>
+            <div className="flex items-center gap-4 mb-6">
+              <span className="text-sm text-gray-500 dark:text-gray-400">⏱ {dailyChallenge.timeLimit} mins</span>
+              <span className="text-sm font-medium text-orange-600 dark:text-orange-400">+{dailyChallenge.xpReward} XP</span>
+            </div>
+            {!dailyChallenge.completed && (
+              <button className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl font-semibold transition-all">
+                Start Challenge
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 };
