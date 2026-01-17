@@ -64,6 +64,7 @@ const viewTitles: Record<DashboardView, string> = {
   'build-resume': 'AI Resume Builder',
   'career-guidance': 'Career Guidance Hub',
   'mock-assessment': 'Mock Assessments',
+  'coding-questions': 'Coding Interview Questions',
 };
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({

@@ -1384,20 +1384,39 @@ const CodingInterviewQuestionsPage: React.FC = () => {
           </div>
 
           {/* Career Banner */}
-          <div className="flex-1 bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-6 flex items-center justify-between overflow-hidden relative">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-teal-500 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 right-0 w-48 h-48 bg-blue-500 rounded-full blur-3xl"></div>
+          <div className="flex-1 bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-2xl p-6 flex items-center justify-between overflow-hidden relative border border-gray-800">
+            <div className="absolute inset-0">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-gray-500/10 rounded-full blur-3xl"></div>
+              {/* Subtle pattern overlay */}
+              <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
             </div>
-            <div className="relative z-10 flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-white font-bold text-lg tracking-wider">PROJECT</span>
-                <span className="text-teal-400 font-bold text-lg tracking-wider">BAZAAR</span>
+            <div className="relative z-10 flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-lg">Unlock All Company Questions</h3>
+                  <p className="text-gray-400 text-sm">Get access to 500+ questions from Google, Amazon, Meta & more</p>
+                </div>
               </div>
-              <span className="text-gray-300 text-lg ml-4">Get Free personalized Career Roadmap from Project Bazaar</span>
+              <div className="flex items-center gap-2 ml-4">
+                {['google', 'amazon', 'meta', 'microsoft', 'apple'].map((company) => (
+                  <div key={company} className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden">
+                    <img src={`/company_logos/${company}.png`} alt={company} className="w-6 h-6 object-contain" />
+                  </div>
+                ))}
+                <span className="text-gray-400 text-sm ml-1">+15 more</span>
+              </div>
             </div>
-            <button className="relative z-10 px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold rounded-lg transition-colors shadow-lg">
-              Show My Career Plan
+            <button className="relative z-10 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-lg transition-all shadow-lg flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Upgrade to Pro
             </button>
           </div>
         </div>
