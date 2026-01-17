@@ -49,7 +49,7 @@ interface TestResult {
 // ============================================
 
 const assessments: Assessment[] = [
-  { id: 'sde', title: 'SDE', logo: '/mock_assessments_logo/sde_interview.png', time: '50 Minutes', objective: 5, programming: 2, registrations: 68675, category: 'technical' },
+  { id: 'sde', title: 'SDE', logo: '/mock_assessments_logo/sde_interview.png', time: '5 Minutes', objective: 5, programming: 2, registrations: 68675, category: 'technical' },
   { id: 'react', title: 'React', logo: '/mock_assessments_logo/react.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 2262, category: 'framework' },
   { id: 'java', title: 'Java', logo: '/mock_assessments_logo/java.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 6626, category: 'language' },
   { id: 'sql', title: 'SQL', logo: '/mock_assessments_logo/sql.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 15902, category: 'database' },
@@ -384,7 +384,7 @@ const MockAssessmentPage: React.FC = () => {
       className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-300 relative group"
     >
       {assessment.popular && (
-        <div className="absolute -top-3 right-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1">
+        <div className="absolute -top-3 right-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1">
           <StarIcon />
           Popular
         </div>
@@ -427,7 +427,7 @@ const MockAssessmentPage: React.FC = () => {
       <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
         <button
           onClick={() => handleStartTest(assessment)}
-          className="w-full text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 flex items-center justify-center gap-2 group-hover:gap-3 transition-all"
+          className="w-full text-orange-600 dark:text-orange-400 font-medium hover:text-orange-700 dark:hover:text-orange-300 flex items-center justify-center gap-2 group-hover:gap-3 transition-all"
         >
           Attempt Now
           <ArrowRightIcon />
@@ -437,7 +437,7 @@ const MockAssessmentPage: React.FC = () => {
   );
 
   const renderAssessmentList = () => (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -458,7 +458,7 @@ const MockAssessmentPage: React.FC = () => {
                 onClick={() => setActiveTab('assessment')}
                 className={`px-6 py-2 rounded-lg font-medium transition ${
                   activeTab === 'assessment'
-                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
@@ -468,7 +468,7 @@ const MockAssessmentPage: React.FC = () => {
                 onClick={() => setActiveTab('interview')}
                 className={`px-6 py-2 rounded-lg font-medium transition ${
                   activeTab === 'interview'
-                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
@@ -513,7 +513,7 @@ const MockAssessmentPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
           <button
             onClick={() => setView('schedule')}
-            className="px-8 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium rounded-xl hover:shadow-lg transition flex items-center justify-center gap-2"
+            className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium rounded-xl hover:shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2"
           >
             Get An Interview Now
             <ArrowRightIcon />
@@ -572,7 +572,7 @@ const MockAssessmentPage: React.FC = () => {
         </h2>
 
         <div className="mb-6">
-          <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-3">Instructions</h4>
+          <h4 className="font-semibold text-orange-600 dark:text-orange-400 mb-3">Instructions</h4>
           <ol className="space-y-3 text-gray-600 dark:text-gray-400">
             <li className="flex gap-2">
               <span className="font-medium">1.</span>
@@ -590,7 +590,7 @@ const MockAssessmentPage: React.FC = () => {
 
         <button
           onClick={handleBeginTest}
-          className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium rounded-xl hover:shadow-lg transition"
+          className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium rounded-xl hover:shadow-lg shadow-orange-500/30 transition"
         >
           Start Test
         </button>
@@ -626,7 +626,7 @@ const MockAssessmentPage: React.FC = () => {
 
         <button
           onClick={handleEnterTest}
-          className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:shadow-lg transition"
+          className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium rounded-xl hover:shadow-lg shadow-orange-500/30 transition"
         >
           Enter Test
         </button>
@@ -638,188 +638,313 @@ const MockAssessmentPage: React.FC = () => {
     const questions = getQuestions();
     const currentQuestion = questions[currentQuestionIndex];
     const attemptedCount = Object.keys(answers).length;
+    const progressPercent = (attemptedCount / questions.length) * 100;
 
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
-        {/* Sidebar */}
-        <div className="w-20 bg-blue-900 text-white flex flex-col items-center py-6 space-y-6">
-          <button className="p-3 bg-blue-800 rounded-xl hover:bg-blue-700 transition">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-          <button className="p-3 bg-blue-800 rounded-xl hover:bg-blue-700 transition">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          </button>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-orange-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex">
+        {/* Enhanced Sidebar */}
+        <div className="w-20 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col shadow-2xl relative">
+          {/* Decorative accent */}
+          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-orange-400 via-orange-500 to-orange-600" />
           
-          {/* Question navigation */}
-          <div className="flex-1 overflow-y-auto space-y-2 mt-4">
-            <div className="text-xs font-medium text-blue-300 text-center mb-2">S1</div>
-            {questions.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentQuestionIndex(index)}
-                className={`w-12 h-8 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1 ${
-                  currentQuestionIndex === index
-                    ? 'bg-blue-500 text-white'
-                    : answers[index] !== undefined
-                    ? 'bg-green-500/20 text-green-300 border border-green-500'
-                    : 'bg-blue-800 text-blue-200 hover:bg-blue-700'
-                }`}
-              >
-                Q {index + 1}
-                {answers[index] !== undefined && (
-                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                )}
-              </button>
-            ))}
+          {/* Logo/Brand area */}
+          <div className="p-3 border-b border-slate-700/50">
+            <div className="w-10 h-10 mx-auto bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Quick actions */}
+          <div className="p-2 space-y-1.5 border-b border-slate-700/50">
+            <button className="w-full p-2 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-all duration-200 group">
+              <svg className="w-4 h-4 mx-auto text-slate-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Section label */}
+          <div className="px-2 py-3">
+            <div className="text-center">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Questions</span>
+            </div>
+          </div>
+          
+          {/* Question navigation - scrollable */}
+          <div className="flex-1 overflow-y-auto px-1.5 py-2 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+            <div className="grid grid-cols-2 gap-1.5">
+              {questions.map((_, index) => {
+                const isActive = currentQuestionIndex === index;
+                const isAnswered = answers[index] !== undefined;
+                const isFlagged = flaggedQuestions.has(index);
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentQuestionIndex(index)}
+                    className={`relative aspect-square rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center ${
+                      isActive
+                        ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-lg shadow-orange-500/40'
+                        : isAnswered
+                        ? 'bg-emerald-500/25 text-emerald-400 border border-emerald-500/40'
+                        : 'bg-slate-700/40 text-slate-400 hover:bg-slate-600/60 hover:text-white'
+                    }`}
+                  >
+                    {index + 1}
+                    {isAnswered && !isActive && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full" />
+                    )}
+                    {isFlagged && (
+                      <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Progress summary */}
+          <div className="p-3 border-t border-slate-700/50">
+            <div className="bg-slate-700/30 rounded-xl p-3">
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-slate-400">Progress</span>
+                <span className="text-white font-semibold">{attemptedCount}/{questions.length}</span>
+              </div>
+              <div className="h-2 bg-slate-600/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Main content */}
         <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+          {/* Enhanced Header */}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 px-8 py-5 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Mock Coding Interview Assessment - {selectedAssessment?.title}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full">
-                <ClockIcon />
-                <span className="font-mono font-medium text-gray-900 dark:text-white">{formatTime(timeLeft)}</span>
-              </div>
-
-              <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div
-                  className="bg-green-500 h-2 rounded-full transition-all"
-                  style={{ width: `${(attemptedCount / questions.length) * 100}%` }}
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 flex items-center justify-center">
+                <img
+                  src={selectedAssessment?.logo}
+                  alt={selectedAssessment?.title}
+                  className="w-6 h-6 object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
               </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {selectedAssessment?.title} Assessment
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Mock Coding Interview</p>
+              </div>
+            </div>
 
-              <span className="text-gray-600 dark:text-gray-400">
-                {attemptedCount} / {questions.length} Attempted
-              </span>
+            <div className="flex items-center gap-4">
+              {/* Timer */}
+              <div className={`flex items-center gap-3 px-5 py-2.5 rounded-2xl border-2 transition-all duration-300 ${
+                timeLeft < 300 
+                  ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800' 
+                  : timeLeft < 600 
+                  ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'
+                  : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+              }`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  timeLeft < 300 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-100 dark:bg-slate-700'
+                }`}>
+                  <ClockIcon />
+                </div>
+                <span className={`font-mono font-bold text-lg tracking-wide ${
+                  timeLeft < 300 ? 'text-red-600 dark:text-red-400 animate-pulse' : 'text-gray-900 dark:text-white'
+                }`}>
+                  {formatTime(timeLeft)}
+                </span>
+              </div>
 
+              {/* Progress indicator */}
+              <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div className="w-28 h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                  {attemptedCount} / {questions.length}
+                </span>
+              </div>
+
+              {/* End Test button */}
               <button
                 onClick={handleSubmitTest}
-                className="px-6 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition"
+                className="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-red-500 text-white font-semibold rounded-xl hover:from-rose-600 hover:to-red-600 transition-all duration-200 shadow-lg shadow-red-500/25 hover:shadow-red-500/40 hover:-translate-y-0.5"
               >
                 End Test
               </button>
             </div>
           </div>
 
-          {/* Question progress */}
-          <div className="bg-gray-100 dark:bg-gray-700 px-6 py-3 flex items-center gap-2 overflow-x-auto">
-            <span className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg">S1</span>
-            <span className="text-gray-500 dark:text-gray-400">Default Section</span>
-            <div className="flex-1 flex items-center gap-1 ml-4">
-              {questions.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentQuestionIndex(index)}
-                  className={`w-8 h-8 rounded-full text-sm font-medium transition ${
-                    currentQuestionIndex === index
-                      ? 'bg-blue-600 text-white'
-                      : answers[index] !== undefined
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
-                  }`}
-                >
-                  Q{index + 1}
-                </button>
-              ))}
+          {/* Question navigation pills */}
+          <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm px-8 py-4 border-b border-gray-200/50 dark:border-gray-700/50 overflow-visible">
+            <div className="flex items-center gap-3 overflow-x-auto py-2 px-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="px-3 py-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-bold rounded-lg shadow-sm">S1</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Section 1</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
+              </div>
+              <div className="flex items-center gap-2 py-1">
+                {questions.map((_, index) => {
+                  const isActive = currentQuestionIndex === index;
+                  const isAnswered = answers[index] !== undefined;
+                  
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentQuestionIndex(index)}
+                      className={`relative w-10 h-10 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
+                        isActive
+                          ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
+                          : isAnswered
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+                          : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600'
+                      }`}
+                    >
+                      {index + 1}
+                      {isAnswered && !isActive && (
+                        <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-800 transform translate-x-0.5 -translate-y-0.5" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Question content */}
-          <div className="flex-1 p-8 overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-medium text-gray-500 dark:text-gray-400">
-                  {selectedAssessment?.title.toUpperCase()} MCQ - {currentQuestion.id}
-                </h2>
-                <button
-                  onClick={handleFlagQuestion}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
-                    flaggedQuestions.has(currentQuestionIndex)
-                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <FlagIcon />
-                  Flag Question
-                </button>
-              </div>
-
-              <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-8">
-                {currentQuestion.question}
-              </h3>
-
-              <div className="space-y-4">
-                {currentQuestion.options.map((option, index) => (
+          <div className="flex-1 p-6 overflow-y-auto">
+            <div className="max-w-3xl mx-auto">
+              {/* Question card */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg shadow-gray-200/30 dark:shadow-none border border-gray-100 dark:border-gray-700 overflow-hidden">
+                {/* Question header */}
+                <div className="px-5 py-3 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-gray-750 dark:to-gray-800 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold text-base shadow-md shadow-orange-500/25">
+                      {currentQuestionIndex + 1}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
+                        {selectedAssessment?.title} • Question {currentQuestion.id}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Topic: <span className="font-medium text-gray-700 dark:text-gray-300">{currentQuestion.topic}</span>
+                      </p>
+                    </div>
+                  </div>
                   <button
-                    key={index}
-                    onClick={() => handleAnswerSelect(index)}
-                    className={`w-full p-4 rounded-xl border-2 text-left transition flex items-center gap-4 ${
-                      answers[currentQuestionIndex] === index
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    onClick={handleFlagQuestion}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 text-sm ${
+                      flaggedQuestions.has(currentQuestionIndex)
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
                     }`}
                   >
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        answers[currentQuestionIndex] === index
-                          ? 'border-blue-500 bg-blue-500'
-                          : 'border-gray-400'
-                      }`}
-                    >
-                      {answers[currentQuestionIndex] === index && (
-                        <div className="w-2 h-2 bg-white rounded-full" />
-                      )}
-                    </div>
-                    <span className="text-gray-700 dark:text-gray-300">{option}</span>
+                    <FlagIcon />
+                    <span className="font-medium">{flaggedQuestions.has(currentQuestionIndex) ? 'Flagged' : 'Flag'}</span>
                   </button>
-                ))}
+                </div>
+
+                {/* Question body */}
+                <div className="p-5">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white leading-relaxed mb-5">
+                    {currentQuestion.question}
+                  </h3>
+
+                  {/* Options */}
+                  <div className="space-y-2.5">
+                    {currentQuestion.options.map((option, index) => {
+                      const isSelected = answers[currentQuestionIndex] === index;
+                      const optionLabel = String.fromCharCode(65 + index); // A, B, C, D
+                      
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleAnswerSelect(index)}
+                          className={`w-full px-4 py-3 rounded-xl text-left transition-all duration-200 flex items-center gap-3 group ${
+                            isSelected
+                              ? 'bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-300 dark:border-orange-500'
+                              : 'bg-gray-50 dark:bg-gray-700/50 border border-transparent hover:bg-white dark:hover:bg-gray-700 hover:border-gray-200 dark:hover:border-gray-600'
+                          }`}
+                        >
+                          <div
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center font-semibold text-sm transition-all duration-200 flex-shrink-0 ${
+                              isSelected
+                                ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white'
+                                : 'bg-white dark:bg-gray-600 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-500 group-hover:border-orange-300 group-hover:text-orange-600 dark:group-hover:border-orange-500 dark:group-hover:text-orange-400'
+                            }`}
+                          >
+                            {optionLabel}
+                          </div>
+                          <span className={`flex-1 text-sm transition-colors ${
+                            isSelected ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-700 dark:text-gray-300'
+                          }`}>
+                            {option}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
+
+              {/* Answer confirmation */}
+              {answers[currentQuestionIndex] !== undefined && (
+                <div className="mt-4 px-4 py-3 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                    Answer saved. You can change it anytime before submitting.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
-            {answers[currentQuestionIndex] !== undefined && (
-              <div className="flex items-center gap-2 text-white">
-                <CheckCircleIcon />
-                <span>Your answer to this question has been recorded. It will be evaluated after the end of the contest.</span>
+          {/* Enhanced Footer */}
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-8 py-4">
+            <div className="max-w-3xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+                  disabled={currentQuestionIndex === 0}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                >
+                  <ArrowLeftIcon />
+                  <span className="hidden sm:inline">Previous</span>
+                </button>
+                
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {currentQuestionIndex + 1} of {questions.length}
+                </span>
               </div>
-            )}
-            <div className="flex-1" />
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
-                disabled={currentQuestionIndex === 0}
-                className="p-3 bg-white/20 rounded-full hover:bg-white/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ArrowLeftIcon />
-              </button>
-              <button
-                onClick={() => handleAnswerSelect(answers[currentQuestionIndex] ?? -1)}
-                className="px-8 py-3 bg-blue-700 text-white font-medium rounded-xl hover:bg-blue-800 transition"
-              >
-                Submit
-              </button>
-              <button
-                onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
-                disabled={currentQuestionIndex === questions.length - 1}
-                className="p-3 bg-white/20 rounded-full hover:bg-white/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ArrowRightIcon />
-              </button>
+              
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
+                  disabled={currentQuestionIndex === questions.length - 1}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                >
+                  <span>{currentQuestionIndex === questions.length - 1 ? 'Finish' : 'Next'}</span>
+                  <ArrowRightIcon />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -831,9 +956,9 @@ const MockAssessmentPage: React.FC = () => {
     if (!testResult) return null;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-16 px-4 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-orange-600 to-orange-700 text-white py-16 px-4 relative overflow-hidden">
           <div className="absolute right-0 top-0 w-1/3 h-full opacity-20">
             <svg viewBox="0 0 200 200" className="w-full h-full">
               <rect x="40" y="20" width="120" height="160" rx="8" fill="currentColor" />
@@ -848,7 +973,7 @@ const MockAssessmentPage: React.FC = () => {
             <h1 className="text-4xl font-bold mb-2">
               Mock Coding Interview Assessment - {testResult.assessmentTitle}
             </h1>
-            <h2 className="text-2xl text-blue-200">Performance Report</h2>
+            <h2 className="text-2xl text-orange-100">Performance Report</h2>
           </div>
         </div>
 
@@ -900,7 +1025,7 @@ const MockAssessmentPage: React.FC = () => {
                   <span className="text-gray-600 dark:text-gray-400">Total Questions: {testResult.totalQuestions}</span>
                 </div>
                 <div className="flex gap-4">
-                  <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-sm">
+                  <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full text-sm">
                     Attempted: {testResult.attempted}
                   </span>
                   <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm">
@@ -939,7 +1064,7 @@ const MockAssessmentPage: React.FC = () => {
             </div>
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
-                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-sm font-medium">
+                <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full text-sm font-medium">
                   S1
                 </span>
                 <span className="text-gray-600 dark:text-gray-400">
@@ -1012,7 +1137,7 @@ const MockAssessmentPage: React.FC = () => {
             </button>
             <button
               onClick={handleViewCertificate}
-              className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:shadow-lg transition flex items-center justify-center gap-2"
+              className="flex-1 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium rounded-xl hover:shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2"
             >
               <DownloadIcon />
               Download Certificate
@@ -1029,7 +1154,7 @@ const MockAssessmentPage: React.FC = () => {
     const isPassed = testResult.score >= 40;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-orange-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <button
             onClick={() => setView('results')}
@@ -1049,8 +1174,8 @@ const MockAssessmentPage: React.FC = () => {
             }}
           >
             {/* Decorative elements */}
-            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full -translate-x-1/2 -translate-y-1/2" />
-            <div className="absolute bottom-0 right-0 w-48 h-48 bg-gradient-to-tl from-indigo-500/10 to-transparent rounded-full translate-x-1/4 translate-y-1/4" />
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full -translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute bottom-0 right-0 w-48 h-48 bg-gradient-to-tl from-amber-500/10 to-transparent rounded-full translate-x-1/4 translate-y-1/4" />
             
             {/* Gold border frame */}
             <div className="absolute inset-4 border-2 border-amber-400/50 rounded-2xl pointer-events-none" />
@@ -1058,7 +1183,7 @@ const MockAssessmentPage: React.FC = () => {
             <div className="relative text-center">
               {/* Logo */}
               <div className="mb-8">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
                   Project Bazaar
                 </h1>
                 <p className="text-gray-500 text-sm mt-1">Excellence in Technology Assessment</p>
@@ -1079,7 +1204,7 @@ const MockAssessmentPage: React.FC = () => {
               <p className="text-gray-600 mb-8 max-w-xl mx-auto">
                 has successfully {isPassed ? 'completed' : 'participated in'} the
                 <br />
-                <strong className="text-blue-900">Mock Coding Interview Assessment - {testResult.assessmentTitle}</strong>
+                <strong className="text-orange-600">Mock Coding Interview Assessment - {testResult.assessmentTitle}</strong>
                 <br />
                 with a score of <strong className="text-2xl">{testResult.score.toFixed(1)}%</strong>
               </p>
@@ -1087,15 +1212,15 @@ const MockAssessmentPage: React.FC = () => {
               {/* Stats */}
               <div className="flex justify-center gap-12 mb-8">
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-900">{testResult.solved}</p>
+                  <p className="text-3xl font-bold text-orange-600">{testResult.solved}</p>
                   <p className="text-gray-500 text-sm">Questions Solved</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-900">{testResult.totalQuestions}</p>
+                  <p className="text-3xl font-bold text-orange-600">{testResult.totalQuestions}</p>
                   <p className="text-gray-500 text-sm">Total Questions</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-900">{testResult.duration}</p>
+                  <p className="text-3xl font-bold text-orange-600">{testResult.duration}</p>
                   <p className="text-gray-500 text-sm">Duration</p>
                 </div>
               </div>
@@ -1139,7 +1264,7 @@ const MockAssessmentPage: React.FC = () => {
                 // Simple print-based download
                 window.print();
               }}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:shadow-lg transition inline-flex items-center gap-2"
+              className="px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium rounded-xl hover:shadow-lg shadow-orange-500/30 transition inline-flex items-center gap-2"
             >
               <DownloadIcon />
               Download Certificate (PDF)
@@ -1180,7 +1305,7 @@ const MockAssessmentPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Select Mock Interview Type
               </label>
-              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                 <option>Programming (DS/Algo)</option>
                 <option>System Design</option>
                 <option>Frontend Development</option>
@@ -1192,7 +1317,7 @@ const MockAssessmentPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Rate your coding skills
               </label>
-              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                 <option>Beginner</option>
                 <option>Intermediate</option>
                 <option>Advanced</option>
@@ -1210,7 +1335,7 @@ const MockAssessmentPage: React.FC = () => {
                   'Python 3 (python-3.8)', 'Go (1.17.4)', 'Swift (5.5)', 'Kotlin (openjdk8)',
                 ].map((lang) => (
                   <label key={lang} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                    <input type="checkbox" className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500" />
                     <span className="text-gray-700 dark:text-gray-300 text-sm">{lang}</span>
                   </label>
                 ))}
@@ -1221,7 +1346,7 @@ const MockAssessmentPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 You are:
               </label>
-              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                 <option>Student</option>
                 <option>Working Professional</option>
                 <option>Freelancer</option>
@@ -1232,7 +1357,7 @@ const MockAssessmentPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Time Zone
               </label>
-              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent">
                 <option>(GMT+05:30) Chennai</option>
                 <option>(GMT+00:00) London</option>
                 <option>(GMT-05:00) New York</option>
@@ -1253,7 +1378,7 @@ const MockAssessmentPage: React.FC = () => {
                       <button
                         key={`${day}-${time}`}
                         type="button"
-                        className="w-full py-1 mb-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-500 transition"
+                        className="w-full py-1 mb-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-500 transition"
                       >
                         {time}
                       </button>
@@ -1265,7 +1390,7 @@ const MockAssessmentPage: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium rounded-xl hover:shadow-lg transition"
+              className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium rounded-xl hover:shadow-lg shadow-orange-500/30 transition"
             >
               Schedule Interview
             </button>
