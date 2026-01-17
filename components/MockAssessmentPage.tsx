@@ -1,0 +1,1293 @@
+import React, { useState, useEffect, useCallback } from 'react';
+
+// ============================================
+// TYPES & INTERFACES
+// ============================================
+
+type AssessmentView = 'list' | 'test' | 'results' | 'certificate' | 'interview' | 'schedule';
+
+interface Assessment {
+  id: string;
+  title: string;
+  logo: string;
+  time: string;
+  objective: number;
+  programming: number;
+  registrations: number;
+  category: 'technical' | 'language' | 'framework' | 'database' | 'devops';
+  popular?: boolean;
+}
+
+interface Question {
+  id: number;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  topic: string;
+}
+
+interface TestResult {
+  assessmentId: string;
+  assessmentTitle: string;
+  score: number;
+  totalQuestions: number;
+  attempted: number;
+  solved: number;
+  duration: string;
+  startTime: string;
+  questionResults: {
+    questionId: number;
+    topic: string;
+    isCorrect: boolean;
+    userAnswer: number;
+    correctAnswer: number;
+  }[];
+}
+
+// ============================================
+// MOCK DATA - Assessments
+// ============================================
+
+const assessments: Assessment[] = [
+  { id: 'sde', title: 'SDE', logo: '/mock_assessments_logo/sde_interview.png', time: '50 Minutes', objective: 5, programming: 2, registrations: 68675, category: 'technical' },
+  { id: 'react', title: 'React', logo: '/mock_assessments_logo/react.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 2262, category: 'framework' },
+  { id: 'java', title: 'Java', logo: '/mock_assessments_logo/java.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 6626, category: 'language' },
+  { id: 'sql', title: 'SQL', logo: '/mock_assessments_logo/sql.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 15902, category: 'database' },
+  { id: 'javascript', title: 'JavaScript', logo: '/mock_assessments_logo/nodejs.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 4594, category: 'language' },
+  { id: 'cpp', title: 'C++', logo: '/mock_assessments_logo/cpp.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 2416, category: 'language' },
+  { id: 'html', title: 'HTML', logo: '/mock_assessments_logo/html.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 4343, category: 'language' },
+  { id: 'oops', title: 'OOPs', logo: '/mock_assessments_logo/oops.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 3346, category: 'technical' },
+  { id: 'datastructures', title: 'Data Structures', logo: '/mock_assessments_logo/data_structures.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 11608, category: 'technical' },
+  { id: 'css', title: 'CSS', logo: '/mock_assessments_logo/css.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 1467, category: 'language' },
+  { id: 'android', title: 'Android', logo: '/mock_assessments_logo/android.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 1890, category: 'framework' },
+  { id: 'dsml', title: 'DSML', logo: '/mock_assessments_logo/dsml_interview.png', time: '30 Minutes', objective: 10, programming: 0, registrations: 2100, category: 'technical', popular: true },
+  { id: 'python', title: 'Python', logo: '/mock_assessments_logo/python.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 8500, category: 'language' },
+  { id: 'aws', title: 'AWS', logo: '/mock_assessments_logo/aws.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 3200, category: 'devops' },
+  { id: 'dbms', title: 'DBMS', logo: '/mock_assessments_logo/dbms.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 4100, category: 'database' },
+  { id: 'machinelearning', title: 'Machine Learning', logo: '/mock_assessments_logo/machine_learning.png', time: '45 Minutes', objective: 15, programming: 0, registrations: 5600, category: 'technical' },
+  { id: 'spring', title: 'Spring Boot', logo: '/mock_assessments_logo/spring.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 2800, category: 'framework' },
+  { id: 'networking', title: 'Networking', logo: '/mock_assessments_logo/networking.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 1950, category: 'technical' },
+  { id: 'cloudcomputing', title: 'Cloud Computing', logo: '/mock_assessments_logo/cloud_computing.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 3400, category: 'devops' },
+  { id: 'datascience', title: 'Data Science', logo: '/mock_assessments_logo/data_science.png', time: '45 Minutes', objective: 15, programming: 0, registrations: 4800, category: 'technical' },
+  { id: 'softwaretesting', title: 'Software Testing', logo: '/mock_assessments_logo/software_testing.png', time: '30 Minutes', objective: 15, programming: 0, registrations: 2200, category: 'technical' },
+];
+
+// ============================================
+// QUESTION BANKS
+// ============================================
+
+const questionBanks: Record<string, Question[]> = {
+  java: [
+    { id: 1, question: 'Which statement is true about Java?', options: ['Platform independent programming language', 'Sequence dependent programming language', 'Code dependent programming language', 'Platform dependent programming language'], correctAnswer: 0, topic: 'Java Basics' },
+    { id: 2, question: 'What is the component used for compiling, debugging, and executing Java programs?', options: ['JRE', 'JVM', 'JDK', 'JIT'], correctAnswer: 2, topic: 'Java Architecture' },
+    { id: 3, question: 'Which of the following is not a Java feature?', options: ['Object-oriented', 'Use of pointers', 'Portable', 'Dynamic and Extensible'], correctAnswer: 1, topic: 'Java Features' },
+    { id: 4, question: 'What is the default value of a boolean variable in Java?', options: ['true', 'false', '0', 'null'], correctAnswer: 1, topic: 'Data Types' },
+    { id: 5, question: 'Which keyword is used to prevent method overriding in Java?', options: ['static', 'final', 'abstract', 'const'], correctAnswer: 1, topic: 'OOP Concepts' },
+    { id: 6, question: 'What is the parent class of all classes in Java?', options: ['Object', 'Class', 'Main', 'Parent'], correctAnswer: 0, topic: 'Inheritance' },
+    { id: 7, question: 'Which collection class allows you to grow or shrink its size and provides indexed access?', options: ['HashSet', 'HashMap', 'ArrayList', 'LinkedList'], correctAnswer: 2, topic: 'Collections' },
+    { id: 8, question: 'What is the purpose of the "this" keyword in Java?', options: ['To refer to the parent class', 'To refer to the current object', 'To create a new object', 'To refer to a static method'], correctAnswer: 1, topic: 'Keywords' },
+    { id: 9, question: 'Which exception is thrown when dividing by zero in Java?', options: ['NullPointerException', 'ArithmeticException', 'NumberFormatException', 'ClassNotFoundException'], correctAnswer: 1, topic: 'Exception Handling' },
+    { id: 10, question: 'What is method overloading?', options: ['Methods with same name in parent and child class', 'Methods with same name but different parameters', 'Methods with different names', 'None of the above'], correctAnswer: 1, topic: 'Polymorphism' },
+    { id: 11, question: 'Which access modifier makes a member accessible only within the same class?', options: ['public', 'protected', 'private', 'default'], correctAnswer: 2, topic: 'Access Modifiers' },
+    { id: 12, question: 'What is the output of 10 + 20 + "Hello" in Java?', options: ['1020Hello', '30Hello', 'Hello1020', 'Compilation Error'], correctAnswer: 1, topic: 'String Operations' },
+    { id: 13, question: 'Which interface must be implemented for serialization in Java?', options: ['Runnable', 'Comparable', 'Serializable', 'Cloneable'], correctAnswer: 2, topic: 'Serialization' },
+    { id: 14, question: 'What is the default value of an int variable in Java?', options: ['0', '1', 'null', 'undefined'], correctAnswer: 0, topic: 'Data Types' },
+    { id: 15, question: 'Which keyword is used to create a thread in Java?', options: ['thread', 'runnable', 'extends Thread', 'All of the above'], correctAnswer: 3, topic: 'Multithreading' },
+  ],
+  python: [
+    { id: 1, question: 'What is Python?', options: ['A compiled language', 'An interpreted high-level language', 'A low-level language', 'A markup language'], correctAnswer: 1, topic: 'Python Basics' },
+    { id: 2, question: 'Which of the following is used to define a block of code in Python?', options: ['Curly braces', 'Parentheses', 'Indentation', 'Quotation marks'], correctAnswer: 2, topic: 'Syntax' },
+    { id: 3, question: 'What is the output of print(2 ** 3)?', options: ['5', '6', '8', '9'], correctAnswer: 2, topic: 'Operators' },
+    { id: 4, question: 'Which data type is immutable in Python?', options: ['List', 'Dictionary', 'Set', 'Tuple'], correctAnswer: 3, topic: 'Data Types' },
+    { id: 5, question: 'What keyword is used to create a function in Python?', options: ['function', 'def', 'func', 'define'], correctAnswer: 1, topic: 'Functions' },
+    { id: 6, question: 'Which method is used to add an element to the end of a list?', options: ['add()', 'insert()', 'append()', 'extend()'], correctAnswer: 2, topic: 'Lists' },
+    { id: 7, question: 'What is the correct way to create a dictionary in Python?', options: ['dict = []', 'dict = {}', 'dict = ()', 'dict = <>'], correctAnswer: 1, topic: 'Dictionaries' },
+    { id: 8, question: 'Which of the following is NOT a valid variable name in Python?', options: ['_myvar', 'myVar', '2myvar', 'my_var'], correctAnswer: 2, topic: 'Variables' },
+    { id: 9, question: 'What does the len() function do?', options: ['Returns the length of an object', 'Returns the type of an object', 'Converts to integer', 'None of the above'], correctAnswer: 0, topic: 'Built-in Functions' },
+    { id: 10, question: 'Which statement is used for exception handling in Python?', options: ['try-catch', 'try-except', 'catch-throw', 'error-handle'], correctAnswer: 1, topic: 'Exception Handling' },
+    { id: 11, question: 'What is the output of bool("")?', options: ['True', 'False', 'None', 'Error'], correctAnswer: 1, topic: 'Boolean' },
+    { id: 12, question: 'Which operator is used for floor division in Python?', options: ['/', '//', '%', '**'], correctAnswer: 1, topic: 'Operators' },
+    { id: 13, question: 'What is a lambda function?', options: ['A named function', 'An anonymous function', 'A recursive function', 'A generator function'], correctAnswer: 1, topic: 'Functions' },
+    { id: 14, question: 'Which module is used for regular expressions in Python?', options: ['regex', 're', 'regexp', 'regular'], correctAnswer: 1, topic: 'Modules' },
+    { id: 15, question: 'What is the purpose of __init__ method?', options: ['Destructor', 'Constructor', 'Iterator', 'Generator'], correctAnswer: 1, topic: 'OOP' },
+  ],
+  react: [
+    { id: 1, question: 'What is React?', options: ['A backend framework', 'A JavaScript library for building UIs', 'A database', 'A programming language'], correctAnswer: 1, topic: 'React Basics' },
+    { id: 2, question: 'What is JSX?', options: ['JavaScript XML', 'Java Syntax Extension', 'JSON XML', 'JavaScript Extension'], correctAnswer: 0, topic: 'JSX' },
+    { id: 3, question: 'Which hook is used for state management in functional components?', options: ['useEffect', 'useState', 'useContext', 'useReducer'], correctAnswer: 1, topic: 'Hooks' },
+    { id: 4, question: 'What is the virtual DOM?', options: ['A copy of the real DOM', 'A lightweight representation of the real DOM', 'A browser feature', 'A React component'], correctAnswer: 1, topic: 'Virtual DOM' },
+    { id: 5, question: 'Which method is called when a component is first mounted?', options: ['componentDidUpdate', 'componentWillMount', 'componentDidMount', 'render'], correctAnswer: 2, topic: 'Lifecycle' },
+    { id: 6, question: 'What is the purpose of keys in React lists?', options: ['Styling', 'Unique identification of elements', 'Event handling', 'State management'], correctAnswer: 1, topic: 'Lists' },
+    { id: 7, question: 'Which hook is used for side effects?', options: ['useState', 'useEffect', 'useMemo', 'useCallback'], correctAnswer: 1, topic: 'Hooks' },
+    { id: 8, question: 'What is props in React?', options: ['State variables', 'Read-only properties passed to components', 'Event handlers', 'CSS styles'], correctAnswer: 1, topic: 'Props' },
+    { id: 9, question: 'What is the correct way to update state in React?', options: ['this.state.name = "new"', 'this.setState({ name: "new" })', 'state.name = "new"', 'setState.name("new")'], correctAnswer: 1, topic: 'State' },
+    { id: 10, question: 'What is a controlled component?', options: ['Component controlled by Redux', 'Component where form data is handled by state', 'Component with props', 'Component without state'], correctAnswer: 1, topic: 'Forms' },
+    { id: 11, question: 'Which hook is used to access context?', options: ['useReducer', 'useContext', 'useMemo', 'useRef'], correctAnswer: 1, topic: 'Context' },
+    { id: 12, question: 'What is React Fragment used for?', options: ['Styling components', 'Grouping children without extra DOM nodes', 'State management', 'Routing'], correctAnswer: 1, topic: 'Fragments' },
+    { id: 13, question: 'What is the purpose of useRef hook?', options: ['State management', 'Accessing DOM elements directly', 'Context API', 'Memoization'], correctAnswer: 1, topic: 'Refs' },
+    { id: 14, question: 'Which tool is commonly used for React routing?', options: ['React Router', 'Redux', 'Axios', 'Webpack'], correctAnswer: 0, topic: 'Routing' },
+    { id: 15, question: 'What is HOC in React?', options: ['High Order Component', 'Higher Order Component', 'Hierarchical Order Component', 'None'], correctAnswer: 1, topic: 'Patterns' },
+  ],
+  sql: [
+    { id: 1, question: 'What does SQL stand for?', options: ['Structured Query Language', 'Simple Query Language', 'Standard Query Language', 'System Query Language'], correctAnswer: 0, topic: 'SQL Basics' },
+    { id: 2, question: 'Which SQL statement is used to retrieve data?', options: ['GET', 'FETCH', 'SELECT', 'RETRIEVE'], correctAnswer: 2, topic: 'Queries' },
+    { id: 3, question: 'Which clause is used to filter records?', options: ['FILTER', 'WHERE', 'HAVING', 'CONDITION'], correctAnswer: 1, topic: 'Filtering' },
+    { id: 4, question: 'What is a primary key?', options: ['A foreign key', 'A unique identifier for a record', 'A composite key', 'An index'], correctAnswer: 1, topic: 'Keys' },
+    { id: 5, question: 'Which JOIN returns all records from both tables?', options: ['INNER JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'FULL OUTER JOIN'], correctAnswer: 3, topic: 'Joins' },
+    { id: 6, question: 'Which SQL statement is used to insert data?', options: ['ADD', 'INSERT INTO', 'PUT', 'CREATE'], correctAnswer: 1, topic: 'DML' },
+    { id: 7, question: 'What does GROUP BY do?', options: ['Sorts data', 'Groups rows with same values', 'Filters data', 'Joins tables'], correctAnswer: 1, topic: 'Aggregation' },
+    { id: 8, question: 'Which function returns the number of rows?', options: ['SUM()', 'COUNT()', 'TOTAL()', 'NUM()'], correctAnswer: 1, topic: 'Functions' },
+    { id: 9, question: 'What is a foreign key?', options: ['Primary key of another table', 'Unique identifier', 'Index column', 'Auto increment field'], correctAnswer: 0, topic: 'Keys' },
+    { id: 10, question: 'Which command is used to delete a table?', options: ['DELETE TABLE', 'DROP TABLE', 'REMOVE TABLE', 'TRUNCATE TABLE'], correctAnswer: 1, topic: 'DDL' },
+    { id: 11, question: 'What is normalization?', options: ['Adding redundancy', 'Reducing redundancy', 'Indexing', 'Partitioning'], correctAnswer: 1, topic: 'Database Design' },
+    { id: 12, question: 'Which clause is used with aggregate functions for filtering?', options: ['WHERE', 'HAVING', 'FILTER', 'GROUP'], correctAnswer: 1, topic: 'Aggregation' },
+    { id: 13, question: 'What is an index used for?', options: ['Storing data', 'Faster data retrieval', 'Data validation', 'Data encryption'], correctAnswer: 1, topic: 'Indexing' },
+    { id: 14, question: 'Which SQL keyword is used to sort results?', options: ['SORT BY', 'ORDER BY', 'ARRANGE BY', 'GROUP BY'], correctAnswer: 1, topic: 'Sorting' },
+    { id: 15, question: 'What is a transaction in SQL?', options: ['A query', 'A unit of work', 'A table', 'A database'], correctAnswer: 1, topic: 'Transactions' },
+  ],
+};
+
+// Default questions for assessments without specific banks
+const defaultQuestions: Question[] = [
+  { id: 1, question: 'Which of the following is a correct concept?', options: ['Option A', 'Option B', 'Option C', 'Option D'], correctAnswer: 0, topic: 'General' },
+  { id: 2, question: 'What is the primary purpose of this technology?', options: ['Performance', 'Security', 'Scalability', 'All of the above'], correctAnswer: 3, topic: 'Concepts' },
+  { id: 3, question: 'Which best practice should be followed?', options: ['Practice A', 'Practice B', 'Practice C', 'Practice D'], correctAnswer: 1, topic: 'Best Practices' },
+  { id: 4, question: 'What is the recommended approach?', options: ['Approach 1', 'Approach 2', 'Approach 3', 'Approach 4'], correctAnswer: 2, topic: 'Methodology' },
+  { id: 5, question: 'Which tool is commonly used?', options: ['Tool A', 'Tool B', 'Tool C', 'Tool D'], correctAnswer: 0, topic: 'Tools' },
+  { id: 6, question: 'What is the correct syntax?', options: ['Syntax A', 'Syntax B', 'Syntax C', 'Syntax D'], correctAnswer: 1, topic: 'Syntax' },
+  { id: 7, question: 'Which feature is most important?', options: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4'], correctAnswer: 0, topic: 'Features' },
+  { id: 8, question: 'What is the expected output?', options: ['Output A', 'Output B', 'Output C', 'Output D'], correctAnswer: 2, topic: 'Output' },
+  { id: 9, question: 'Which error is commonly encountered?', options: ['Error A', 'Error B', 'Error C', 'Error D'], correctAnswer: 1, topic: 'Debugging' },
+  { id: 10, question: 'What is the recommended version?', options: ['v1.0', 'v2.0', 'v3.0', 'Latest'], correctAnswer: 3, topic: 'Versioning' },
+  { id: 11, question: 'Which pattern should be used?', options: ['Pattern A', 'Pattern B', 'Pattern C', 'Pattern D'], correctAnswer: 0, topic: 'Patterns' },
+  { id: 12, question: 'What is the correct implementation?', options: ['Implementation 1', 'Implementation 2', 'Implementation 3', 'Implementation 4'], correctAnswer: 1, topic: 'Implementation' },
+  { id: 13, question: 'Which optimization technique is best?', options: ['Technique A', 'Technique B', 'Technique C', 'Technique D'], correctAnswer: 2, topic: 'Optimization' },
+  { id: 14, question: 'What is the security consideration?', options: ['Security A', 'Security B', 'Security C', 'All of the above'], correctAnswer: 3, topic: 'Security' },
+  { id: 15, question: 'Which testing approach is recommended?', options: ['Unit Testing', 'Integration Testing', 'E2E Testing', 'All of the above'], correctAnswer: 3, topic: 'Testing' },
+];
+
+// ============================================
+// ICONS
+// ============================================
+
+const ClockIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const GridIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+  </svg>
+);
+
+const CodeIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+  </svg>
+);
+
+const CheckCircleIcon = () => (
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+  </svg>
+);
+
+const XCircleIcon = () => (
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+    <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clipRule="evenodd" />
+  </svg>
+);
+
+const DownloadIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+  </svg>
+);
+
+const FlagIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+  </svg>
+);
+
+const ArrowLeftIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+  </svg>
+);
+
+const ArrowRightIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+  </svg>
+);
+
+const UsersIcon = () => (
+  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+);
+
+const VideoIcon = () => (
+  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
+
+const StarIcon = () => (
+  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+  </svg>
+);
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
+const MockAssessmentPage: React.FC = () => {
+  const [view, setView] = useState<AssessmentView>('list');
+  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [showRules, setShowRules] = useState(false);
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
+  const [testStartTime, setTestStartTime] = useState<Date | null>(null);
+  const [activeTab, setActiveTab] = useState<'assessment' | 'interview'>('assessment');
+
+  // Get questions for current assessment
+  const getQuestions = useCallback(() => {
+    if (!selectedAssessment) return defaultQuestions;
+    return questionBanks[selectedAssessment.id] || defaultQuestions;
+  }, [selectedAssessment]);
+
+  // Timer effect
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (view === 'test' && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            handleSubmitTest();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [view, timeLeft]);
+
+  const formatTime = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')} Hr : ${mins.toString().padStart(2, '0')} min : ${secs.toString().padStart(2, '0')} sec`;
+  };
+
+  const handleStartTest = (assessment: Assessment) => {
+    setSelectedAssessment(assessment);
+    setShowInstructions(true);
+  };
+
+  const handleBeginTest = () => {
+    setShowInstructions(false);
+    setShowRules(true);
+  };
+
+  const handleEnterTest = () => {
+    setShowRules(false);
+    setView('test');
+    setCurrentQuestionIndex(0);
+    setAnswers({});
+    setFlaggedQuestions(new Set());
+    const timeInSeconds = parseInt(selectedAssessment?.time || '30') * 60;
+    setTimeLeft(timeInSeconds);
+    setTestStartTime(new Date());
+  };
+
+  const handleAnswerSelect = (optionIndex: number) => {
+    setAnswers((prev) => ({ ...prev, [currentQuestionIndex]: optionIndex }));
+  };
+
+  const handleFlagQuestion = () => {
+    setFlaggedQuestions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(currentQuestionIndex)) {
+        newSet.delete(currentQuestionIndex);
+      } else {
+        newSet.add(currentQuestionIndex);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSubmitTest = () => {
+    const questions = getQuestions();
+    const questionResults = questions.map((q, index) => ({
+      questionId: q.id,
+      topic: q.topic,
+      isCorrect: answers[index] === q.correctAnswer,
+      userAnswer: answers[index] ?? -1,
+      correctAnswer: q.correctAnswer,
+    }));
+
+    const solved = questionResults.filter((r) => r.isCorrect).length;
+    const attempted = Object.keys(answers).length;
+    const score = (solved / questions.length) * 100;
+
+    const result: TestResult = {
+      assessmentId: selectedAssessment?.id || '',
+      assessmentTitle: selectedAssessment?.title || '',
+      score,
+      totalQuestions: questions.length,
+      attempted,
+      solved,
+      duration: selectedAssessment?.time || '30 Minutes',
+      startTime: testStartTime?.toLocaleString() || new Date().toLocaleString(),
+      questionResults,
+    };
+
+    setTestResult(result);
+    setView('results');
+  };
+
+  const handleBackToList = () => {
+    setView('list');
+    setSelectedAssessment(null);
+    setTestResult(null);
+    setCurrentQuestionIndex(0);
+    setAnswers({});
+  };
+
+  const handleViewCertificate = () => {
+    setView('certificate');
+  };
+
+  // ============================================
+  // RENDER FUNCTIONS
+  // ============================================
+
+  const renderAssessmentCard = (assessment: Assessment) => (
+    <div
+      key={assessment.id}
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-300 relative group"
+    >
+      {assessment.popular && (
+        <div className="absolute -top-3 right-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1">
+          <StarIcon />
+          Popular
+        </div>
+      )}
+      {assessment.registrations > 5000 && !assessment.popular && (
+        <div className="absolute -top-3 right-4 bg-gradient-to-r from-rose-400 to-pink-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+          🎯 {assessment.registrations.toLocaleString()} Registrations
+        </div>
+      )}
+      
+      <div className="flex flex-col items-center mb-4">
+        <div className="w-20 h-20 rounded-xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center mb-3 overflow-hidden">
+          <img
+            src={assessment.logo}
+            alt={assessment.title}
+            className="w-16 h-16 object-contain"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/64?text=' + assessment.title[0];
+            }}
+          />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{assessment.title}</h3>
+      </div>
+
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
+          <ClockIcon />
+          <span>Time: {assessment.time}</span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
+          <GridIcon />
+          <span>Objective: {assessment.objective}</span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
+          <CodeIcon />
+          <span>Programming: {assessment.programming}</span>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+        <button
+          onClick={() => handleStartTest(assessment)}
+          className="w-full text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 flex items-center justify-center gap-2 group-hover:gap-3 transition-all"
+        >
+          Attempt Now
+          <ArrowRightIcon />
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderAssessmentList = () => (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => window.history.back()}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+              >
+                <ArrowLeftIcon />
+              </button>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mock Assessments</h1>
+            </div>
+            
+            {/* Tabs */}
+            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+              <button
+                onClick={() => setActiveTab('assessment')}
+                className={`px-6 py-2 rounded-lg font-medium transition ${
+                  activeTab === 'assessment'
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                Free Mock Assessment
+              </button>
+              <button
+                onClick={() => setActiveTab('interview')}
+                className={`px-6 py-2 rounded-lg font-medium transition ${
+                  activeTab === 'interview'
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                Mock Interview
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {activeTab === 'assessment' ? (
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Hero Section */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              Explore All Mock Assessments
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Take popular mock tests for free with real life interview questions from top tech companies
+            </p>
+          </div>
+
+          {/* Assessment Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+            {assessments.map(renderAssessmentCard)}
+          </div>
+        </div>
+      ) : (
+        renderMockInterviewSection()
+      )}
+    </div>
+  );
+
+  const renderMockInterviewSection = () => (
+    <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Mock Interview</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-8">
+          Get paired with a suitable peer and interview each other anonymously
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <button
+            onClick={() => setView('schedule')}
+            className="px-8 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium rounded-xl hover:shadow-lg transition flex items-center justify-center gap-2"
+          >
+            Get An Interview Now
+            <ArrowRightIcon />
+          </button>
+          <button
+            onClick={() => setView('schedule')}
+            className="px-8 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center justify-center gap-2"
+          >
+            Get An Interview Later
+            <CalendarIcon />
+          </button>
+        </div>
+
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-8">How It Works</h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { icon: <UsersIcon />, title: 'Pairup', desc: 'We will match you with the suitable peer based on your preferences. The Interview will be of 1 Hr : 30 Mins' },
+            { icon: <VideoIcon />, title: 'Interview Your Peer', desc: 'For the first half (45 Mins), you interview your peer based on the question and answer we provide (or vice versa)' },
+            { icon: <VideoIcon />, title: 'Peer Interviews You', desc: 'Second half (45 Mins), your peer interviews you based on the question and answer we provide (or vice versa)' },
+            { icon: <StarIcon />, title: 'Evaluate Each Other', desc: 'After completion you and your peer provide feedback. Work on the areas you lack and then repeat until you are confident' },
+          ].map((step, index) => (
+            <div key={index} className="relative">
+              <div className="absolute -top-4 -left-4 text-6xl font-bold text-gray-100 dark:text-gray-700">{index + 1}</div>
+              <div className="relative bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-600 dark:text-amber-400">
+                  {step.icon}
+                </div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{step.title}</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{step.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderInstructionsModal = () => (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <img
+            src={selectedAssessment?.logo}
+            alt={selectedAssessment?.title}
+            className="w-12 h-12 object-contain"
+          />
+          <div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Powered by</p>
+            <h3 className="font-bold text-xl text-gray-900 dark:text-white">Project Bazaar</h3>
+          </div>
+        </div>
+
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+          Mock Coding Interview Assessment - {selectedAssessment?.title}
+        </h2>
+
+        <div className="mb-6">
+          <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-3">Instructions</h4>
+          <ol className="space-y-3 text-gray-600 dark:text-gray-400">
+            <li className="flex gap-2">
+              <span className="font-medium">1.</span>
+              <span>You will have <strong>{selectedAssessment?.time}</strong> to complete the test and it <strong>cannot be paused once started.</strong></span>
+            </li>
+            <li className="flex gap-2">
+              <span className="font-medium">2.</span>
+              <span>Please refrain from performing the following <strong className="text-red-500">restricted events.</strong></span>
+            </li>
+          </ol>
+          <p className="mt-3 text-sm italic text-gray-500 dark:text-gray-500">
+            Text Selection, Copy & Paste, Right Click, Opening Inspector, Debugging Console, Browser Settings, Switching Tabs, Closing the Session Tab
+          </p>
+        </div>
+
+        <button
+          onClick={handleBeginTest}
+          className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium rounded-xl hover:shadow-lg transition"
+        >
+          Start Test
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderRulesModal = () => (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-8">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          Before You Begin: Important Rules
+        </h2>
+
+        <div className="space-y-4 mb-8">
+          {[
+            'Do not switch tabs or windows during the test',
+            'Do not copy or paste any questions or answers',
+            'Keep the test in full screen mode at all times',
+          ].map((rule, index) => (
+            <div key={index} className="flex items-start gap-3">
+              <span className="text-yellow-500">✨</span>
+              <span className="text-gray-700 dark:text-gray-300">{rule}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-6">
+          <p className="text-amber-800 dark:text-amber-200">
+            <strong>Warning:</strong> Violating any rule will result in a warning. Four violations will lead to disqualification and your current attempt will be marked as disqualified.
+          </p>
+        </div>
+
+        <button
+          onClick={handleEnterTest}
+          className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:shadow-lg transition"
+        >
+          Enter Test
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderTestInterface = () => {
+    const questions = getQuestions();
+    const currentQuestion = questions[currentQuestionIndex];
+    const attemptedCount = Object.keys(answers).length;
+
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+        {/* Sidebar */}
+        <div className="w-20 bg-blue-900 text-white flex flex-col items-center py-6 space-y-6">
+          <button className="p-3 bg-blue-800 rounded-xl hover:bg-blue-700 transition">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+          <button className="p-3 bg-blue-800 rounded-xl hover:bg-blue-700 transition">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </button>
+          
+          {/* Question navigation */}
+          <div className="flex-1 overflow-y-auto space-y-2 mt-4">
+            <div className="text-xs font-medium text-blue-300 text-center mb-2">S1</div>
+            {questions.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentQuestionIndex(index)}
+                className={`w-12 h-8 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1 ${
+                  currentQuestionIndex === index
+                    ? 'bg-blue-500 text-white'
+                    : answers[index] !== undefined
+                    ? 'bg-green-500/20 text-green-300 border border-green-500'
+                    : 'bg-blue-800 text-blue-200 hover:bg-blue-700'
+                }`}
+              >
+                Q {index + 1}
+                {answers[index] !== undefined && (
+                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Mock Coding Interview Assessment - {selectedAssessment?.title}
+              </h1>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full">
+                <ClockIcon />
+                <span className="font-mono font-medium text-gray-900 dark:text-white">{formatTime(timeLeft)}</span>
+              </div>
+
+              <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-green-500 h-2 rounded-full transition-all"
+                  style={{ width: `${(attemptedCount / questions.length) * 100}%` }}
+                />
+              </div>
+
+              <span className="text-gray-600 dark:text-gray-400">
+                {attemptedCount} / {questions.length} Attempted
+              </span>
+
+              <button
+                onClick={handleSubmitTest}
+                className="px-6 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition"
+              >
+                End Test
+              </button>
+            </div>
+          </div>
+
+          {/* Question progress */}
+          <div className="bg-gray-100 dark:bg-gray-700 px-6 py-3 flex items-center gap-2 overflow-x-auto">
+            <span className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg">S1</span>
+            <span className="text-gray-500 dark:text-gray-400">Default Section</span>
+            <div className="flex-1 flex items-center gap-1 ml-4">
+              {questions.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentQuestionIndex(index)}
+                  className={`w-8 h-8 rounded-full text-sm font-medium transition ${
+                    currentQuestionIndex === index
+                      ? 'bg-blue-600 text-white'
+                      : answers[index] !== undefined
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  Q{index + 1}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Question content */}
+          <div className="flex-1 p-8 overflow-y-auto">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-medium text-gray-500 dark:text-gray-400">
+                  {selectedAssessment?.title.toUpperCase()} MCQ - {currentQuestion.id}
+                </h2>
+                <button
+                  onClick={handleFlagQuestion}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                    flaggedQuestions.has(currentQuestionIndex)
+                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <FlagIcon />
+                  Flag Question
+                </button>
+              </div>
+
+              <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-8">
+                {currentQuestion.question}
+              </h3>
+
+              <div className="space-y-4">
+                {currentQuestion.options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerSelect(index)}
+                    className={`w-full p-4 rounded-xl border-2 text-left transition flex items-center gap-4 ${
+                      answers[currentQuestionIndex] === index
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        answers[currentQuestionIndex] === index
+                          ? 'border-blue-500 bg-blue-500'
+                          : 'border-gray-400'
+                      }`}
+                    >
+                      {answers[currentQuestionIndex] === index && (
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      )}
+                    </div>
+                    <span className="text-gray-700 dark:text-gray-300">{option}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
+            {answers[currentQuestionIndex] !== undefined && (
+              <div className="flex items-center gap-2 text-white">
+                <CheckCircleIcon />
+                <span>Your answer to this question has been recorded. It will be evaluated after the end of the contest.</span>
+              </div>
+            )}
+            <div className="flex-1" />
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+                disabled={currentQuestionIndex === 0}
+                className="p-3 bg-white/20 rounded-full hover:bg-white/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowLeftIcon />
+              </button>
+              <button
+                onClick={() => handleAnswerSelect(answers[currentQuestionIndex] ?? -1)}
+                className="px-8 py-3 bg-blue-700 text-white font-medium rounded-xl hover:bg-blue-800 transition"
+              >
+                Submit
+              </button>
+              <button
+                onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
+                disabled={currentQuestionIndex === questions.length - 1}
+                className="p-3 bg-white/20 rounded-full hover:bg-white/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowRightIcon />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderResults = () => {
+    if (!testResult) return null;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-16 px-4 relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-1/3 h-full opacity-20">
+            <svg viewBox="0 0 200 200" className="w-full h-full">
+              <rect x="40" y="20" width="120" height="160" rx="8" fill="currentColor" />
+              <rect x="50" y="40" width="60" height="8" rx="2" fill="currentColor" opacity="0.5" />
+              <rect x="50" y="60" width="80" height="4" rx="2" fill="currentColor" opacity="0.3" />
+              <rect x="50" y="70" width="70" height="4" rx="2" fill="currentColor" opacity="0.3" />
+              <path d="M70 100 L85 115 L120 80" stroke="currentColor" strokeWidth="4" fill="none" opacity="0.5" />
+              <path d="M70 130 L85 145 L120 110" stroke="currentColor" strokeWidth="4" fill="none" opacity="0.5" />
+            </svg>
+          </div>
+          <div className="max-w-4xl mx-auto relative z-10">
+            <h1 className="text-4xl font-bold mb-2">
+              Mock Coding Interview Assessment - {testResult.assessmentTitle}
+            </h1>
+            <h2 className="text-2xl text-blue-200">Performance Report</h2>
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 -mt-8">
+          {/* Score Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+              {/* Score Circle */}
+              <div className="flex flex-col items-center">
+                <div className="relative w-32 h-32">
+                  <svg className="w-32 h-32 transform -rotate-90">
+                    <circle
+                      cx="64"
+                      cy="64"
+                      r="56"
+                      stroke="currentColor"
+                      strokeWidth="12"
+                      fill="none"
+                      className="text-gray-200 dark:text-gray-700"
+                    />
+                    <circle
+                      cx="64"
+                      cy="64"
+                      r="56"
+                      stroke="currentColor"
+                      strokeWidth="12"
+                      fill="none"
+                      strokeDasharray={`${(testResult.score / 100) * 352} 352`}
+                      className={`${testResult.score >= 60 ? 'text-green-500' : testResult.score >= 40 ? 'text-yellow-500' : 'text-red-500'}`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-bold text-gray-900 dark:text-white">{testResult.score.toFixed(1)}</span>
+                    <span className="text-gray-500 dark:text-gray-400">/100</span>
+                  </div>
+                </div>
+                <span className="mt-2 font-medium text-gray-900 dark:text-white">SCORE</span>
+              </div>
+
+              {/* Stats */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <ClockIcon />
+                  <span className="text-gray-600 dark:text-gray-400">Duration: {testResult.duration}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <GridIcon />
+                  <span className="text-gray-600 dark:text-gray-400">Total Questions: {testResult.totalQuestions}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-sm">
+                    Attempted: {testResult.attempted}
+                  </span>
+                  <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm">
+                    Solved: {testResult.solved}
+                  </span>
+                </div>
+              </div>
+
+              {/* Start Time */}
+              <div className="text-right">
+                <p className="text-gray-500 dark:text-gray-400">Start Time</p>
+                <p className="font-medium text-gray-900 dark:text-white">{testResult.startTime}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl p-4 mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                🏆
+              </div>
+            </div>
+            <button
+              onClick={handleViewCertificate}
+              className="px-6 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition"
+            >
+              Know more
+            </button>
+          </div>
+
+          {/* Question Stats */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">QUESTION STATS</h3>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-sm font-medium">
+                  S1
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Default Section ({testResult.solved * 30}/{testResult.totalQuestions * 30})
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-gray-500 dark:text-gray-400 text-sm border-b border-gray-100 dark:border-gray-700">
+                      <th className="pb-3 font-medium">#</th>
+                      <th className="pb-3 font-medium">Topic</th>
+                      <th className="pb-3 font-medium">Type/Language</th>
+                      <th className="pb-3 font-medium">Score</th>
+                      <th className="pb-3 font-medium">Status</th>
+                      <th className="pb-3 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {testResult.questionResults.map((result, index) => (
+                      <tr key={index} className="border-b border-gray-50 dark:border-gray-700/50">
+                        <td className="py-4 text-gray-900 dark:text-white">{index + 1}</td>
+                        <td className="py-4 text-gray-900 dark:text-white">{result.topic}</td>
+                        <td className="py-4">
+                          <GridIcon />
+                        </td>
+                        <td className="py-4">
+                          <span className="text-gray-900 dark:text-white font-medium">
+                            {result.isCorrect ? '30.0' : '0.0'} / 30.0
+                          </span>
+                          <br />
+                          <span className="text-red-500 text-sm">
+                            {Math.floor(Math.random() * 80 + 10)}% solved this
+                          </span>
+                        </td>
+                        <td className="py-4">
+                          {result.isCorrect ? (
+                            <span className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                              <CheckCircleIcon />
+                              Solved
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                              <XCircleIcon />
+                              Wrong Answer
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4">
+                          <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-sm">
+                            View Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-4 mb-12">
+            <button
+              onClick={handleBackToList}
+              className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            >
+              Back to Assessments
+            </button>
+            <button
+              onClick={handleViewCertificate}
+              className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:shadow-lg transition flex items-center justify-center gap-2"
+            >
+              <DownloadIcon />
+              Download Certificate
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCertificate = () => {
+    if (!testResult) return null;
+
+    const isPassed = testResult.score >= 40;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <button
+            onClick={() => setView('results')}
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-8 transition"
+          >
+            <ArrowLeftIcon />
+            Back to Results
+          </button>
+
+          {/* Certificate */}
+          <div
+            id="certificate"
+            className="bg-white rounded-3xl shadow-2xl p-12 relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)',
+              border: '8px solid #1e3a5f',
+            }}
+          >
+            {/* Decorative elements */}
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full -translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute bottom-0 right-0 w-48 h-48 bg-gradient-to-tl from-indigo-500/10 to-transparent rounded-full translate-x-1/4 translate-y-1/4" />
+            
+            {/* Gold border frame */}
+            <div className="absolute inset-4 border-2 border-amber-400/50 rounded-2xl pointer-events-none" />
+
+            <div className="relative text-center">
+              {/* Logo */}
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                  Project Bazaar
+                </h1>
+                <p className="text-gray-500 text-sm mt-1">Excellence in Technology Assessment</p>
+              </div>
+
+              {/* Certificate Title */}
+              <div className="mb-8">
+                <h2 className="text-5xl font-serif text-gray-800 mb-2">Certificate</h2>
+                <p className="text-xl text-gray-600">of {isPassed ? 'Achievement' : 'Participation'}</p>
+              </div>
+
+              {/* Recipient */}
+              <p className="text-gray-600 mb-2">This is to certify that</p>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+                Participant
+              </h3>
+
+              <p className="text-gray-600 mb-8 max-w-xl mx-auto">
+                has successfully {isPassed ? 'completed' : 'participated in'} the
+                <br />
+                <strong className="text-blue-900">Mock Coding Interview Assessment - {testResult.assessmentTitle}</strong>
+                <br />
+                with a score of <strong className="text-2xl">{testResult.score.toFixed(1)}%</strong>
+              </p>
+
+              {/* Stats */}
+              <div className="flex justify-center gap-12 mb-8">
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-blue-900">{testResult.solved}</p>
+                  <p className="text-gray-500 text-sm">Questions Solved</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-blue-900">{testResult.totalQuestions}</p>
+                  <p className="text-gray-500 text-sm">Total Questions</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-blue-900">{testResult.duration}</p>
+                  <p className="text-gray-500 text-sm">Duration</p>
+                </div>
+              </div>
+
+              {/* Badge */}
+              <div className="mb-8">
+                {isPassed ? (
+                  <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full font-medium">
+                    <CheckCircleIcon />
+                    Assessment Passed
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-medium">
+                    🎯 Keep Practicing!
+                  </div>
+                )}
+              </div>
+
+              {/* Date & Signature */}
+              <div className="flex justify-between items-end mt-12 pt-8 border-t border-gray-200">
+                <div className="text-left">
+                  <p className="text-gray-500 text-sm">Date</p>
+                  <p className="font-medium text-gray-900">{new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-32 border-b-2 border-gray-400 mb-2" />
+                  <p className="text-gray-500 text-sm">Authorized Signature</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-gray-500 text-sm">Certificate ID</p>
+                  <p className="font-mono text-sm text-gray-900">PB-{Date.now().toString(36).toUpperCase()}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Download Button */}
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => {
+                // Simple print-based download
+                window.print();
+              }}
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:shadow-lg transition inline-flex items-center gap-2"
+            >
+              <DownloadIcon />
+              Download Certificate (PDF)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderScheduleInterview = () => (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
+        <button
+          onClick={() => setView('list')}
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-8 transition"
+        >
+          <ArrowLeftIcon />
+          Back
+        </button>
+
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">
+            Schedule Programming Interview
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 text-center mb-4">
+            Provide us with your skills and preferences, for us to find the right match for you.
+          </p>
+
+          <div className="bg-orange-100 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-700 rounded-xl p-4 mb-8 text-center">
+            <p className="text-orange-800 dark:text-orange-200">
+              To respect your peers' time, <strong>2 No-shows</strong> or <strong>2 Cancellations</strong> will result in your ban from mock interviews for a month.
+            </p>
+          </div>
+
+          <form className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Mock Interview Type
+              </label>
+              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option>Programming (DS/Algo)</option>
+                <option>System Design</option>
+                <option>Frontend Development</option>
+                <option>Backend Development</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Rate your coding skills
+              </label>
+              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option>Beginner</option>
+                <option>Intermediate</option>
+                <option>Advanced</option>
+                <option>Expert</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select languages you are comfortable with
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  'C++17 (gcc-9.2)', 'Java7 (open-jdk-1.7.0)', 'C (gcc-4.8)', 'JavaScript (ES6)',
+                  'Python 3 (python-3.8)', 'Go (1.17.4)', 'Swift (5.5)', 'Kotlin (openjdk8)',
+                ].map((lang) => (
+                  <label key={lang} className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                    <span className="text-gray-700 dark:text-gray-300 text-sm">{lang}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                You are:
+              </label>
+              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option>Student</option>
+                <option>Working Professional</option>
+                <option>Freelancer</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Time Zone
+              </label>
+              <select className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option>(GMT+05:30) Chennai</option>
+                <option>(GMT+00:00) London</option>
+                <option>(GMT-05:00) New York</option>
+                <option>(GMT-08:00) Los Angeles</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                Select time slots (Choose as many, 3 at the least)
+              </label>
+              <div className="grid grid-cols-7 gap-2 text-center text-sm">
+                {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, i) => (
+                  <div key={day}>
+                    <p className="font-medium text-gray-900 dark:text-white mb-1">{day}</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-xs mb-2">Jan, {18 + i}</p>
+                    {['08:30 AM', '09:30 AM', '08:30 PM', '09:30 PM'].map((time) => (
+                      <button
+                        key={`${day}-${time}`}
+                        type="button"
+                        className="w-full py-1 mb-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-500 transition"
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium rounded-xl hover:shadow-lg transition"
+            >
+              Schedule Interview
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Main render
+  return (
+    <>
+      {showInstructions && renderInstructionsModal()}
+      {showRules && renderRulesModal()}
+      
+      {view === 'list' && renderAssessmentList()}
+      {view === 'test' && renderTestInterface()}
+      {view === 'results' && renderResults()}
+      {view === 'certificate' && renderCertificate()}
+      {view === 'schedule' && renderScheduleInterview()}
+    </>
+  );
+};
+
+export default MockAssessmentPage;

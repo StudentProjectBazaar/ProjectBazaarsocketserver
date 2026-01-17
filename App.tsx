@@ -27,9 +27,10 @@ import BrowseProjects from './components/BrowseProjects';
 import BuildPortfolioPage from './components/BuildPortfolioPage';
 import PlatformFeatures from './components/PlatformFeatures';
 import { ResumeBuilderPage } from './components/resume-builder';
+import MockAssessmentPage from './components/MockAssessmentPage';
 
 type Theme = 'light' | 'dark';
-type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browseFreelancers' | 'browseProjects' | 'buildPortfolio' | 'buildResume' | 'notFound';
+type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browseFreelancers' | 'browseProjects' | 'buildPortfolio' | 'buildResume' | 'mockAssessment' | 'notFound';
 type UserRole = 'user' | 'admin';
 
 interface PremiumContextType {
@@ -187,6 +188,8 @@ const AppContent: React.FC = () => {
       return <BuildPortfolioPage />;
     case 'buildResume':
       return <ResumeBuilderPage />;
+    case 'mockAssessment':
+      return <MockAssessmentPage />;
     case 'notFound':
       return <NotFound />;
     case 'home':
@@ -254,6 +257,8 @@ const App: React.FC = () => {
         '/build-portfolio': 'buildPortfolio',
         '/build-resume': 'buildResume',
         '/resume-builder': 'buildResume',
+        '/mock-assessment': 'mockAssessment',
+        '/mock-interview': 'mockAssessment',
         '/404': 'notFound',
         'home': 'home',
         'auth': 'auth',
@@ -266,6 +271,7 @@ const App: React.FC = () => {
         'browseProjects': 'browseProjects',
         'buildPortfolio': 'buildPortfolio',
         'buildResume': 'buildResume',
+        'mockAssessment': 'mockAssessment',
         'notFound': 'notFound',
       };
       
@@ -381,6 +387,7 @@ const App: React.FC = () => {
       'browseProjects': '/browse-projects',
       'buildPortfolio': '/build-portfolio',
       'buildResume': '/build-resume',
+      'mockAssessment': '/mock-assessment',
       'notFound': '/404'
     };
     
