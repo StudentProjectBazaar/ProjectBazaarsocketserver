@@ -21,7 +21,7 @@ const STEPS = [
 
 const ResumeBuilderContent: React.FC = () => {
   const { navigateTo } = useNavigation();
-  const { isLoggedIn } = useAuth();
+  useAuth();
   const { resumeInfo, saveResume, savedResumes, loadResume, resetResume, deleteResume } = useResumeInfo();
   
   const [activeStep, setActiveStep] = useState(1);

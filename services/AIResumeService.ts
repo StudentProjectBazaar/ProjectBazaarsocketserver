@@ -1,8 +1,18 @@
 // AI Resume Service - Uses OpenAI/Gemini for content generation
 // For demo purposes, includes fallback mock responses
 
-const AI_API_ENDPOINT = import.meta.env.VITE_AI_API_ENDPOINT || '';
-const AI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || '';
+declare const import_meta_env: { VITE_AI_API_ENDPOINT?: string; VITE_OPENAI_API_KEY?: string; VITE_GEMINI_API_KEY?: string };
+const getEnv = () => {
+  try {
+    // @ts-expect-error Vite injects import.meta.env at build time
+    return import.meta.env || {};
+  } catch {
+    return {};
+  }
+};
+const env = getEnv();
+const AI_API_ENDPOINT = (env.VITE_AI_API_ENDPOINT as string) || '';
+const AI_API_KEY = (env.VITE_OPENAI_API_KEY as string) || (env.VITE_GEMINI_API_KEY as string) || '';
 
 interface SummaryResponse {
   summary: string;
@@ -131,7 +141,6 @@ export async function generateSummarySuggestions(jobTitle: string): Promise<Summ
   }
 
   // Fallback to template-based generation
-  const normalizedTitle = jobTitle.toLowerCase();
   return [
     { summary: SUMMARY_TEMPLATES.fresher(jobTitle)[0], experience_level: 'Fresher' },
     { summary: SUMMARY_TEMPLATES.mid(jobTitle)[1], experience_level: 'Mid-Level' },

@@ -134,7 +134,7 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
     alert('URL copied to clipboard!');
   };
 
-  const handleShare = (url: string, name: string, e: React.MouseEvent) => {
+  const handleShare = (url: string, _name: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setShareMenuOpen(shareMenuOpen === url ? null : url);
   };
