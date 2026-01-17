@@ -431,10 +431,36 @@ const Dropdown: React.FC<{
 };
 
 // Company Logo Component
-const CompanyLogo: React.FC<{ companyId: string; size?: 'sm' | 'md' }> = ({ companyId, size = 'sm' }) => {
+const CompanyLogo: React.FC<{ companyId: string; size?: 'sm' | 'md' | 'lg' }> = ({ companyId, size = 'sm' }) => {
   const company = companies.find(c => c.id === companyId);
-  const sizeClass = size === 'sm' ? 'w-5 h-5' : 'w-6 h-6';
+  const sizeClass = size === 'sm' ? 'w-6 h-6' : size === 'md' ? 'w-7 h-7' : 'w-8 h-8';
+  const [imgError, setImgError] = useState(false);
   
+  // Get the correct logo path
+  const getLogoPath = (id: string) => {
+    const logoMap: Record<string, string> = {
+      google: '/company_logos/google.png',
+      microsoft: '/company_logos/microsoft.png',
+      amazon: '/company_logos/amazon.png',
+      meta: '/company_logos/meta.png',
+      apple: '/company_logos/apple.png',
+      netflix: '/company_logos/netflix.png',
+      flipkart: '/company_logos/flipkart.png',
+      uber: '/company_logos/uber.png',
+      oracle: '/company_logos/oracle.png',
+      adobe: '/company_logos/adobe.png',
+      linkedin: '/company_logos/linkedin.png',
+      yahoo: '/company_logos/yahoo.png',
+      twitter: '/company_logos/twitter.png',
+      ibm: '/company_logos/ibm.png',
+      salesforce: '/company_logos/salesforce.png',
+      paypal: '/company_logos/paypal.png',
+      ebay: '/company_logos/ebay.jpg',
+      facebook: '/company_logos/meta.png',
+    };
+    return logoMap[id] || `/company_logos/${id}.png`;
+  };
+
   // Fallback to first letter if logo doesn't load
   const getCompanyInitial = (id: string) => {
     const comp = companies.find(c => c.id === id);
@@ -447,28 +473,42 @@ const CompanyLogo: React.FC<{ companyId: string; size?: 'sm' | 'md' }> = ({ comp
       microsoft: 'bg-blue-600',
       amazon: 'bg-orange-500',
       meta: 'bg-blue-500',
-      apple: 'bg-gray-800 dark:bg-gray-200 dark:text-gray-800',
+      apple: 'bg-gray-800',
       netflix: 'bg-red-600',
       flipkart: 'bg-yellow-500',
-      uber: 'bg-black dark:bg-white dark:text-black',
+      uber: 'bg-black',
       oracle: 'bg-red-500',
       adobe: 'bg-red-600',
       linkedin: 'bg-blue-700',
       yahoo: 'bg-purple-600',
-      deshaw: 'bg-green-600',
       twitter: 'bg-sky-500',
       ibm: 'bg-blue-600',
       salesforce: 'bg-blue-500',
       paypal: 'bg-blue-600',
       ebay: 'bg-blue-600',
-      directi: 'bg-orange-500',
     };
     return colors[id] || 'bg-gray-500';
   };
 
+  if (imgError) {
+    return (
+      <div 
+        className={`${sizeClass} rounded-full overflow-hidden flex items-center justify-center ${getCompanyColor(companyId)} text-white text-xs font-bold shadow-sm`} 
+        title={company?.name || companyId}
+      >
+        {getCompanyInitial(companyId)}
+      </div>
+    );
+  }
+
   return (
-    <div className={`${sizeClass} rounded-full overflow-hidden flex items-center justify-center ${getCompanyColor(companyId)} text-white text-[10px] font-bold`} title={company?.name || companyId}>
-      {getCompanyInitial(companyId)}
+    <div className={`${sizeClass} rounded-full overflow-hidden bg-white shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-center`} title={company?.name || companyId}>
+      <img 
+        src={getLogoPath(companyId)} 
+        alt={company?.name || companyId}
+        className="w-full h-full object-contain p-0.5"
+        onError={() => setImgError(true)}
+      />
     </div>
   );
 };
@@ -697,15 +737,16 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
               </>
             )}
           </div>
-          <button className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+          <button 
+            onClick={() => {
+              const starterCode = problemDetails.starterCode[selectedLanguage] || problemDetails.starterCode.python || '';
+              setCode(starterCode);
+            }}
+            className="p-2 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+            title="Reset Code"
+          >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-          <button className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
         </div>
