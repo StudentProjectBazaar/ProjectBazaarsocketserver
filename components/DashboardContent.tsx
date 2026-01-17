@@ -27,6 +27,7 @@ import CourseDetailsPage from './CourseDetailsPage';
 import HackathonsPage from './HackathonsPage';
 import Pagination from './Pagination';
 import BuildPortfolioPage from './BuildPortfolioPage';
+import { ResumeBuilderPage } from './resume-builder';
 import MyCoursesPage from './MyCoursesPage';
 import { PurchasedCourse } from '../services/buyerApi';
 
@@ -551,6 +552,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 return <HackathonsPage />;
             case 'build-portfolio':
                 return <BuildPortfolioPage embedded />;
+            case 'build-resume':
+                return <ResumeBuilderPage />;
             case 'course-details':
                 if (!selectedCourse) return null;
                 return (
@@ -639,6 +642,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 return <SellerDashboard />;
             case 'build-portfolio':
                 return <BuildPortfolioPage embedded />;
+            case 'build-resume':
+                return <ResumeBuilderPage />;
             case 'my-projects':
                 return <MyProjectsPage />;
             case 'my-courses':
@@ -664,7 +669,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 dashboardMode === 'buyer' ? renderBuyerContent() : renderSellerContent()
             ) : (
                 <div className="container mx-auto px-6 py-8">
-                    {activeView !== 'project-details' && activeView !== 'seller-profile' && activeView !== 'course-details' && activeView !== 'hackathons' && activeView !== 'build-portfolio' && (
+                    {activeView !== 'project-details' && activeView !== 'seller-profile' && activeView !== 'course-details' && activeView !== 'hackathons' && activeView !== 'build-portfolio' && activeView !== 'build-resume' && (
                         <DashboardHeader 
                             dashboardMode={dashboardMode} 
                             setDashboardMode={setDashboardMode}

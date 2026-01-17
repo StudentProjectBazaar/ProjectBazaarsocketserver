@@ -26,9 +26,10 @@ import BrowseFreelancers from './components/BrowseFreelancers';
 import BrowseProjects from './components/BrowseProjects';
 import BuildPortfolioPage from './components/BuildPortfolioPage';
 import PlatformFeatures from './components/PlatformFeatures';
+import { ResumeBuilderPage } from './components/resume-builder';
 
 type Theme = 'light' | 'dark';
-type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browseFreelancers' | 'browseProjects' | 'buildPortfolio' | 'notFound';
+type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browseFreelancers' | 'browseProjects' | 'buildPortfolio' | 'buildResume' | 'notFound';
 type UserRole = 'user' | 'admin';
 
 interface PremiumContextType {
@@ -184,6 +185,8 @@ const AppContent: React.FC = () => {
       return <BrowseProjects />;
     case 'buildPortfolio':
       return <BuildPortfolioPage />;
+    case 'buildResume':
+      return <ResumeBuilderPage />;
     case 'notFound':
       return <NotFound />;
     case 'home':
@@ -249,6 +252,8 @@ const App: React.FC = () => {
         '/browse-freelancers': 'browseFreelancers',
         '/browse-projects': 'browseProjects',
         '/build-portfolio': 'buildPortfolio',
+        '/build-resume': 'buildResume',
+        '/resume-builder': 'buildResume',
         '/404': 'notFound',
         'home': 'home',
         'auth': 'auth',
@@ -260,6 +265,7 @@ const App: React.FC = () => {
         'browseFreelancers': 'browseFreelancers',
         'browseProjects': 'browseProjects',
         'buildPortfolio': 'buildPortfolio',
+        'buildResume': 'buildResume',
         'notFound': 'notFound',
       };
       
@@ -374,6 +380,7 @@ const App: React.FC = () => {
       'browseFreelancers': '/browse-freelancers',
       'browseProjects': '/browse-projects',
       'buildPortfolio': '/build-portfolio',
+      'buildResume': '/build-resume',
       'notFound': '/404'
     };
     
