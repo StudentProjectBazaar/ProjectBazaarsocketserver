@@ -1,6 +1,25 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 
+// Lambda API endpoints
+const CODING_QUESTIONS_API = 'https://6918395pal.execute-api.ap-south-2.amazonaws.com/default/coding-questions-service';
+const USER_PROGRESS_API = 'https://jzrc9iaj3j.execute-api.ap-south-2.amazonaws.com/default/user_coding_question_progress';
+
+// Helper to get current user ID (from localStorage or auth)
+const getCurrentUserId = (): string | null => {
+  // Try to get user from localStorage
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      return user.userId || user.id || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
 // ============================================
 // TYPES & INTERFACES
 // ============================================
@@ -123,62 +142,6 @@ const topics = [
   'Two Pointers',
 ];
 
-// Problem details for each question
-const problemDetailsMap: Record<string, ProblemDetails> = {
-  '2': {
-    description: 'Given an array of size **N**, find the majority element. The majority element is the element that appears more than **floor(N/2)** times.\n\nYou may assume that the array is non-empty and the majority element always exists in the array.',
-    constraints: ['1 <= |A| <= 10^6', '1 <= A[i] <= 10^9'],
-    inputFormat: 'First argument is an integer array A.',
-    outputFormat: 'Return an integer representing the majority element.',
-    examples: [
-      { input: 'A = [2, 1, 2]', output: '2', explanation: '2 appears 2 times which is greater than floor(3/2) = 1' },
-      { input: 'A = [1, 1, 1, 2, 2]', output: '1', explanation: '1 appears 3 times which is greater than floor(5/2) = 2' }
-    ],
-    hints: [
-      'Think about what happens when you pair up elements that are different.',
-      'Consider using Boyer-Moore Voting Algorithm.',
-      'Can you solve this in O(1) extra space?'
-    ],
-    starterCode: {
-      python: 'class Solution:\n    def majorityElement(self, A):\n        # Write your code here\n        pass',
-      javascript: 'function majorityElement(A) {\n    // Write your code here\n    \n}',
-      java: 'public class Solution {\n    public int majorityElement(final int[] A) {\n        // Write your code here\n        return 0;\n    }\n}',
-      cpp: 'class Solution {\npublic:\n    int majorityElement(const vector<int> &A) {\n        // Write your code here\n        return 0;\n    }\n};'
-    },
-    testCases: [
-      { input: '[2, 1, 2]', expectedOutput: '2' },
-      { input: '[1, 1, 1, 2, 2]', expectedOutput: '1' },
-      { input: '[3, 3, 4, 2, 4, 4, 2, 4, 4]', expectedOutput: '4', hidden: true }
-    ]
-  },
-  '9': {
-    description: 'Given an array of integers **nums** and an integer **target**, return indices of the two numbers such that they add up to **target**.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.',
-    constraints: ['2 <= nums.length <= 10^4', '-10^9 <= nums[i] <= 10^9', '-10^9 <= target <= 10^9', 'Only one valid answer exists.'],
-    inputFormat: 'First argument is an integer array nums.\nSecond argument is an integer target.',
-    outputFormat: 'Return an array of two integers representing the indices.',
-    examples: [
-      { input: 'nums = [2, 7, 11, 15], target = 9', output: '[0, 1]', explanation: 'Because nums[0] + nums[1] == 9, we return [0, 1].' },
-      { input: 'nums = [3, 2, 4], target = 6', output: '[1, 2]' },
-      { input: 'nums = [3, 3], target = 6', output: '[0, 1]' }
-    ],
-    hints: [
-      'A really brute force way would be to search for all possible pairs of numbers but that would be too slow.',
-      'Try using a hash map to reduce the time complexity.',
-      'What if we store the complement of each number?'
-    ],
-    starterCode: {
-      python: 'class Solution:\n    def twoSum(self, nums, target):\n        # Write your code here\n        pass',
-      javascript: 'function twoSum(nums, target) {\n    // Write your code here\n    \n}',
-      java: 'class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your code here\n        return new int[]{};\n    }\n}',
-      cpp: 'class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        // Write your code here\n        return {};\n    }\n};'
-    },
-    testCases: [
-      { input: '[2, 7, 11, 15], 9', expectedOutput: '[0, 1]' },
-      { input: '[3, 2, 4], 6', expectedOutput: '[1, 2]' },
-      { input: '[3, 3], 6', expectedOutput: '[0, 1]' }
-    ]
-  }
-};
 
 // Default problem details template
 const defaultProblemDetails: ProblemDetails = {
@@ -197,38 +160,6 @@ const defaultProblemDetails: ProblemDetails = {
   testCases: [{ input: '[1, 2, 3]', expectedOutput: '6' }]
 };
 
-const codingQuestions: CodingQuestion[] = [
-  { id: '1', title: 'Gas Station', topic: 'Greedy Algorithm', difficulty: 'medium', avgTime: 56, submissions: 66818, askedIn: ['google', 'amazon', 'microsoft', 'uber', 'flipkart'], status: 'attempted', isBookmarked: true, dateAdded: '2025-12-01', likes: 687, dislikes: 53, successRate: 52.4 },
-  { id: '2', title: 'Majority Element', topic: 'Greedy Algorithm', difficulty: 'easy', avgTime: 19, submissions: 107381, askedIn: ['microsoft', 'yahoo', 'google', 'adobe'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-11-15', likes: 892, dislikes: 34, successRate: 68.7 },
-  { id: '3', title: 'Distribute Candy', topic: 'Greedy Algorithm', difficulty: 'medium', avgTime: 65, submissions: 49275, askedIn: ['microsoft', 'flipkart', 'amazon'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-10-20', likes: 445, dislikes: 67, successRate: 41.2 },
-  { id: '4', title: 'Longest Increasing Subsequence', topic: 'Dynamic Programming', difficulty: 'medium', avgTime: 30, submissions: 69063, askedIn: ['meta', 'yahoo', 'google', 'amazon', 'microsoft'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-09-10', likes: 756, dislikes: 45, successRate: 55.8 },
-  { id: '5', title: 'Unique Binary Search Trees', topic: 'Dynamic Programming', difficulty: 'easy', avgTime: 62, submissions: 20009, askedIn: ['amazon', 'google', 'uber'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-08-25', likes: 234, dislikes: 23, successRate: 62.3 },
-  { id: '6', title: 'Max Rectangle in Binary Matrix', topic: 'Dynamic Programming', difficulty: 'medium', avgTime: 79, submissions: 29987, askedIn: ['google', 'microsoft'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-07-15', likes: 389, dislikes: 56, successRate: 38.5 },
-  { id: '7', title: 'Distinct Subsequences', topic: 'Dynamic Programming', difficulty: 'medium', avgTime: 65, submissions: 41227, askedIn: ['google'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-06-30', likes: 312, dislikes: 41, successRate: 44.7 },
-  { id: '8', title: 'Unique Paths in a Grid', topic: 'Dynamic Programming', difficulty: 'medium', avgTime: 34, submissions: 40425, askedIn: ['meta'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-05-20', likes: 521, dislikes: 32, successRate: 58.9 },
-  { id: '9', title: 'Two Sum', topic: 'Arrays', difficulty: 'easy', avgTime: 15, submissions: 250000, askedIn: ['google', 'amazon', 'meta', 'microsoft', 'apple'], status: 'solved', isBookmarked: true, dateAdded: '2025-12-15', likes: 2341, dislikes: 89, successRate: 78.5 },
-  { id: '10', title: 'Valid Parentheses', topic: 'Stack', difficulty: 'easy', avgTime: 20, submissions: 180000, askedIn: ['amazon', 'meta', 'google'], status: 'solved', isBookmarked: false, dateAdded: '2025-12-10', likes: 1876, dislikes: 65, successRate: 72.3 },
-  { id: '11', title: 'Merge Intervals', topic: 'Arrays', difficulty: 'medium', avgTime: 35, submissions: 95000, askedIn: ['google', 'meta', 'microsoft', 'uber'], status: 'attempted', isBookmarked: false, dateAdded: '2025-11-28', likes: 987, dislikes: 78, successRate: 54.6 },
-  { id: '12', title: 'Trapping Rain Water', topic: 'Dynamic Programming', difficulty: 'hard', avgTime: 45, submissions: 78000, askedIn: ['amazon', 'google', 'microsoft'], status: 'unsolved', isBookmarked: true, dateAdded: '2025-11-20', likes: 1234, dislikes: 98, successRate: 42.1 },
-  { id: '13', title: 'Coin Change', topic: 'Dynamic Programming', difficulty: 'medium', avgTime: 40, submissions: 120000, askedIn: ['amazon', 'google', 'apple'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-10-15', likes: 1567, dislikes: 87, successRate: 51.4 },
-  { id: '14', title: 'Rotate Image', topic: 'Arrays', difficulty: 'medium', avgTime: 25, submissions: 85000, askedIn: ['microsoft', 'amazon', 'apple'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-10-01', likes: 876, dislikes: 54, successRate: 61.2 },
-  { id: '15', title: 'Word Break', topic: 'Dynamic Programming', difficulty: 'medium', avgTime: 50, submissions: 67000, askedIn: ['meta', 'google', 'amazon'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-09-20', likes: 765, dislikes: 67, successRate: 47.8 },
-  { id: '16', title: 'LRU Cache', topic: 'Hashing', difficulty: 'hard', avgTime: 60, submissions: 95000, askedIn: ['amazon', 'google', 'meta', 'microsoft'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-09-01', likes: 1123, dislikes: 112, successRate: 39.5 },
-  { id: '17', title: 'Binary Tree Level Order Traversal', topic: 'Tree', difficulty: 'easy', avgTime: 25, submissions: 110000, askedIn: ['amazon', 'meta', 'microsoft'], status: 'solved', isBookmarked: false, dateAdded: '2025-08-15', likes: 1345, dislikes: 56, successRate: 69.8 },
-  { id: '18', title: 'Search in Rotated Sorted Array', topic: 'Binary Search', difficulty: 'medium', avgTime: 30, submissions: 88000, askedIn: ['amazon', 'google', 'meta'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-08-01', likes: 923, dislikes: 71, successRate: 52.3 },
-  { id: '19', title: 'Maximum Subarray', topic: 'Greedy Algorithm', difficulty: 'easy', avgTime: 18, submissions: 200000, askedIn: ['microsoft', 'amazon', 'linkedin'], status: 'solved', isBookmarked: true, dateAdded: '2025-07-20', likes: 2156, dislikes: 78, successRate: 75.2 },
-  { id: '20', title: 'Median of Two Sorted Arrays', topic: 'Binary Search', difficulty: 'very-hard', avgTime: 75, submissions: 55000, askedIn: ['google', 'amazon', 'apple'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-07-01', likes: 678, dislikes: 134, successRate: 28.9 },
-  { id: '21', title: 'Climbing Stairs', topic: 'Dynamic Programming', difficulty: 'very-easy', avgTime: 10, submissions: 180000, askedIn: ['amazon', 'google'], status: 'solved', isBookmarked: false, dateAdded: '2025-06-15', likes: 1987, dislikes: 45, successRate: 82.1 },
-  { id: '22', title: 'Best Time to Buy and Sell Stock', topic: 'Greedy Algorithm', difficulty: 'easy', avgTime: 15, submissions: 220000, askedIn: ['amazon', 'meta', 'google', 'microsoft'], status: 'solved', isBookmarked: false, dateAdded: '2025-06-01', likes: 2345, dislikes: 67, successRate: 76.8 },
-  { id: '23', title: 'Product of Array Except Self', topic: 'Arrays', difficulty: 'medium', avgTime: 28, submissions: 130000, askedIn: ['meta', 'amazon', 'apple'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-05-15', likes: 1234, dislikes: 65, successRate: 57.3 },
-  { id: '24', title: 'Decode Ways', topic: 'Dynamic Programming', difficulty: 'medium', avgTime: 42, submissions: 75000, askedIn: ['meta', 'google', 'microsoft'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-05-01', likes: 654, dislikes: 78, successRate: 45.6 },
-  { id: '25', title: 'Number of Islands', topic: 'Graph Data Structure & Algorithms', difficulty: 'medium', avgTime: 35, submissions: 145000, askedIn: ['amazon', 'meta', 'microsoft', 'google'], status: 'attempted', isBookmarked: false, dateAdded: '2025-04-15', likes: 1567, dislikes: 89, successRate: 53.2 },
-  { id: '26', title: 'Course Schedule', topic: 'Graph Data Structure & Algorithms', difficulty: 'medium', avgTime: 40, submissions: 82000, askedIn: ['amazon', 'meta', 'google'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-04-01', likes: 876, dislikes: 67, successRate: 48.9 },
-  { id: '27', title: 'Serialize and Deserialize Binary Tree', topic: 'Tree', difficulty: 'hard', avgTime: 55, submissions: 62000, askedIn: ['meta', 'amazon', 'google', 'linkedin'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-03-15', likes: 789, dislikes: 98, successRate: 38.7 },
-  { id: '28', title: 'Minimum Window Substring', topic: 'String', difficulty: 'hard', avgTime: 65, submissions: 58000, askedIn: ['meta', 'google', 'amazon'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-03-01', likes: 923, dislikes: 112, successRate: 35.4 },
-  { id: '29', title: 'Longest Palindromic Substring', topic: 'String', difficulty: 'medium', avgTime: 38, submissions: 175000, askedIn: ['amazon', 'microsoft', 'google'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-02-15', likes: 1456, dislikes: 76, successRate: 56.7 },
-  { id: '30', title: 'Regular Expression Matching', topic: 'Dynamic Programming', difficulty: 'very-hard', avgTime: 80, submissions: 45000, askedIn: ['google', 'meta', 'amazon'], status: 'unsolved', isBookmarked: false, dateAdded: '2025-02-01', likes: 567, dislikes: 156, successRate: 25.3 },
-];
 
 // ============================================
 // HELPER FUNCTIONS
@@ -525,6 +456,7 @@ interface ProblemSolvingViewProps {
   onNext: () => void;
   onPrevious: () => void;
   onToggleBookmark: () => void;
+  onStatusUpdate: (questionId: string, status: QuestionStatus, passed: boolean) => void;
 }
 
 const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
@@ -535,6 +467,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
   onNext,
   onPrevious,
   onToggleBookmark,
+  onStatusUpdate,
 }) => {
   const [activeTab, setActiveTab] = useState<ProblemTab>('description');
   const [selectedLanguage, setSelectedLanguage] = useState('python');
@@ -554,7 +487,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const problemDetails = problemDetailsMap[question.id] || defaultProblemDetails;
+  const problemDetails = question.problemDetails || defaultProblemDetails;
 
   // Initialize code with starter code
   useEffect(() => {
@@ -649,10 +582,14 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
     if (allPassed) {
       setOutput('✅ Accepted! All test cases passed.\n\nRuntime: 45 ms (beats 78.5% of submissions)\nMemory: 42.1 MB (beats 65.3% of submissions)');
       setScore(400);
+      // Update status to solved
+      onStatusUpdate(question.id, 'solved', true);
     } else {
       const failedTestCase = Math.floor(Math.random() * 3) + 1;
       setOutput(`❌ Wrong Answer\n\nTest case ${failedTestCase} failed.\nInput: ${problemDetails.testCases[0]?.input || '[1,2,3]'}\nExpected: ${problemDetails.testCases[0]?.expectedOutput || '6'}\nGot: Different output`);
       setScore(Math.floor(Math.random() * 300));
+      // Update status to attempted
+      onStatusUpdate(question.id, 'attempted', false);
     }
 
     setIsSubmitting(false);
@@ -1122,11 +1059,133 @@ const CodingInterviewQuestionsPage: React.FC = () => {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('recently-added');
-  const [questions, setQuestions] = useState<CodingQuestion[]>(codingQuestions);
+  const [questions, setQuestions] = useState<CodingQuestion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedQuestion, setSelectedQuestion] = useState<CodingQuestion | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+
+  // Fetch questions from API on mount
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${CODING_QUESTIONS_API}?status=published`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch questions');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.data?.questions && data.data.questions.length > 0) {
+          // Map API response to our interface format
+          const apiQuestions: CodingQuestion[] = data.data.questions.map((q: any, index: number) => {
+            // Map difficulty from API format to our format
+            const difficultyMap: Record<string, DifficultyLevel> = {
+              'Easy': 'easy',
+              'Medium': 'medium',
+              'Hard': 'hard'
+            };
+            
+            return {
+              id: q.questionId || q.id || `api-${index}`,
+              title: q.title,
+              topic: q.topic || 'General',
+              difficulty: difficultyMap[q.difficulty] || 'medium',
+              avgTime: q.avgTime || 30,
+              submissions: Math.floor(Math.random() * 100000) + 10000, // Random for now
+              askedIn: q.companies || ['google', 'amazon'],
+              status: 'unsolved' as QuestionStatus,
+              isBookmarked: false,
+              dateAdded: q.createdAt || new Date().toISOString().split('T')[0],
+              likes: Math.floor(Math.random() * 1000) + 100,
+              dislikes: Math.floor(Math.random() * 100) + 10,
+              successRate: Math.floor(Math.random() * 40) + 30,
+              problemDetails: {
+                description: q.description || '',
+                constraints: q.constraints || [],
+                inputFormat: q.inputFormat || '',
+                outputFormat: q.outputFormat || '',
+                examples: q.examples || [],
+                hints: q.hints || [],
+                starterCode: q.starterCode || defaultProblemDetails.starterCode,
+                testCases: (q.testCases || []).map((tc: any) => ({
+                  input: tc.input,
+                  expectedOutput: tc.expectedOutput,
+                  hidden: tc.isHidden
+                }))
+              }
+            };
+          });
+          
+          // Use API questions
+          const allQuestions = [...apiQuestions];
+          
+          // Fetch user progress and merge with questions
+          const userId = getCurrentUserId();
+          if (userId) {
+            try {
+              const progressResponse = await fetch(USER_PROGRESS_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'get_progress', userId })
+              });
+              
+              if (progressResponse.ok) {
+                const progressData = await progressResponse.json();
+                if (progressData.success && progressData.data?.progress) {
+                  // Create a map of question progress
+                  const progressMap = new Map();
+                  progressData.data.progress.forEach((p: any) => {
+                    progressMap.set(p.questionId, p);
+                  });
+                  
+                  // Merge progress with questions
+                  const mergedQuestions = allQuestions.map(q => {
+                    const progress = progressMap.get(q.id);
+                    if (progress) {
+                      return {
+                        ...q,
+                        status: progress.status as QuestionStatus,
+                        isBookmarked: progress.isBookmarked || false
+                      };
+                    }
+                    return q;
+                  });
+                  
+                  setQuestions(mergedQuestions);
+                } else {
+                  setQuestions(allQuestions);
+                }
+              } else {
+                setQuestions(allQuestions);
+              }
+            } catch (progressError) {
+              console.error('Error fetching user progress:', progressError);
+              setQuestions(allQuestions);
+            }
+          } else {
+            setQuestions(allQuestions);
+          }
+        } else {
+          // No API questions - keep empty state
+          setQuestions([]);
+        }
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        // Keep using mock data on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchQuestions();
+  }, []);
 
   // Calculate user progress
   const userProgress: UserProgress = useMemo(() => {
@@ -1270,13 +1329,32 @@ const CodingInterviewQuestionsPage: React.FC = () => {
   }, [filteredQuestions]);
 
   // Toggle bookmark
-  const toggleBookmark = useCallback((questionId: string) => {
+  const toggleBookmark = useCallback(async (questionId: string) => {
+    // Optimistically update UI
     setQuestions(prev => prev.map(q =>
       q.id === questionId ? { ...q, isBookmarked: !q.isBookmarked } : q
     ));
     // Also update selectedQuestion if it's the current one
     if (selectedQuestion?.id === questionId) {
       setSelectedQuestion(prev => prev ? { ...prev, isBookmarked: !prev.isBookmarked } : null);
+    }
+    
+    // Sync with API
+    const userId = getCurrentUserId();
+    if (userId) {
+      try {
+        await fetch(USER_PROGRESS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'toggle_bookmark',
+            userId,
+            questionId
+          })
+        });
+      } catch (error) {
+        console.error('Error syncing bookmark:', error);
+      }
     }
   }, [selectedQuestion]);
 
@@ -1309,6 +1387,39 @@ const CodingInterviewQuestionsPage: React.FC = () => {
     setSelectedQuestion(null);
   }, []);
 
+  // Update question status (solved/attempted) and sync with API
+  const updateQuestionStatus = useCallback(async (questionId: string, status: QuestionStatus, passed: boolean) => {
+    // Update local state
+    setQuestions(prev => prev.map(q =>
+      q.id === questionId ? { ...q, status } : q
+    ));
+    
+    // Also update selected question if it's the current one
+    if (selectedQuestion?.id === questionId) {
+      setSelectedQuestion(prev => prev ? { ...prev, status } : null);
+    }
+    
+    // Sync with API
+    const userId = getCurrentUserId();
+    if (userId) {
+      try {
+        await fetch(USER_PROGRESS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update_status',
+            userId,
+            questionId,
+            status
+          })
+        });
+        console.log(`Question ${questionId} status updated to ${status}`);
+      } catch (error) {
+        console.error('Error syncing status:', error);
+      }
+    }
+  }, [selectedQuestion]);
+
   // If a question is selected, show the problem solving view
   if (selectedQuestion) {
     return (
@@ -1320,6 +1431,7 @@ const CodingInterviewQuestionsPage: React.FC = () => {
         onNext={goToNextQuestion}
         onPrevious={goToPreviousQuestion}
         onToggleBookmark={() => toggleBookmark(selectedQuestion.id)}
+        onStatusUpdate={updateQuestionStatus}
       />
     );
   }
@@ -1347,6 +1459,17 @@ const CodingInterviewQuestionsPage: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Loading State */}
+        {isLoading && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 mb-6 border border-gray-200 dark:border-gray-700 flex items-center justify-center gap-3">
+            <svg className="w-5 h-5 animate-spin text-orange-500" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="text-gray-600 dark:text-gray-400">Loading questions...</span>
+          </div>
+        )}
+
         {/* Progress & Banner Section */}
         <div className="flex flex-col lg:flex-row gap-6 mb-8">
           {/* Progress Card */}
