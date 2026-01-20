@@ -1388,7 +1388,7 @@ const CodingInterviewQuestionsPage: React.FC = () => {
   }, []);
 
   // Update question status (solved/attempted) and sync with API
-  const updateQuestionStatus = useCallback(async (questionId: string, status: QuestionStatus, passed: boolean) => {
+  const updateQuestionStatus = useCallback(async (questionId: string, status: QuestionStatus, _passed: boolean) => {
     // Update local state
     setQuestions(prev => prev.map(q =>
       q.id === questionId ? { ...q, status } : q

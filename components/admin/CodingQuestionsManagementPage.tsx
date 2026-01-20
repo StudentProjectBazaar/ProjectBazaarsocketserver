@@ -10,7 +10,7 @@ interface APIKeyConfig {
 }
 
 // Lambda API endpoint for API key management (update this with your actual endpoint)
-const API_KEY_LAMBDA_ENDPOINT = 'https://your-api-gateway.execute-api.region.amazonaws.com/prod/api-keys';
+// const API_KEY_LAMBDA_ENDPOINT = 'https://your-api-gateway.execute-api.region.amazonaws.com/prod/api-keys';
 
 // Lambda API endpoint for Coding Questions
 const CODING_QUESTIONS_API = 'https://6918395pal.execute-api.ap-south-2.amazonaws.com/default/coding-questions-service';
@@ -156,7 +156,7 @@ const CodingQuestionsManagementPage: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<CodingQuestion | null>(null);
   const [viewingQuestion, setViewingQuestion] = useState<CodingQuestion | null>(null);
-  const [activeTab, setActiveTab] = useState<'details' | 'testcases' | 'code' | 'preview'>('details');
+  const [_activeTab, _setActiveTab] = useState<'details' | 'testcases' | 'code' | 'preview'>('details');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   
   // API Key Management State
