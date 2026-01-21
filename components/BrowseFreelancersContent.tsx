@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Pagination from './Pagination';
 import OrangeCheckbox from './OrangeCheckbox';
 import type { Freelancer } from '../types/browse';
-import freelancersData from '../mock/freelancers.json';
+import { getAllFreelancers, searchFreelancers } from '../services/freelancersApi';
 
 type SortOption = 'most-relevant' | 'highest-rated' | 'lowest-price';
 
@@ -11,9 +11,11 @@ interface BrowseFreelancersContentProps {
 }
 
 export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> = () => {
-  const [freelancers] = useState<Freelancer[]>(freelancersData as Freelancer[]);
+  const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [hourlyRateRange, setHourlyRateRange] = useState<[number, number]>([10, 30]);
+  const [hourlyRateRange, setHourlyRateRange] = useState<[number, number]>([10, 100]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [sortOption, setSortOption] = useState<SortOption>('most-relevant');
@@ -26,6 +28,51 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
     country: true
   });
   const filterRef = useRef<HTMLDivElement>(null);
+
+  // Fetch freelancers from API
+  useEffect(() => {
+    const fetchFreelancers = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const { freelancers: data } = await getAllFreelancers(100, 0);
+        setFreelancers(data);
+      } catch (err) {
+        console.error('Error fetching freelancers:', err);
+        setError('Failed to load freelancers. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFreelancers();
+  }, []);
+
+  // Search with API when filters change significantly
+  useEffect(() => {
+    const searchWithFilters = async () => {
+      if (!searchQuery && selectedSkills.length === 0 && !selectedCountry) {
+        return; // Use local filtering for basic cases
+      }
+
+      try {
+        const { freelancers: results } = await searchFreelancers({
+          query: searchQuery,
+          skills: selectedSkills,
+          country: selectedCountry,
+          minHourlyRate: hourlyRateRange[0],
+          maxHourlyRate: hourlyRateRange[1],
+          limit: 100,
+        });
+        setFreelancers(results);
+      } catch (err) {
+        console.error('Error searching freelancers:', err);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchWithFilters, 500);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, selectedSkills, selectedCountry]);
 
   // Get unique skills and countries
   const allSkills = useMemo(() => {
@@ -116,14 +163,14 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
   }, [isFilterOpen]);
 
   const clearFilters = () => {
-    setHourlyRateRange([10, 30]);
+    setHourlyRateRange([10, 100]);
     setSelectedSkills([]);
     setSelectedCountry('');
     setSearchQuery('');
     setSortOption('most-relevant');
   };
 
-  const hasActiveFilters = selectedSkills.length > 0 || selectedCountry !== '' || hourlyRateRange[0] > 10 || hourlyRateRange[1] < 30;
+  const hasActiveFilters = selectedSkills.length > 0 || selectedCountry !== '' || hourlyRateRange[0] > 10 || hourlyRateRange[1] < 100;
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -132,8 +179,9 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
     }));
   };
 
-  const minPercent = ((hourlyRateRange[0] - 10) / 20) * 100;
-  const maxPercent = ((hourlyRateRange[1] - 10) / 20) * 100;
+  // Calculate slider percentages (range: 10-100, so 90 total)
+  const minPercent = ((hourlyRateRange[0] - 10) / 90) * 100;
+  const maxPercent = ((hourlyRateRange[1] - 10) / 90) * 100;
 
   const StarIcon = ({ filled }: { filled: boolean }) => (
     <svg
@@ -154,6 +202,39 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
       </div>
     );
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center">
+          <svg className="animate-spin h-12 w-12 text-orange-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Loading freelancers...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="text-center py-16 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl">
+        <svg className="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p className="text-red-500 text-lg font-medium mb-2">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -261,7 +342,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                     <input
                       type="range"
                       min={10}
-                      max={30}
+                      max={100}
                       value={hourlyRateRange[0]}
                       onChange={(e) => setHourlyRateRange([Number(e.target.value), hourlyRateRange[1]])}
                       className="absolute top-0 left-0 w-full h-8 bg-transparent appearance-none cursor-pointer z-30"
@@ -269,7 +350,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                     <input
                       type="range"
                       min={10}
-                      max={30}
+                      max={100}
                       value={hourlyRateRange[1]}
                       onChange={(e) => setHourlyRateRange([hourlyRateRange[0], Number(e.target.value)])}
                       className="absolute top-0 left-0 w-full h-8 bg-transparent appearance-none cursor-pointer z-20"
@@ -303,10 +384,10 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                       <input
                         type="number"
                         min={10}
-                        max={30}
+                        max={100}
                         value={hourlyRateRange[0]}
                         onChange={(e) => {
-                          const val = Math.max(10, Math.min(30, Number(e.target.value)));
+                          const val = Math.max(10, Math.min(100, Number(e.target.value)));
                           setHourlyRateRange([val, hourlyRateRange[1]]);
                         }}
                         className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-gray-100 text-sm"
@@ -317,10 +398,10 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                       <input
                         type="number"
                         min={10}
-                        max={30}
+                        max={100}
                         value={hourlyRateRange[1]}
                         onChange={(e) => {
-                          const val = Math.max(10, Math.min(30, Number(e.target.value)));
+                          const val = Math.max(10, Math.min(100, Number(e.target.value)));
                           setHourlyRateRange([hourlyRateRange[0], val]);
                         }}
                         className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-gray-100 text-sm"

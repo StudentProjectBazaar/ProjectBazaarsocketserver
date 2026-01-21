@@ -32,6 +32,7 @@ import MyCoursesPage from './MyCoursesPage';
 import CareerGuidancePage from './CareerGuidancePage';
 import MockAssessmentPage from './MockAssessmentPage';
 import CodingInterviewQuestionsPage from './CodingInterviewQuestionsPage';
+import PostBidRequestProjectPage from './PostBidRequestProjectPage';
 import { PurchasedCourse } from '../services/buyerApi';
 
 const GET_ALL_PROJECTS_ENDPOINT = 'https://vwqfgtwerj.execute-api.ap-south-2.amazonaws.com/default/Get_All_Projects_for_Admin_Buyer';
@@ -553,6 +554,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 );
             case 'hackathons':
                 return <HackathonsPage />;
+            case 'post-project':
+                return <PostBidRequestProjectPage onBack={() => setActiveView('dashboard')} />;
             case 'build-portfolio':
                 return <BuildPortfolioPage embedded />;
             case 'build-resume':
@@ -649,6 +652,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
         switch (activeView) {
             case 'dashboard':
                 return <SellerDashboard />;
+            case 'post-project':
+                return <PostBidRequestProjectPage onBack={() => setActiveView('dashboard')} />;
             case 'build-portfolio':
                 return <BuildPortfolioPage embedded />;
             case 'build-resume':

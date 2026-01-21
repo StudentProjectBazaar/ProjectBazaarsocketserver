@@ -7,7 +7,7 @@ export interface Bid {
   bidAmount: number;
   currency: string;
   deliveryTime: number;
-  deliveryTimeUnit: 'days' | 'weeks' | 'months';
+  deliveryTimeUnit: 'hours' | 'days' | 'weeks' | 'months';
   proposal: string;
   submittedAt: string; // ISO date string
   status?: 'pending' | 'accepted' | 'rejected';
@@ -17,7 +17,7 @@ export interface BidFormData {
   bidAmount: number;
   currency: string;
   deliveryTime: number;
-  deliveryTimeUnit: 'days' | 'weeks' | 'months';
+  deliveryTimeUnit: 'hours' | 'days' | 'weeks' | 'months';
   proposal: string;
 }
 

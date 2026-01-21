@@ -30,5 +30,11 @@ export interface BrowseProject {
   bidsCount: number;
   postedAt: string; // ISO date string
   postedTimeAgo: string; // e.g., "1 minute ago"
+  // Requirement owner info
+  ownerId: string;
+  ownerEmail: string;
+  ownerName?: string;
+  ownerProfilePicture?: string;
+  thumbnailUrl?: string;
 }
 

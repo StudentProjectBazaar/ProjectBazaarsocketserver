@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Star, BadgeCheck, ShoppingBag, TrendingUp } from "lucide-react";
+import { getTopFreelancers } from "../services/freelancersApi";
+import type { Freelancer } from "../types/browse";
 
 interface Seller {
   name: string;
@@ -14,7 +16,8 @@ interface Seller {
   tags: string[];
 }
 
-const topSellers: Seller[] = [
+// Fallback static data for when API is unavailable
+const fallbackSellers: Seller[] = [
   {
     name: "Aditya Verma",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
@@ -82,6 +85,43 @@ const topSellers: Seller[] = [
     tags: ["Python", "Pandas", "ML"],
   },
 ];
+
+// Helper to format earnings
+const formatEarnings = (amount: number): string => {
+  if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(1)}L`;
+  } else if (amount >= 1000) {
+    return `₹${(amount / 1000).toFixed(1)}K`;
+  }
+  return `₹${amount}`;
+};
+
+// Helper to determine badge type
+const getBadgeType = (index: number, rating: number, sales: number): "top" | "rising" | "verified" => {
+  if (index < 2 || rating >= 4.9) return "top";
+  if (sales > 30 || rating >= 4.7) return "verified";
+  return "rising";
+};
+
+// Convert Freelancer from API to Seller format
+const freelancerToSeller = (freelancer: Freelancer, index: number): Seller => {
+  // @ts-ignore - Extended properties from API
+  const projectsSold = freelancer.projectsSold || Math.floor(Math.random() * 50 + 20);
+  // @ts-ignore - Extended properties from API
+  const totalEarnings = freelancer.totalEarnings || projectsSold * 5000;
+  
+  return {
+    name: freelancer.name,
+    avatar: freelancer.profileImage,
+    specialty: freelancer.skills[0] ? `${freelancer.skills[0]} Expert` : "Developer",
+    rating: freelancer.rating,
+    reviews: freelancer.reviewsCount,
+    projectsSold: projectsSold,
+    earnings: formatEarnings(totalEarnings),
+    badge: getBadgeType(index, freelancer.rating, projectsSold),
+    tags: freelancer.skills.slice(0, 3),
+  };
+};
 
 const BadgeIcon: React.FC<{ type: "top" | "rising" | "verified" }> = ({ type }) => {
   switch (type) {
@@ -200,6 +240,28 @@ const SellerCard: React.FC<{ seller: Seller; index: number }> = ({ seller, index
 };
 
 const TopSellers: React.FC = () => {
+  const [sellers, setSellers] = useState<Seller[]>(fallbackSellers);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTopSellers = async () => {
+      try {
+        const freelancers = await getTopFreelancers(6);
+        if (freelancers.length > 0) {
+          const mappedSellers = freelancers.map((f, i) => freelancerToSeller(f, i));
+          setSellers(mappedSellers);
+        }
+      } catch (error) {
+        console.error('Error fetching top sellers:', error);
+        // Keep fallback data
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTopSellers();
+  }, []);
+
   return (
     <section className="relative py-20 overflow-hidden bg-gradient-to-b from-[#1a1025] to-[#0f0a15]">
       {/* Background decorations */}
@@ -236,9 +298,28 @@ const TopSellers: React.FC = () => {
 
         {/* Sellers Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {topSellers.map((seller, index) => (
-            <SellerCard key={seller.name} seller={seller} index={index} />
-          ))}
+          {isLoading ? (
+            // Loading skeleton
+            Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="animate-pulse">
+                <div className="p-6 rounded-3xl border border-white/10 bg-gradient-to-br from-[#1a1025]/90 to-[#2d1f47]/60">
+                  <div className="flex justify-center mb-4">
+                    <div className="w-20 h-20 rounded-full bg-white/10"></div>
+                  </div>
+                  <div className="h-5 bg-white/10 rounded w-3/4 mx-auto mb-2"></div>
+                  <div className="h-4 bg-white/10 rounded w-1/2 mx-auto mb-4"></div>
+                  <div className="flex justify-center gap-2 mb-4">
+                    <div className="h-6 bg-white/10 rounded w-16"></div>
+                    <div className="h-6 bg-white/10 rounded w-16"></div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            sellers.map((seller, index) => (
+              <SellerCard key={seller.name + index} seller={seller} index={index} />
+            ))
+          )}
         </div>
 
         {/* CTA */}
