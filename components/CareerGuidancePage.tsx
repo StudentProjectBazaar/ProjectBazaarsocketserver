@@ -26,20 +26,68 @@ interface Roadmap {
     steps: RoadmapStep[];
 }
 
-interface InternshipPhase {
-    task: string;
-    deadline: string;
-    topicsCovered: string;
+// New Roadmap Interfaces
+interface CareerAnalysis {
+    careerGoal: string;
+    currentLevel: 'Beginner' | 'Intermediate' | 'Advanced';
+    timeCommitment: number; // hours per week
+    preferredTechStack: string[];
 }
 
-interface InternshipData {
-    CompanyName: string;
-    companyDescription: string;
-    YourRole: string;
-    phases: InternshipPhase[];
+interface WeekResource {
+    type: 'gfg' | 'youtube' | 'documentation' | 'practice' | 'article';
+    title: string;
+    url: string;
 }
 
-type CareerTab = 'trending' | 'recommend' | 'roadmap' | 'internship' | 'placement' | 'projects';
+interface WeekContent {
+    weekNumber: number;
+    mainTopics: string[];
+    subtopics: string[];
+    practicalTasks: string[];
+    miniProject: string;
+    resources?: WeekResource[];
+    quiz?: QuizQuestion[];
+    isCompleted: boolean;
+    quizCompleted: boolean;
+}
+
+interface RoadmapData {
+    careerGoal: string;
+    totalWeeks: number;
+    weeks: WeekContent[];
+    createdAt: string;
+}
+
+interface QuizQuestion {
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    userAnswer?: number;
+}
+
+interface WeeklyQuiz {
+    weekNumber: number;
+    questions: QuizQuestion[];
+    score?: number;
+    feedback?: string;
+}
+
+interface FinalExam {
+    questions: QuizQuestion[];
+    userAnswers: number[];
+    score?: number;
+    completed: boolean;
+}
+
+interface Certificate {
+    name: string;
+    career: string;
+    score: number;
+    date: string;
+}
+
+type CareerTab = 'trending' | 'recommend' | 'roadmap' | 'placement' | 'projects';
 type RecommendStep = 0 | 1 | 2 | 3 | 4 | 5;
 
 // Trending Career Data for B.Tech Students
@@ -96,11 +144,6 @@ const RoadmapIcon = () => (
     </svg>
 );
 
-const InternshipIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-);
 
 const TargetIcon = () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -450,7 +493,7 @@ const Selector: React.FC<SelectorProps> = ({ title, subtitle, options, setOption
     const selectedOptions = options.filter(item => item.isSelected).map(item => item.option);
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div>
             <div className="mb-8 text-center">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
                 <p className="text-gray-600">{subtitle}</p>
@@ -530,7 +573,7 @@ interface ResultProps {
 }
 
 const ResultComponent: React.FC<ResultProps> = ({ result, onGenerateAgain, onContinueToRoadmap }) => (
-    <div className="max-w-4xl mx-auto text-center">
+    <div className="text-center">
         <div className="mb-8">
             <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-sm font-medium">
                 <SparkleIcon />
@@ -604,233 +647,1737 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ step, totalSteps }) => (
 );
 
 // ============================================
-// ROADMAP COMPONENT
+// NEW ROADMAP FEATURE COMPONENT
 // ============================================
 
-interface RoadmapDisplayProps {
-    roadmap: Roadmap;
+interface RoadmapFeatureProps {
+    roadmapStep: 'analysis' | 'roadmap' | 'progress' | 'exam' | 'evaluation';
+    setRoadmapStep: (step: 'analysis' | 'roadmap' | 'progress' | 'exam' | 'evaluation') => void;
+    careerAnalysis: CareerAnalysis | null;
+    setCareerAnalysis: (analysis: CareerAnalysis | null) => void;
+    roadmapData: RoadmapData | null;
+    setRoadmapData: (data: RoadmapData | null) => void;
+    currentWeek: number | null;
+    setCurrentWeek: (week: number | null) => void;
+    weeklyQuiz: WeeklyQuiz | null;
+    setWeeklyQuiz: (quiz: WeeklyQuiz | null) => void;
+    finalExam: FinalExam | null;
+    setFinalExam: (exam: FinalExam | null) => void;
+    certificate: Certificate | null;
+    setCertificate: (cert: Certificate | null) => void;
+    isGeneratingRoadmap: boolean;
+    setIsGeneratingRoadmap: (loading: boolean) => void;
+    isGeneratingQuiz: boolean;
+    setIsGeneratingQuiz: (loading: boolean) => void;
+    isGeneratingExam: boolean;
+    setIsGeneratingExam: (loading: boolean) => void;
+    roadmapError: string | null;
+    setRoadmapError: (error: string | null) => void;
 }
 
-const RoadmapDisplay: React.FC<RoadmapDisplayProps> = ({ roadmap }) => {
-    const [currentStep, setCurrentStep] = useState(0);
+const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
+    roadmapStep,
+    setRoadmapStep,
+    careerAnalysis,
+    setCareerAnalysis,
+    roadmapData,
+    setRoadmapData,
+    currentWeek,
+    setCurrentWeek,
+    weeklyQuiz,
+    setWeeklyQuiz,
+    finalExam,
+    setFinalExam,
+    certificate,
+    setCertificate,
+    isGeneratingRoadmap,
+    setIsGeneratingRoadmap,
+    isGeneratingQuiz,
+    setIsGeneratingQuiz,
+    isGeneratingExam,
+    setIsGeneratingExam,
+    roadmapError,
+    setRoadmapError,
+}) => {
+    // API keys no longer needed - using static data
 
-    return (
-        <div className="max-w-5xl mx-auto">
-            <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-3">{roadmap.title}</h2>
-                <p className="text-gray-600">{roadmap.description}</p>
-            </div>
+    // Step 1: Category Selection and Duration Input
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [duration, setDuration] = useState<number>(8);
+    const [currentLevel, setCurrentLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
 
-            {/* Learning Resources */}
-            <div className="mb-8 p-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-xl">
-                <h3 className="font-semibold text-gray-900 mb-3">📚 Recommended Courses</h3>
-                <div className="flex flex-wrap gap-3">
-                    <a 
-                        href={`https://www.coursera.org/search?query=${encodeURIComponent(roadmap.title)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-orange-300 transition-all"
-                    >
-                        Coursera
-                    </a>
-                    <a 
-                        href={`https://www.udemy.com/courses/search/?q=${encodeURIComponent(roadmap.title)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-orange-300 transition-all"
-                    >
-                        Udemy
-                    </a>
-                </div>
-            </div>
+    // Available categories
+    const categories = [
+        { id: 'ai-ml', name: 'AI/ML Engineer', icon: '🤖' },
+        { id: 'web-dev', name: 'Web Development', icon: '🌐' },
+        { id: 'data-science', name: 'Data Science', icon: '📊' },
+        { id: 'devops', name: 'DevOps Engineer', icon: '⚙️' },
+        { id: 'mobile-dev', name: 'Mobile Development', icon: '📱' },
+        { id: 'cloud-engineer', name: 'Cloud Engineer', icon: '☁️' },
+        { id: 'cybersecurity', name: 'Cybersecurity', icon: '🔒' },
+        { id: 'blockchain', name: 'Blockchain Developer', icon: '⛓️' },
+        { id: 'ui-ux', name: 'UI/UX Designer', icon: '🎨' },
+        { id: 'fullstack', name: 'Full Stack Developer', icon: '💻' },
+    ];
 
-            {/* Steps Navigation */}
-            <div className="flex gap-2 overflow-x-auto pb-4 mb-6">
-                {roadmap.steps.map((_step, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => setCurrentStep(idx)}
-                        className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                            currentStep === idx
-                                ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                                : idx < currentStep
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                    >
-                        Step {idx + 1}
-                    </button>
-                ))}
-            </div>
+    const handleCategorySelect = (categoryId: string) => {
+        setSelectedCategory(categoryId);
+        setRoadmapError(null); // Clear any previous errors
+    };
 
-            {/* Current Step Content */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                    {roadmap.steps[currentStep].title}
-                </h3>
-                <p className="text-gray-600 mb-6">{roadmap.steps[currentStep].description}</p>
+    const handleGenerateRoadmap = () => {
+        if (!selectedCategory) {
+            setRoadmapError('Please select a category');
+            return;
+        }
+        if (duration < 4 || duration > 24) {
+            setRoadmapError('Duration must be between 4 and 24 weeks');
+            return;
+        }
 
-                {/* Skills */}
-                <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Skills you'll learn</h4>
-                    <div className="flex flex-wrap gap-2">
-                        {roadmap.steps[currentStep].skills.map((skill, idx) => (
-                            <span 
-                                key={idx}
-                                className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
-                            >
-                                {skill}
-                            </span>
-                        ))}
-                    </div>
-                </div>
+        const categoryName = categories.find(c => c.id === selectedCategory)?.name || selectedCategory;
+        const analysis: CareerAnalysis = {
+            careerGoal: categoryName,
+            currentLevel: currentLevel,
+            timeCommitment: 10,
+            preferredTechStack: [],
+        };
+        setCareerAnalysis(analysis);
+        setRoadmapStep('roadmap');
+        generateRoadmap(analysis, duration);
+    };
 
-                {/* Sub-steps */}
+    // Generate static roadmap based on career goal and duration
+    const generateRoadmap = async (analysis: CareerAnalysis, totalWeeks: number) => {
+        setIsGeneratingRoadmap(true);
+        setRoadmapError(null);
+
+        // Simulate loading delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Get roadmap data - first try API, then fallback to static
+        const getStaticRoadmap = async (categoryId: string, level: string, totalWeeks: number, categoriesList: typeof categories): Promise<RoadmapData> => {
+            // Try to load from API first
+            try {
+                const API_ENDPOINT = 'https://YOUR_API_GATEWAY_URL/roadmap-management'; // Replace with your API Gateway URL
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resource: 'roadmap',
+                        action: 'get',
+                        categoryId: categoryId,
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.roadmap && data.roadmap.weeks && data.roadmap.weeks.length > 0) {
+                        // Use API roadmap, but limit to requested duration
+                        const weeksToUse = data.roadmap.weeks.slice(0, totalWeeks).map((w: any, idx: number) => ({
+                            ...w,
+                            weekNumber: idx + 1,
+                            isCompleted: false,
+                            quizCompleted: false,
+                        }));
+                        return {
+                            careerGoal: data.roadmap.categoryName || categoriesList.find(c => c.id === categoryId)?.name || categoryId,
+                            totalWeeks: weeksToUse.length,
+                            weeks: weeksToUse,
+                            createdAt: new Date().toISOString(),
+                        };
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load roadmap from API:', err);
+            }
+
+            // Fallback: Try localStorage
+            try {
+                const stored = localStorage.getItem('admin_roadmaps');
+                if (stored) {
+                    const adminRoadmaps: Record<string, { categoryId: string; categoryName: string; weeks: any[] }> = JSON.parse(stored);
+                    const adminRoadmap = adminRoadmaps[categoryId];
+                    if (adminRoadmap && adminRoadmap.weeks.length > 0) {
+                        const weeksToUse = adminRoadmap.weeks.slice(0, totalWeeks).map((w, idx) => ({
+                            ...w,
+                            weekNumber: idx + 1,
+                            isCompleted: false,
+                            quizCompleted: false,
+                        }));
+                        return {
+                            careerGoal: adminRoadmap.categoryName,
+                            totalWeeks: weeksToUse.length,
+                            weeks: weeksToUse,
+                            createdAt: new Date().toISOString(),
+                        };
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load admin roadmaps from localStorage:', err);
+            }
+
+            // Fallback to static data
+            // Helper function to generate resources for each week
+            const getResourcesForWeek = (categoryId: string, weekIndex: number, topics: string[]): WeekResource[] => {
+                const resources: WeekResource[] = [];
+                const topic = topics[0]?.toLowerCase() || '';
+                
+                // Common resources for all categories
+                const commonResources: Record<string, WeekResource[]> = {
+                    'ai-ml': [
+                        { type: 'youtube', title: 'Python for Data Science - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=LHBE6Q9XlzI' },
+                        { type: 'gfg', title: 'Python Programming - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/python-programming-language/' },
+                        { type: 'youtube', title: 'Machine Learning Course - Andrew Ng', url: 'https://www.youtube.com/watch?v=PPLop4L2eGk' },
+                        { type: 'gfg', title: 'Machine Learning - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/machine-learning/' },
+                        { type: 'documentation', title: 'NumPy Documentation', url: 'https://numpy.org/doc/stable/' },
+                        { type: 'documentation', title: 'Pandas Documentation', url: 'https://pandas.pydata.org/docs/' },
+                        { type: 'youtube', title: 'Deep Learning Specialization - DeepLearning.AI', url: 'https://www.youtube.com/watch?v=CS4cs9xVecg' },
+                        { type: 'gfg', title: 'Deep Learning - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/deep-learning/' },
+                        { type: 'practice', title: 'Kaggle Learn', url: 'https://www.kaggle.com/learn' },
+                        { type: 'practice', title: 'LeetCode ML Problems', url: 'https://leetcode.com/tag/machine-learning/' },
+                    ],
+                    'web-dev': [
+                        { type: 'youtube', title: 'HTML & CSS Full Course - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=mU6anWqZJcc' },
+                        { type: 'gfg', title: 'HTML Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/html-tutorials/' },
+                        { type: 'gfg', title: 'CSS Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/css-tutorials/' },
+                        { type: 'youtube', title: 'JavaScript Full Course - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=jS4aFq5-91M' },
+                        { type: 'gfg', title: 'JavaScript Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/javascript-tutorial/' },
+                        { type: 'youtube', title: 'React Course - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=bMknfKXIFA8' },
+                        { type: 'gfg', title: 'React Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/reactjs-tutorials/' },
+                        { type: 'documentation', title: 'React Official Docs', url: 'https://react.dev/' },
+                        { type: 'youtube', title: 'Node.js & Express - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=Oe421EPjBEo' },
+                        { type: 'gfg', title: 'Node.js Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/nodejs-tutorials/' },
+                        { type: 'practice', title: 'Frontend Mentor', url: 'https://www.frontendmentor.io/' },
+                        { type: 'practice', title: 'JavaScript30', url: 'https://javascript30.com/' },
+                    ],
+                    'data-science': [
+                        { type: 'youtube', title: 'Data Science Full Course - Simplilearn', url: 'https://www.youtube.com/watch?v=X3paOmcrTjQ' },
+                        { type: 'gfg', title: 'Data Science - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/data-science/' },
+                        { type: 'youtube', title: 'Python for Data Science - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=LHBE6Q9XlzI' },
+                        { type: 'gfg', title: 'Pandas Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/pandas-tutorial/' },
+                        { type: 'documentation', title: 'Matplotlib Documentation', url: 'https://matplotlib.org/stable/contents.html' },
+                        { type: 'documentation', title: 'Seaborn Documentation', url: 'https://seaborn.pydata.org/' },
+                        { type: 'youtube', title: 'Statistics for Data Science - StatQuest', url: 'https://www.youtube.com/c/joshstarmer' },
+                        { type: 'gfg', title: 'Statistics Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/statistics-tutorials/' },
+                        { type: 'practice', title: 'Kaggle Learn', url: 'https://www.kaggle.com/learn' },
+                        { type: 'practice', title: 'DataCamp', url: 'https://www.datacamp.com/' },
+                    ],
+                    'devops': [
+                        { type: 'youtube', title: 'DevOps Full Course - Simplilearn', url: 'https://www.youtube.com/watch?v=5jb9LqXcg4c' },
+                        { type: 'gfg', title: 'DevOps Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/devops-tutorial/' },
+                        { type: 'youtube', title: 'Docker Tutorial - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=fqMOX6JJhGo' },
+                        { type: 'gfg', title: 'Docker Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/docker-tutorial/' },
+                        { type: 'youtube', title: 'Kubernetes Tutorial - TechWorld with Nana', url: 'https://www.youtube.com/watch?v=X48VuDVv0do' },
+                        { type: 'gfg', title: 'Kubernetes Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/kubernetes-tutorial/' },
+                        { type: 'documentation', title: 'Docker Documentation', url: 'https://docs.docker.com/' },
+                        { type: 'documentation', title: 'Kubernetes Documentation', url: 'https://kubernetes.io/docs/' },
+                        { type: 'youtube', title: 'AWS Tutorial - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=ulprqHHWlng' },
+                        { type: 'gfg', title: 'AWS Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/aws-tutorial/' },
+                    ],
+                    'mobile-dev': [
+                        { type: 'youtube', title: 'React Native Tutorial - Programming with Mosh', url: 'https://www.youtube.com/watch?v=0-S5a0eXPoc' },
+                        { type: 'gfg', title: 'React Native Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/react-native-tutorial/' },
+                        { type: 'youtube', title: 'Flutter Tutorial - The Net Ninja', url: 'https://www.youtube.com/watch?v=1ukSR1GRtMU' },
+                        { type: 'gfg', title: 'Flutter Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/flutter-tutorial/' },
+                        { type: 'documentation', title: 'React Native Docs', url: 'https://reactnative.dev/docs/getting-started' },
+                        { type: 'documentation', title: 'Flutter Docs', url: 'https://docs.flutter.dev/' },
+                        { type: 'youtube', title: 'iOS Development - CodeWithChris', url: 'https://www.youtube.com/c/CodeWithChris' },
+                        { type: 'youtube', title: 'Android Development - Coding with Mitch', url: 'https://www.youtube.com/c/CodingWithMitch' },
+                        { type: 'practice', title: 'App Ideas', url: 'https://github.com/florinpop17/app-ideas' },
+                    ],
+                    'cloud-engineer': [
+                        { type: 'youtube', title: 'AWS Full Course - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=ulprqHHWlng' },
+                        { type: 'gfg', title: 'AWS Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/aws-tutorial/' },
+                        { type: 'youtube', title: 'Azure Tutorial - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=3hHmUes6z9k' },
+                        { type: 'gfg', title: 'Azure Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/azure-tutorial/' },
+                        { type: 'youtube', title: 'GCP Tutorial - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=18OP6c1hSaI' },
+                        { type: 'documentation', title: 'AWS Documentation', url: 'https://docs.aws.amazon.com/' },
+                        { type: 'documentation', title: 'Azure Documentation', url: 'https://docs.microsoft.com/azure/' },
+                        { type: 'documentation', title: 'GCP Documentation', url: 'https://cloud.google.com/docs' },
+                        { type: 'practice', title: 'AWS Hands-On Labs', url: 'https://aws.amazon.com/training/' },
+                    ],
+                    'cybersecurity': [
+                        { type: 'youtube', title: 'Cybersecurity Full Course - Simplilearn', url: 'https://www.youtube.com/watch?v=inWWhr5tnEA' },
+                        { type: 'gfg', title: 'Cybersecurity Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/cyber-security-tutorial/' },
+                        { type: 'youtube', title: 'Ethical Hacking - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=3Kq1MIfTWCE' },
+                        { type: 'gfg', title: 'Ethical Hacking - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/ethical-hacking-tutorial/' },
+                        { type: 'practice', title: 'TryHackMe', url: 'https://tryhackme.com/' },
+                        { type: 'practice', title: 'HackTheBox', url: 'https://www.hackthebox.com/' },
+                        { type: 'article', title: 'OWASP Top 10', url: 'https://owasp.org/www-project-top-ten/' },
+                    ],
+                    'blockchain': [
+                        { type: 'youtube', title: 'Blockchain Full Course - Simplilearn', url: 'https://www.youtube.com/watch?v=SyVMma1IkXM' },
+                        { type: 'gfg', title: 'Blockchain Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/blockchain-tutorial/' },
+                        { type: 'youtube', title: 'Solidity Tutorial - Dapp University', url: 'https://www.youtube.com/c/DappUniversity' },
+                        { type: 'gfg', title: 'Solidity Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/solidity-basics/' },
+                        { type: 'documentation', title: 'Solidity Documentation', url: 'https://docs.soliditylang.org/' },
+                        { type: 'documentation', title: 'Ethereum Documentation', url: 'https://ethereum.org/en/developers/docs/' },
+                        { type: 'practice', title: 'CryptoZombies', url: 'https://cryptozombies.io/' },
+                    ],
+                    'ui-ux': [
+                        { type: 'youtube', title: 'UI/UX Design Course - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=c9Wg6Cb_YlU' },
+                        { type: 'gfg', title: 'UI/UX Design - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/ui-ux-design/' },
+                        { type: 'youtube', title: 'Figma Tutorial - Flux', url: 'https://www.youtube.com/watch?v=FTFaQWZBqQ8' },
+                        { type: 'article', title: 'Design Principles', url: 'https://www.interaction-design.org/literature/topics/design-principles' },
+                        { type: 'practice', title: 'Dribbble', url: 'https://dribbble.com/' },
+                        { type: 'practice', title: 'Behance', url: 'https://www.behance.net/' },
+                    ],
+                    'fullstack': [
+                        { type: 'youtube', title: 'Full Stack Web Development - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=zJSY8tbf_ys' },
+                        { type: 'gfg', title: 'Full Stack Development - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/full-stack-development/' },
+                        { type: 'youtube', title: 'MERN Stack Tutorial - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=7CqJlxBYj-M' },
+                        { type: 'gfg', title: 'MERN Stack - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/mern-stack/' },
+                        { type: 'practice', title: 'Full Stack Open', url: 'https://fullstackopen.com/en/' },
+                        { type: 'practice', title: 'The Odin Project', url: 'https://www.theodinproject.com/' },
+                    ],
+                };
+
+                const categoryResources = commonResources[categoryId] || commonResources['web-dev'];
+                
+                // Select 4-6 resources based on week index
+                const selectedResources = categoryResources.slice(weekIndex % categoryResources.length, (weekIndex % categoryResources.length) + 5);
+                if (selectedResources.length < 4) {
+                    selectedResources.push(...categoryResources.slice(0, 4 - selectedResources.length));
+                }
+                
+                return selectedResources.slice(0, 6);
+            };
+
+            // Category-specific week templates
+            const weekTemplates: Record<string, any[]> = {
+                'ai-ml': [
+                    { mainTopics: ['Python Fundamentals', 'NumPy & Pandas', 'Data Structures'], subtopics: ['Python Basics', 'NumPy Arrays', 'DataFrames', 'Data Cleaning', 'Data Visualization'], practicalTasks: ['Install Python & libraries', 'Practice NumPy operations', 'Load and clean datasets', 'Create visualizations'], miniProject: 'Build a data analysis script for a dataset' },
+                    { mainTopics: ['Machine Learning Basics', 'Scikit-learn', 'Model Training'], subtopics: ['Supervised Learning', 'Classification', 'Regression', 'Model Evaluation', 'Cross-validation'], practicalTasks: ['Train first ML model', 'Evaluate model performance', 'Tune hyperparameters', 'Compare models'], miniProject: 'Create a classification model for predicting outcomes' },
+                    { mainTopics: ['Deep Learning', 'Neural Networks', 'TensorFlow/Keras'], subtopics: ['Neural Network Basics', 'CNNs', 'RNNs', 'Transfer Learning', 'Model Architecture'], practicalTasks: ['Build first neural network', 'Train on image data', 'Use pre-trained models', 'Optimize architecture'], miniProject: 'Build an image classifier using deep learning' },
+                    { mainTopics: ['Natural Language Processing', 'Text Processing', 'NLP Models'], subtopics: ['Text Preprocessing', 'Tokenization', 'Word Embeddings', 'Transformers', 'BERT/GPT'], practicalTasks: ['Process text data', 'Build sentiment analyzer', 'Use transformer models', 'Fine-tune models'], miniProject: 'Create a text sentiment analysis application' },
+                    { mainTopics: ['Computer Vision', 'Image Processing', 'CV Models'], subtopics: ['Image Preprocessing', 'Object Detection', 'Image Segmentation', 'OpenCV', 'YOLO'], practicalTasks: ['Process images', 'Detect objects', 'Segment images', 'Build CV pipeline'], miniProject: 'Build an object detection system' },
+                    { mainTopics: ['Model Deployment', 'MLOps', 'Production Systems'], subtopics: ['Model Serving', 'API Development', 'Containerization', 'Monitoring', 'A/B Testing'], practicalTasks: ['Deploy ML model', 'Create prediction API', 'Monitor model performance', 'Set up CI/CD'], miniProject: 'Deploy an ML model to production with API' },
+                ],
+                'web-dev': [
+                    { mainTopics: ['HTML & CSS', 'Responsive Design', 'CSS Frameworks'], subtopics: ['HTML5', 'CSS3', 'Flexbox', 'Grid', 'Bootstrap', 'Tailwind'], practicalTasks: ['Build static pages', 'Create responsive layouts', 'Use CSS frameworks', 'Practice animations'], miniProject: 'Build a responsive portfolio website' },
+                    { mainTopics: ['JavaScript Fundamentals', 'DOM Manipulation', 'ES6+'], subtopics: ['Variables & Functions', 'Arrays & Objects', 'DOM API', 'Async/Await', 'Promises', 'Closures'], practicalTasks: ['Write JavaScript functions', 'Manipulate DOM', 'Handle events', 'Work with APIs'], miniProject: 'Create an interactive todo application' },
+                    { mainTopics: ['React/Vue Basics', 'Components', 'State Management'], subtopics: ['Component Lifecycle', 'Props & State', 'Hooks', 'Routing', 'Context API'], practicalTasks: ['Build components', 'Manage state', 'Add routing', 'Handle side effects'], miniProject: 'Build a single-page application with React/Vue' },
+                    { mainTopics: ['Backend Development', 'Node.js/Express', 'REST APIs'], subtopics: ['Server Setup', 'API Endpoints', 'Database Integration', 'Authentication', 'Middleware'], practicalTasks: ['Create API server', 'Connect to database', 'Implement auth', 'Add validation'], miniProject: 'Build a RESTful API with authentication' },
+                    { mainTopics: ['Database Integration', 'MongoDB/PostgreSQL', 'ORM'], subtopics: ['Database Design', 'Queries', 'Relationships', 'Migrations', 'Indexing'], practicalTasks: ['Design schema', 'Write queries', 'Handle relationships', 'Optimize queries'], miniProject: 'Create a full-stack app with database' },
+                    { mainTopics: ['Deployment', 'Hosting', 'CI/CD'], subtopics: ['Cloud Platforms', 'Docker', 'CI/CD Pipelines', 'Domain Setup', 'SSL Certificates'], practicalTasks: ['Deploy application', 'Set up CI/CD', 'Configure domain', 'Monitor performance'], miniProject: 'Deploy full-stack application to production' },
+                ],
+                'data-science': [
+                    { mainTopics: ['Python for Data Science', 'Pandas', 'Data Exploration'], subtopics: ['Data Loading', 'Data Cleaning', 'Exploratory Analysis', 'Visualization', 'Statistical Summary'], practicalTasks: ['Load datasets', 'Clean data', 'Create visualizations', 'Identify patterns'], miniProject: 'Perform EDA on a real-world dataset' },
+                    { mainTopics: ['Statistics & Probability', 'Hypothesis Testing', 'Statistical Analysis'], subtopics: ['Descriptive Stats', 'Inferential Stats', 'A/B Testing', 'Correlation', 'Regression Analysis'], practicalTasks: ['Calculate statistics', 'Run hypothesis tests', 'Analyze relationships', 'Interpret results'], miniProject: 'Conduct statistical analysis on dataset' },
+                    { mainTopics: ['Machine Learning', 'Model Building', 'Evaluation'], subtopics: ['Supervised Learning', 'Unsupervised Learning', 'Model Selection', 'Cross-validation', 'Feature Engineering'], practicalTasks: ['Build ML models', 'Evaluate performance', 'Compare models', 'Feature selection'], miniProject: 'Build and compare multiple ML models' },
+                    { mainTopics: ['Data Visualization', 'Matplotlib/Seaborn', 'Dashboards'], subtopics: ['Plotting', 'Interactive Charts', 'Dashboard Creation', 'Storytelling', 'Tableau/PowerBI'], practicalTasks: ['Create visualizations', 'Build dashboards', 'Present insights', 'Share reports'], miniProject: 'Create an interactive data dashboard' },
+                    { mainTopics: ['Big Data Tools', 'SQL', 'Data Warehousing'], subtopics: ['SQL Queries', 'Data Warehouses', 'ETL Processes', 'Data Pipelines', 'Apache Spark'], practicalTasks: ['Write complex SQL', 'Design data warehouse', 'Build ETL pipeline', 'Process large datasets'], miniProject: 'Build a data pipeline for analytics' },
+                    { mainTopics: ['Advanced Analytics', 'Time Series', 'Predictive Modeling'], subtopics: ['Time Series Analysis', 'Forecasting', 'Advanced ML', 'Model Deployment', 'A/B Testing'], practicalTasks: ['Analyze time series', 'Build forecasts', 'Deploy models', 'Monitor predictions'], miniProject: 'Create a predictive analytics solution' },
+                ],
+                'devops': [
+                    { mainTopics: ['Linux Fundamentals', 'Command Line', 'Shell Scripting'], subtopics: ['Linux Commands', 'File System', 'Permissions', 'Process Management', 'Shell Scripts'], practicalTasks: ['Master Linux commands', 'Write shell scripts', 'Manage processes', 'Configure system'], miniProject: 'Automate system tasks with shell scripts' },
+                    { mainTopics: ['Version Control', 'Git', 'CI/CD Basics'], subtopics: ['Git Workflows', 'Branching Strategies', 'GitHub Actions', 'Jenkins', 'GitLab CI'], practicalTasks: ['Set up Git workflows', 'Create CI/CD pipelines', 'Automate builds', 'Configure deployments'], miniProject: 'Set up a complete CI/CD pipeline' },
+                    { mainTopics: ['Containerization', 'Docker', 'Container Orchestration'], subtopics: ['Docker Basics', 'Docker Compose', 'Kubernetes', 'Container Registry', 'Orchestration'], practicalTasks: ['Containerize applications', 'Use Docker Compose', 'Deploy to Kubernetes', 'Manage containers'], miniProject: 'Containerize and orchestrate a microservices application' },
+                    { mainTopics: ['Cloud Platforms', 'AWS/Azure/GCP', 'Infrastructure as Code'], subtopics: ['Cloud Services', 'EC2/Compute', 'S3/Storage', 'Terraform', 'CloudFormation'], practicalTasks: ['Set up cloud infrastructure', 'Use IaC tools', 'Configure services', 'Manage resources'], miniProject: 'Deploy infrastructure using Terraform' },
+                    { mainTopics: ['Monitoring & Logging', 'Observability', 'Alerting'], subtopics: ['Prometheus', 'Grafana', 'ELK Stack', 'CloudWatch', 'Alerting Systems'], practicalTasks: ['Set up monitoring', 'Create dashboards', 'Configure alerts', 'Analyze logs'], miniProject: 'Build a complete monitoring and alerting system' },
+                    { mainTopics: ['Security', 'Compliance', 'Best Practices'], subtopics: ['Security Scanning', 'Secrets Management', 'Compliance', 'Security Policies', 'Vulnerability Management'], practicalTasks: ['Implement security measures', 'Manage secrets', 'Scan for vulnerabilities', 'Enforce policies'], miniProject: 'Secure a cloud infrastructure setup' },
+                ],
+                'mobile-dev': [
+                    { mainTopics: ['Mobile Development Basics', 'Platforms', 'Development Tools'], subtopics: ['iOS/Android', 'React Native/Flutter', 'IDE Setup', 'Emulators', 'Device Testing'], practicalTasks: ['Set up development environment', 'Create first app', 'Test on devices', 'Configure build tools'], miniProject: 'Build a simple mobile app' },
+                    { mainTopics: ['UI/UX for Mobile', 'Design Patterns', 'Navigation'], subtopics: ['Mobile Design Principles', 'Navigation Patterns', 'Responsive Layouts', 'Material Design', 'iOS Guidelines'], practicalTasks: ['Design mobile UI', 'Implement navigation', 'Create responsive layouts', 'Follow design guidelines'], miniProject: 'Create a mobile app with beautiful UI' },
+                    { mainTopics: ['State Management', 'Data Persistence', 'Local Storage'], subtopics: ['State Management', 'AsyncStorage', 'SQLite', 'Realm', 'Redux/MobX'], practicalTasks: ['Implement state management', 'Store data locally', 'Handle offline mode', 'Sync data'], miniProject: 'Build an app with offline data storage' },
+                    { mainTopics: ['API Integration', 'Networking', 'Authentication'], subtopics: ['REST APIs', 'GraphQL', 'Authentication', 'Token Management', 'Error Handling'], practicalTasks: ['Integrate APIs', 'Handle authentication', 'Manage tokens', 'Handle errors'], miniProject: 'Build an app with API integration and auth' },
+                    { mainTopics: ['Native Features', 'Device APIs', 'Permissions'], subtopics: ['Camera', 'Location', 'Notifications', 'Biometrics', 'Device Sensors'], practicalTasks: ['Access device features', 'Handle permissions', 'Use device APIs', 'Implement features'], miniProject: 'Create an app using native device features' },
+                    { mainTopics: ['App Deployment', 'App Stores', 'Testing'], subtopics: ['App Store Submission', 'Play Store', 'Beta Testing', 'App Signing', 'Release Management'], practicalTasks: ['Prepare for release', 'Submit to stores', 'Manage versions', 'Handle updates'], miniProject: 'Deploy an app to app stores' },
+                ],
+                'cloud-engineer': [
+                    { mainTopics: ['Cloud Fundamentals', 'Cloud Models', 'Service Models'], subtopics: ['IaaS, PaaS, SaaS', 'Cloud Providers', 'Regions & Zones', 'Cloud Architecture', 'Cost Management'], practicalTasks: ['Understand cloud models', 'Explore cloud providers', 'Set up accounts', 'Calculate costs'], miniProject: 'Design a cloud architecture for a startup' },
+                    { mainTopics: ['AWS Core Services', 'EC2, S3, VPC', 'Networking'], subtopics: ['EC2 Instances', 'S3 Storage', 'VPC Configuration', 'Load Balancers', 'Auto Scaling'], practicalTasks: ['Launch EC2 instances', 'Configure S3 buckets', 'Set up VPC', 'Configure networking'], miniProject: 'Deploy a scalable web application on AWS' },
+                    { mainTopics: ['Container Services', 'ECS, EKS', 'Serverless'], subtopics: ['ECS/EKS', 'Lambda Functions', 'API Gateway', 'EventBridge', 'Step Functions'], practicalTasks: ['Deploy containers', 'Create Lambda functions', 'Set up API Gateway', 'Build serverless apps'], miniProject: 'Build a serverless application with Lambda' },
+                    { mainTopics: ['Database Services', 'RDS, DynamoDB', 'Data Management'], subtopics: ['RDS Setup', 'DynamoDB', 'ElastiCache', 'Data Migration', 'Backup & Recovery'], practicalTasks: ['Set up databases', 'Configure backups', 'Migrate data', 'Optimize performance'], miniProject: 'Design and implement a database solution' },
+                    { mainTopics: ['Security & Compliance', 'IAM', 'Security Best Practices'], subtopics: ['IAM Policies', 'Security Groups', 'Encryption', 'Compliance', 'Security Monitoring'], practicalTasks: ['Configure IAM', 'Set up security', 'Enable encryption', 'Monitor security'], miniProject: 'Secure a cloud infrastructure' },
+                    { mainTopics: ['DevOps on Cloud', 'CI/CD', 'Infrastructure Automation'], subtopics: ['CodePipeline', 'CloudFormation', 'Terraform', 'Monitoring', 'Cost Optimization'], practicalTasks: ['Set up CI/CD', 'Automate infrastructure', 'Monitor services', 'Optimize costs'], miniProject: 'Build a complete CI/CD pipeline on cloud' },
+                ],
+                'cybersecurity': [
+                    { mainTopics: ['Security Fundamentals', 'Threats & Vulnerabilities', 'Security Principles'], subtopics: ['Security Concepts', 'Attack Vectors', 'Vulnerability Assessment', 'Risk Management', 'Security Policies'], practicalTasks: ['Understand threats', 'Assess vulnerabilities', 'Create security policies', 'Identify risks'], miniProject: 'Conduct a security assessment' },
+                    { mainTopics: ['Network Security', 'Firewalls', 'Intrusion Detection'], subtopics: ['Network Protocols', 'Firewall Configuration', 'IDS/IPS', 'VPN', 'Network Monitoring'], practicalTasks: ['Configure firewalls', 'Set up IDS', 'Implement VPN', 'Monitor networks'], miniProject: 'Secure a network infrastructure' },
+                    { mainTopics: ['Cryptography', 'Encryption', 'Digital Signatures'], subtopics: ['Encryption Algorithms', 'Public Key Infrastructure', 'SSL/TLS', 'Hashing', 'Key Management'], practicalTasks: ['Implement encryption', 'Set up PKI', 'Configure SSL/TLS', 'Manage keys'], miniProject: 'Implement encryption for data protection' },
+                    { mainTopics: ['Ethical Hacking', 'Penetration Testing', 'Security Tools'], subtopics: ['Penetration Testing', 'Vulnerability Scanning', 'Security Tools', 'Exploitation', 'Reporting'], practicalTasks: ['Perform pentesting', 'Use security tools', 'Identify vulnerabilities', 'Create reports'], miniProject: 'Conduct a penetration test' },
+                    { mainTopics: ['Incident Response', 'Forensics', 'Compliance'], subtopics: ['Incident Handling', 'Digital Forensics', 'Compliance Standards', 'Security Audits', 'Recovery'], practicalTasks: ['Handle incidents', 'Perform forensics', 'Ensure compliance', 'Conduct audits'], miniProject: 'Create an incident response plan' },
+                    { mainTopics: ['Security Operations', 'SIEM', 'Threat Intelligence'], subtopics: ['SIEM Tools', 'Log Analysis', 'Threat Hunting', 'Security Monitoring', 'Automation'], practicalTasks: ['Set up SIEM', 'Analyze logs', 'Hunt threats', 'Automate responses'], miniProject: 'Build a security operations center' },
+                ],
+                'blockchain': [
+                    { mainTopics: ['Blockchain Fundamentals', 'Cryptography', 'Distributed Systems'], subtopics: ['Blockchain Basics', 'Cryptographic Hash', 'Consensus Mechanisms', 'Distributed Ledger', 'Smart Contracts Intro'], practicalTasks: ['Understand blockchain', 'Study cryptography', 'Learn consensus', 'Explore blockchains'], miniProject: 'Create a simple blockchain implementation' },
+                    { mainTopics: ['Ethereum Development', 'Solidity', 'Smart Contracts'], subtopics: ['Solidity Language', 'Smart Contract Development', 'Remix IDE', 'Truffle', 'Hardhat'], practicalTasks: ['Write Solidity code', 'Deploy contracts', 'Test contracts', 'Use development tools'], miniProject: 'Build and deploy a smart contract' },
+                    { mainTopics: ['DApp Development', 'Web3.js', 'Frontend Integration'], subtopics: ['DApp Architecture', 'Web3.js', 'Ethers.js', 'MetaMask Integration', 'IPFS'], practicalTasks: ['Build DApp frontend', 'Connect to blockchain', 'Integrate wallet', 'Use IPFS'], miniProject: 'Create a decentralized application' },
+                    { mainTopics: ['DeFi Concepts', 'Token Standards', 'DeFi Protocols'], subtopics: ['ERC-20/ERC-721', 'DeFi Protocols', 'Liquidity Pools', 'Yield Farming', 'DEX'], practicalTasks: ['Create tokens', 'Interact with DeFi', 'Build DeFi features', 'Understand protocols'], miniProject: 'Build a DeFi application' },
+                    { mainTopics: ['Security & Testing', 'Auditing', 'Best Practices'], subtopics: ['Smart Contract Security', 'Common Vulnerabilities', 'Testing Strategies', 'Auditing', 'Gas Optimization'], practicalTasks: ['Test contracts', 'Find vulnerabilities', 'Optimize gas', 'Audit code'], miniProject: 'Audit and secure a smart contract' },
+                    { mainTopics: ['Blockchain Infrastructure', 'Nodes', 'Networks'], subtopics: ['Running Nodes', 'Network Participation', 'Scaling Solutions', 'Layer 2', 'Interoperability'], practicalTasks: ['Run blockchain node', 'Participate in network', 'Explore scaling', 'Use Layer 2'], miniProject: 'Set up and run a blockchain node' },
+                ],
+                'ui-ux': [
+                    { mainTopics: ['Design Fundamentals', 'Principles', 'Color Theory'], subtopics: ['Design Principles', 'Color Theory', 'Typography', 'Layout', 'Visual Hierarchy'], practicalTasks: ['Study design principles', 'Create color palettes', 'Design layouts', 'Practice typography'], miniProject: 'Design a brand identity system' },
+                    { mainTopics: ['User Research', 'Personas', 'User Journey'], subtopics: ['User Research Methods', 'Persona Creation', 'User Journey Mapping', 'Usability Testing', 'Interviews'], practicalTasks: ['Conduct research', 'Create personas', 'Map journeys', 'Run usability tests'], miniProject: 'Complete a user research project' },
+                    { mainTopics: ['Wireframing & Prototyping', 'Tools', 'Interaction Design'], subtopics: ['Wireframing', 'Prototyping', 'Figma/Sketch', 'Interaction Design', 'User Flows'], practicalTasks: ['Create wireframes', 'Build prototypes', 'Design interactions', 'Test prototypes'], miniProject: 'Design and prototype a mobile app' },
+                    { mainTopics: ['Visual Design', 'UI Design', 'Design Systems'], subtopics: ['Visual Design', 'Component Libraries', 'Design Systems', 'Style Guides', 'Iconography'], practicalTasks: ['Create UI designs', 'Build components', 'Develop design system', 'Create style guide'], miniProject: 'Build a complete design system' },
+                    { mainTopics: ['Responsive Design', 'Accessibility', 'Usability'], subtopics: ['Responsive Principles', 'Accessibility Standards', 'Usability Testing', 'Cross-platform', 'Performance'], practicalTasks: ['Design responsive layouts', 'Ensure accessibility', 'Test usability', 'Optimize performance'], miniProject: 'Design an accessible, responsive website' },
+                    { mainTopics: ['Portfolio & Presentation', 'Case Studies', 'Client Work'], subtopics: ['Portfolio Building', 'Case Study Creation', 'Presentation Skills', 'Client Communication', 'Freelancing'], practicalTasks: ['Build portfolio', 'Create case studies', 'Present work', 'Handle clients'], miniProject: 'Create a professional design portfolio' },
+                ],
+                'fullstack': [
+                    { mainTopics: ['Frontend Basics', 'HTML, CSS, JavaScript', 'Responsive Design'], subtopics: ['HTML5', 'CSS3', 'JavaScript ES6+', 'Responsive Design', 'CSS Frameworks'], practicalTasks: ['Build static pages', 'Style with CSS', 'Add interactivity', 'Make responsive'], miniProject: 'Build a responsive portfolio website' },
+                    { mainTopics: ['Frontend Framework', 'React/Vue', 'State Management'], subtopics: ['React/Vue Basics', 'Components', 'State Management', 'Routing', 'Hooks'], practicalTasks: ['Build components', 'Manage state', 'Add routing', 'Handle side effects'], miniProject: 'Create a single-page application' },
+                    { mainTopics: ['Backend Development', 'Node.js/Python', 'Server Setup'], subtopics: ['Server Development', 'API Creation', 'Middleware', 'Error Handling', 'Validation'], practicalTasks: ['Set up server', 'Create APIs', 'Handle requests', 'Add validation'], miniProject: 'Build a RESTful API server' },
+                    { mainTopics: ['Database Integration', 'SQL/NoSQL', 'ORM'], subtopics: ['Database Design', 'SQL Queries', 'MongoDB/PostgreSQL', 'ORM Usage', 'Migrations'], practicalTasks: ['Design database', 'Write queries', 'Integrate database', 'Handle migrations'], miniProject: 'Create a full-stack app with database' },
+                    { mainTopics: ['Authentication & Security', 'JWT', 'Security Best Practices'], subtopics: ['Authentication', 'Authorization', 'JWT Tokens', 'Password Hashing', 'Security Measures'], practicalTasks: ['Implement auth', 'Secure APIs', 'Handle tokens', 'Add security'], miniProject: 'Build a secure full-stack application' },
+                    { mainTopics: ['Deployment & DevOps', 'CI/CD', 'Cloud Deployment'], subtopics: ['Deployment Strategies', 'CI/CD Pipelines', 'Cloud Platforms', 'Docker', 'Monitoring'], practicalTasks: ['Deploy application', 'Set up CI/CD', 'Use containers', 'Monitor app'], miniProject: 'Deploy a full-stack application to production' },
+                ],
+            };
+
+            // Get templates for selected category or default to web-dev
+            const templates = weekTemplates[categoryId] || weekTemplates['web-dev'];
+            
+            // Generate weeks based on duration
+            const generatedWeeks = [];
+            for (let i = 0; i < totalWeeks; i++) {
+                const templateIndex = i % templates.length;
+                const template = templates[templateIndex];
+                const resources = getResourcesForWeek(categoryId, i, template.mainTopics);
+                generatedWeeks.push({
+                    weekNumber: i + 1,
+                    mainTopics: template.mainTopics,
+                    subtopics: template.subtopics,
+                    practicalTasks: template.practicalTasks,
+                    miniProject: template.miniProject,
+                    resources: resources,
+                });
+            }
+            
+            // Add revision week for beginners if duration > 8 weeks
+            if (level === 'Beginner' && totalWeeks > 8) {
+                generatedWeeks.push({
+                    weekNumber: generatedWeeks.length + 1,
+                    mainTopics: ['Revision & Practice', 'Portfolio Building', 'Interview Preparation'],
+                    subtopics: ['Review All Topics', 'Build Portfolio', 'Practice Problems', 'Mock Interviews', 'Resume Building'],
+                    practicalTasks: ['Review all concepts', 'Complete portfolio projects', 'Solve coding problems', 'Prepare resume'],
+                    miniProject: 'Create a comprehensive portfolio showcasing all your projects',
+                    resources: [
+                        { type: 'practice', title: 'LeetCode', url: 'https://leetcode.com/' },
+                        { type: 'practice', title: 'HackerRank', url: 'https://www.hackerrank.com/' },
+                        { type: 'practice', title: 'InterviewBit', url: 'https://www.interviewbit.com/' },
+                        { type: 'article', title: 'Resume Building Guide', url: 'https://www.geeksforgeeks.org/resume-building-for-freshers/' },
+                        { type: 'article', title: 'Interview Preparation', url: 'https://www.geeksforgeeks.org/interview-preparation/' },
+                    ],
+                });
+            }
+
+            // Get category name for display
+            const categoryName = categoriesList.find(c => c.id === categoryId)?.name || categoryId;
+
+            return {
+                careerGoal: categoryName,
+                totalWeeks: generatedWeeks.length,
+                weeks: generatedWeeks.map(w => ({
+                    ...w,
+                    isCompleted: false,
+                    quizCompleted: false,
+                })),
+                createdAt: new Date().toISOString(),
+            };
+        };
+
+        try {
+            // Get category ID from selected category
+            const categoryId = selectedCategory || 'web-dev';
+            const roadmap = await getStaticRoadmap(categoryId, analysis.currentLevel, totalWeeks, categories);
+            setRoadmapData(roadmap);
+        } catch (err: any) {
+            console.error('Roadmap generation error:', err);
+            setRoadmapError('Failed to generate roadmap. Please try again.');
+        } finally {
+            setIsGeneratingRoadmap(false);
+        }
+    };
+
+    // Generate weekly quiz - use admin-managed quiz if available, else static
+    const generateWeeklyQuiz = async (weekNumber: number) => {
+        setIsGeneratingQuiz(true);
+        setRoadmapError(null);
+
+        const week = roadmapData?.weeks.find(w => w.weekNumber === weekNumber);
+        if (!week || !roadmapData) {
+            setIsGeneratingQuiz(false);
+            return;
+        }
+
+        // Simulate loading
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Check if week has admin-managed quiz questions
+        if (week.quiz && week.quiz.length > 0) {
+            const quiz: WeeklyQuiz = {
+                weekNumber,
+                questions: week.quiz.map(q => ({
+                    question: q.question,
+                    options: q.options,
+                    correctAnswer: q.correctAnswer,
+                })),
+            };
+            setWeeklyQuiz(quiz);
+            setRoadmapStep('progress');
+            setIsGeneratingQuiz(false);
+            return;
+        }
+
+        // Fallback to static quiz
+
+        // Static quiz questions based on week number
+        const staticQuizzes: Record<number, QuizQuestion[]> = {
+            1: [
+                {
+                    question: 'What is the primary purpose of version control systems like Git?',
+                    options: [
+                        'To track changes in code and collaborate with others',
+                        'To compile code into executable files',
+                        'To design user interfaces',
+                        'To deploy applications to servers'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'Which Git command is used to create a new branch?',
+                    options: [
+                        'git branch new-branch',
+                        'git create branch new-branch',
+                        'git new branch new-branch',
+                        'git add branch new-branch'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is a variable in programming?',
+                    options: [
+                        'A container that stores data values',
+                        'A function that performs calculations',
+                        'A loop that repeats code',
+                        'A condition that checks values'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'Which of the following is NOT a data type?',
+                    options: [
+                        'String',
+                        'Integer',
+                        'Boolean',
+                        'Function'
+                    ],
+                    correctAnswer: 3
+                },
+                {
+                    question: 'What does IDE stand for?',
+                    options: [
+                        'Integrated Development Environment',
+                        'Internal Development Engine',
+                        'Interactive Design Editor',
+                        'Internet Development Extension'
+                    ],
+                    correctAnswer: 0
+                }
+            ],
+            2: [
+                {
+                    question: 'What is the main principle of Object-Oriented Programming?',
+                    options: [
+                        'Encapsulation, Inheritance, and Polymorphism',
+                        'Variables, Functions, and Loops',
+                        'HTML, CSS, and JavaScript',
+                        'Servers, Clients, and Databases'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is the purpose of unit testing?',
+                    options: [
+                        'To test individual components of code in isolation',
+                        'To test the entire application at once',
+                        'To test user interfaces only',
+                        'To test network connections'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'Which keyword is used to handle exceptions in most programming languages?',
+                    options: [
+                        'try-catch',
+                        'if-else',
+                        'for-while',
+                        'switch-case'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is code documentation?',
+                    options: [
+                        'Comments and explanations that describe what code does',
+                        'The process of writing code',
+                        'The compilation of code',
+                        'The execution of code'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is the benefit of code review?',
+                    options: [
+                        'Improves code quality and catches bugs early',
+                        'Makes code run faster',
+                        'Reduces file size',
+                        'Changes programming language'
+                    ],
+                    correctAnswer: 0
+                }
+            ],
+            3: [
+                {
+                    question: 'What is a framework in software development?',
+                    options: [
+                        'A reusable set of libraries and tools that provide structure',
+                        'A programming language',
+                        'A database system',
+                        'A web browser'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is the purpose of a package manager?',
+                    options: [
+                        'To manage and install project dependencies',
+                        'To compile code',
+                        'To design user interfaces',
+                        'To deploy applications'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What does npm stand for?',
+                    options: [
+                        'Node Package Manager',
+                        'New Project Manager',
+                        'Network Protocol Manager',
+                        'Next Program Manager'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is a module in programming?',
+                    options: [
+                        'A file containing code that can be imported and reused',
+                        'A database table',
+                        'A user interface component',
+                        'A network protocol'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'Why is project structure important?',
+                    options: [
+                        'It helps organize code and makes it easier to maintain',
+                        'It makes code run faster',
+                        'It reduces file size',
+                        'It changes programming syntax'
+                    ],
+                    correctAnswer: 0
+                }
+            ],
+            4: [
+                {
+                    question: 'What does SQL stand for?',
+                    options: [
+                        'Structured Query Language',
+                        'Simple Query Language',
+                        'System Query Language',
+                        'Standard Query Language'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is a primary key in a database?',
+                    options: [
+                        'A unique identifier for each row in a table',
+                        'A foreign key reference',
+                        'A data type',
+                        'A query statement'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is the purpose of database indexing?',
+                    options: [
+                        'To improve query performance by speeding up data retrieval',
+                        'To store more data',
+                        'To delete data',
+                        'To change data types'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is a foreign key?',
+                    options: [
+                        'A field that references the primary key of another table',
+                        'A unique identifier',
+                        'A data type',
+                        'A query result'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is normalization in database design?',
+                    options: [
+                        'The process of organizing data to reduce redundancy',
+                        'The process of adding more data',
+                        'The process of deleting data',
+                        'The process of changing data types'
+                    ],
+                    correctAnswer: 0
+                }
+            ],
+            5: [
+                {
+                    question: 'What does REST stand for?',
+                    options: [
+                        'Representational State Transfer',
+                        'Remote Execution System Transfer',
+                        'Resource Exchange Standard Transfer',
+                        'Request Execution System Transfer'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'Which HTTP method is used to retrieve data?',
+                    options: [
+                        'GET',
+                        'POST',
+                        'PUT',
+                        'DELETE'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is JWT used for?',
+                    options: [
+                        'Authentication and authorization',
+                        'Database queries',
+                        'File storage',
+                        'Network routing'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is the purpose of API documentation?',
+                    options: [
+                        'To explain how to use the API endpoints',
+                        'To compile code',
+                        'To design interfaces',
+                        'To deploy applications'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What status code indicates a successful request?',
+                    options: [
+                        '200',
+                        '400',
+                        '404',
+                        '500'
+                    ],
+                    correctAnswer: 0
+                }
+            ],
+            6: [
+                {
+                    question: 'What is state management in frontend development?',
+                    options: [
+                        'Managing and sharing data across components',
+                        'Managing server resources',
+                        'Managing database connections',
+                        'Managing file systems'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is component architecture?',
+                    options: [
+                        'Breaking UI into reusable, independent components',
+                        'Organizing server files',
+                        'Structuring database tables',
+                        'Designing network protocols'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is responsive design?',
+                    options: [
+                        'Designing websites that work on all screen sizes',
+                        'Designing fast websites',
+                        'Designing secure websites',
+                        'Designing colorful websites'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is routing in frontend applications?',
+                    options: [
+                        'Navigating between different views or pages',
+                        'Sending network requests',
+                        'Connecting to databases',
+                        'Compiling code'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is the purpose of CSS frameworks?',
+                    options: [
+                        'To provide pre-built styles and components',
+                        'To compile JavaScript',
+                        'To manage databases',
+                        'To handle authentication'
+                    ],
+                    correctAnswer: 0
+                }
+            ],
+            7: [
+                {
+                    question: 'What is caching?',
+                    options: [
+                        'Storing frequently accessed data for faster retrieval',
+                        'Deleting old data',
+                        'Compressing files',
+                        'Encrypting data'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is performance optimization?',
+                    options: [
+                        'Improving application speed and efficiency',
+                        'Adding more features',
+                        'Changing programming languages',
+                        'Increasing file sizes'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is SQL injection?',
+                    options: [
+                        'A security vulnerability where malicious SQL is injected',
+                        'A database query',
+                        'A data type',
+                        'A programming language'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is code profiling?',
+                    options: [
+                        'Analyzing code to identify performance bottlenecks',
+                        'Writing code',
+                        'Compiling code',
+                        'Deploying code'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is scalability?',
+                    options: [
+                        'The ability of a system to handle growing amounts of work',
+                        'The size of files',
+                        'The number of lines of code',
+                        'The complexity of algorithms'
+                    ],
+                    correctAnswer: 0
+                }
+            ],
+            8: [
+                {
+                    question: 'What is containerization?',
+                    options: [
+                        'Packaging applications with their dependencies in containers',
+                        'Storing data in databases',
+                        'Organizing code files',
+                        'Designing user interfaces'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What does CI/CD stand for?',
+                    options: [
+                        'Continuous Integration/Continuous Deployment',
+                        'Code Integration/Code Deployment',
+                        'Computer Integration/Computer Deployment',
+                        'Component Integration/Component Deployment'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is the purpose of cloud platforms?',
+                    options: [
+                        'To host and deploy applications with scalability',
+                        'To write code',
+                        'To design interfaces',
+                        'To compile programs'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is application monitoring?',
+                    options: [
+                        'Tracking application performance and health',
+                        'Writing application code',
+                        'Designing application UI',
+                        'Compiling application'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'Why are backups important?',
+                    options: [
+                        'To prevent data loss and enable recovery',
+                        'To increase performance',
+                        'To reduce costs',
+                        'To improve security'
+                    ],
+                    correctAnswer: 0
+                }
+            ],
+            9: [
+                {
+                    question: 'What should be included in a developer portfolio?',
+                    options: [
+                        'Projects, code samples, and technical skills',
+                        'Personal photos only',
+                        'Social media links only',
+                        'Resume only'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is the purpose of mock interviews?',
+                    options: [
+                        'To practice and prepare for real interviews',
+                        'To get a job',
+                        'To learn programming',
+                        'To deploy applications'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is important in a technical resume?',
+                    options: [
+                        'Relevant skills, projects, and experience',
+                        'Only education',
+                        'Only personal information',
+                        'Only hobbies'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'Why is portfolio building important?',
+                    options: [
+                        'To showcase skills and projects to employers',
+                        'To store files',
+                        'To organize code',
+                        'To compile programs'
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: 'What is the best way to prepare for technical interviews?',
+                    options: [
+                        'Practice coding problems and review fundamentals',
+                        'Only read books',
+                        'Only watch videos',
+                        'Only attend classes'
+                    ],
+                    correctAnswer: 0
+                }
+            ]
+        };
+
+        try {
+            const questions = staticQuizzes[weekNumber] || staticQuizzes[1];
+            const quiz: WeeklyQuiz = {
+                weekNumber,
+                questions: questions,
+            };
+            setWeeklyQuiz(quiz);
+            setRoadmapStep('progress');
+        } catch (err: any) {
+            setRoadmapError('Failed to generate quiz');
+        } finally {
+            setIsGeneratingQuiz(false);
+        }
+    };
+
+    const submitWeeklyQuiz = () => {
+        if (!weeklyQuiz || !roadmapData) return;
+
+        let correct = 0;
+        weeklyQuiz.questions.forEach((q, idx) => {
+            if (q.userAnswer === q.correctAnswer) correct++;
+        });
+
+        const score = Math.round((correct / weeklyQuiz.questions.length) * 100);
+        const feedback = score >= 80
+            ? "Excellent work! You've mastered this week's content. You can proceed to the next week."
+            : `Good effort! You scored ${score}%. Review the topics and try to improve. You can still proceed, but consider reviewing.`;
+
+        const updatedQuiz = { ...weeklyQuiz, score, feedback };
+        setWeeklyQuiz(updatedQuiz);
+
+        // Mark quiz as completed and unlock next week
+        const updatedWeeks = roadmapData.weeks.map(w =>
+            w.weekNumber === weeklyQuiz.weekNumber
+                ? { ...w, quizCompleted: true }
+                : w
+        );
+        setRoadmapData({ ...roadmapData, weeks: updatedWeeks });
+
+        // Return to roadmap view
+        setTimeout(() => {
+            setRoadmapStep('roadmap');
+            setWeeklyQuiz(null);
+        }, 3000);
+    };
+
+    // Generate static final exam
+    const generateFinalExam = async () => {
+        setIsGeneratingExam(true);
+        setRoadmapError(null);
+
+        if (!roadmapData) {
+            setRoadmapError('Roadmap data missing');
+            setIsGeneratingExam(false);
+            return;
+        }
+
+        // Simulate loading
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Static final exam questions
+        const examQuestions: QuizQuestion[] = [
+            {
+                question: 'What is the primary purpose of version control systems?',
+                options: [
+                    'To track changes and enable collaboration',
+                    'To compile code',
+                    'To design interfaces',
+                    'To deploy applications'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'Which principle is NOT part of Object-Oriented Programming?',
+                options: [
+                    'Sequential Processing',
+                    'Encapsulation',
+                    'Inheritance',
+                    'Polymorphism'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is the main advantage of using frameworks?',
+                options: [
+                    'Provides structure and reusable components',
+                    'Makes code run faster automatically',
+                    'Reduces file size',
+                    'Changes programming language'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What does REST API stand for?',
+                options: [
+                    'Representational State Transfer',
+                    'Remote Execution System Transfer',
+                    'Resource Exchange Standard Transfer',
+                    'Request Execution System Transfer'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is the purpose of database normalization?',
+                options: [
+                    'To reduce data redundancy and improve integrity',
+                    'To increase data storage',
+                    'To delete old data',
+                    'To change data types'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'Which HTTP method is idempotent?',
+                options: [
+                    'GET',
+                    'POST',
+                    'PUT',
+                    'DELETE'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is state management used for in frontend?',
+                options: [
+                    'Managing and sharing data across components',
+                    'Managing server resources',
+                    'Managing database connections',
+                    'Managing file systems'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is the purpose of caching?',
+                options: [
+                    'To improve performance by storing frequently accessed data',
+                    'To delete old data',
+                    'To compress files',
+                    'To encrypt data'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is SQL injection?',
+                options: [
+                    'A security vulnerability where malicious SQL is injected',
+                    'A database query method',
+                    'A data type',
+                    'A programming language feature'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What does CI/CD stand for?',
+                options: [
+                    'Continuous Integration/Continuous Deployment',
+                    'Code Integration/Code Deployment',
+                    'Computer Integration/Computer Deployment',
+                    'Component Integration/Component Deployment'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is containerization?',
+                options: [
+                    'Packaging applications with dependencies in isolated containers',
+                    'Storing data in databases',
+                    'Organizing code files',
+                    'Designing user interfaces'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is the purpose of API documentation?',
+                options: [
+                    'To explain how to use API endpoints',
+                    'To compile code',
+                    'To design interfaces',
+                    'To deploy applications'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is responsive design?',
+                options: [
+                    'Designing websites that work on all screen sizes',
+                    'Designing fast websites',
+                    'Designing secure websites',
+                    'Designing colorful websites'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is the purpose of unit testing?',
+                options: [
+                    'To test individual components in isolation',
+                    'To test entire application at once',
+                    'To test user interfaces only',
+                    'To test network connections'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is scalability?',
+                options: [
+                    'The ability to handle growing amounts of work',
+                    'The size of files',
+                    'The number of lines of code',
+                    'The complexity of algorithms'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is the primary key in a database?',
+                options: [
+                    'A unique identifier for each row',
+                    'A foreign key reference',
+                    'A data type',
+                    'A query statement'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is JWT used for?',
+                options: [
+                    'Authentication and authorization',
+                    'Database queries',
+                    'File storage',
+                    'Network routing'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is code profiling?',
+                options: [
+                    'Analyzing code to identify performance bottlenecks',
+                    'Writing code',
+                    'Compiling code',
+                    'Deploying code'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'What is the purpose of application monitoring?',
+                options: [
+                    'To track performance and health',
+                    'To write code',
+                    'To design UI',
+                    'To compile programs'
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: 'Why are backups important?',
+                options: [
+                    'To prevent data loss and enable recovery',
+                    'To increase performance',
+                    'To reduce costs',
+                    'To improve security'
+                ],
+                correctAnswer: 0
+            }
+        ];
+
+        try {
+            const exam: FinalExam = {
+                questions: examQuestions,
+                userAnswers: new Array(20).fill(undefined),
+                completed: false,
+            };
+            setFinalExam(exam);
+        } catch (err: any) {
+            setRoadmapError('Failed to generate exam');
+        } finally {
+            setIsGeneratingExam(false);
+        }
+    };
+
+    const submitFinalExam = () => {
+        if (!finalExam || !roadmapData) return;
+
+        let correct = 0;
+        finalExam.questions.forEach((q, idx) => {
+            if (finalExam.userAnswers[idx] === q.correctAnswer) correct++;
+        });
+
+        const score = Math.round((correct / finalExam.questions.length) * 100);
+        const updatedExam = { ...finalExam, score, completed: true };
+        setFinalExam(updatedExam);
+
+        if (score >= 80) {
+            // Generate certificate
+            const cert: Certificate = {
+                name: 'Student Name', // Could get from user profile
+                career: roadmapData.careerGoal,
+                score,
+                date: new Date().toLocaleDateString(),
+            };
+            setCertificate(cert);
+        }
+
+        setRoadmapStep('evaluation');
+    };
+
+    // Render based on current step
+    if (roadmapStep === 'analysis') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
                 <div>
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Topics to Cover</h4>
-                    <div className="space-y-4">
-                        {roadmap.steps[currentStep].sub_steps.map((subStep, idx) => (
-                            <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <h5 className="font-semibold text-gray-900 mb-2">{subStep.title}</h5>
-                                <p className="text-sm text-gray-600 mb-3">{subStep.description}</p>
-                                <div className="flex flex-wrap gap-2 mb-3">
-                                    {subStep.skills.map((skill, skillIdx) => (
-                                        <span 
-                                            key={skillIdx}
-                                            className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium"
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-gray-900 mb-3">Select Your Career Path</h2>
+                            <p className="text-gray-600">Choose a category and set your learning duration to generate a personalized roadmap</p>
+                        </div>
+
+                        {roadmapError && (
+                            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                                {roadmapError}
+                                <button onClick={() => setRoadmapError(null)} className="ml-2 font-bold">×</button>
+                            </div>
+                        )}
+
+                        <div className="space-y-8">
+                            {/* Category Selection */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-4">Select Category *</label>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                    {categories.map((category) => (
+                                        <button
+                                            key={category.id}
+                                            onClick={() => handleCategorySelect(category.id)}
+                                            className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                                                selectedCategory === category.id
+                                                    ? 'border-orange-500 bg-orange-50 shadow-md scale-105'
+                                                    : 'border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50'
+                                            }`}
                                         >
-                                            {skill}
-                                        </span>
+                                            <div className="text-3xl mb-2">{category.icon}</div>
+                                            <div className="text-sm font-semibold text-gray-900">{category.name}</div>
+                                        </button>
                                     ))}
                                 </div>
-                                <div className="flex flex-wrap gap-2">
-                                    <span className="text-xs text-gray-500 font-medium">Resources:</span>
-                                    <a 
-                                        href={`https://www.w3schools.com/search/search_result.asp?query=${encodeURIComponent(subStep.title)}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-medium hover:bg-yellow-200 transition-colors"
-                                    >
-                                        W3Schools
-                                    </a>
-                                    <a 
-                                        href={`https://www.geeksforgeeks.org/search/?q=${encodeURIComponent(subStep.title)}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-medium hover:bg-yellow-200 transition-colors"
-                                    >
-                                        GeeksforGeeks
-                                    </a>
+                            </div>
+
+                            {/* Duration Input */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Learning Duration: {duration} weeks
+                                </label>
+                                <div className="flex items-center gap-4">
+                                    <input
+                                        type="range"
+                                        min="4"
+                                        max="24"
+                                        value={duration}
+                                        onChange={(e) => setDuration(parseInt(e.target.value))}
+                                        className="flex-1"
+                                    />
+                                    <div className="w-20 text-center">
+                                        <input
+                                            type="number"
+                                            min="4"
+                                            max="24"
+                                            value={duration}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value);
+                                                if (val >= 4 && val <= 24) {
+                                                    setDuration(val);
+                                                }
+                                            }}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center font-semibold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-2">Recommended: 8-12 weeks for beginners, 12-16 weeks for intermediate</p>
+                            </div>
+
+                            {/* Current Level */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Current Level *</label>
+                                <select
+                                    value={currentLevel}
+                                    onChange={(e) => setCurrentLevel(e.target.value as 'Beginner' | 'Intermediate' | 'Advanced')}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                                >
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                </select>
+                            </div>
+
+                            {/* Generate Button */}
+                            <button
+                                onClick={handleGenerateRoadmap}
+                                disabled={!selectedCategory || isGeneratingRoadmap}
+                                className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold text-lg shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                                {isGeneratingRoadmap ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Generating Roadmap...
+                                    </span>
+                                ) : (
+                                    'Generate Learning Roadmap →'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Step 2: Roadmap Display
+    if (roadmapStep === 'roadmap' && roadmapData) {
+        if (isGeneratingRoadmap) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8 flex items-center justify-center">
+                    <LoadingSpinner message="Generating your personalized learning roadmap..." />
+                </div>
+            );
+        }
+
+        const allWeeksCompleted = roadmapData.weeks.every(w => w.isCompleted && w.quizCompleted);
+        const canTakeExam = allWeeksCompleted;
+
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
+                <div>
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mb-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 className="text-3xl font-bold text-gray-900">{roadmapData.careerGoal} Roadmap</h2>
+                                <p className="text-gray-600 mt-1">{roadmapData.totalWeeks} weeks • {careerAnalysis?.timeCommitment} hours/week</p>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-2xl font-bold text-orange-600">
+                                    {roadmapData.weeks.filter(w => w.isCompleted).length}/{roadmapData.totalWeeks}
+                                </div>
+                                <div className="text-sm text-gray-600">Weeks Completed</div>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4">
+                            {roadmapData.weeks.map((week, idx) => (
+                                <div
+                                    key={idx}
+                                    className={`border-2 rounded-xl p-6 transition-all ${
+                                        week.isCompleted && week.quizCompleted
+                                            ? 'border-green-500 bg-green-50'
+                                            : week.isCompleted
+                                            ? 'border-orange-500 bg-orange-50'
+                                            : 'border-gray-200 bg-white'
+                                    }`}
+                                >
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
+                                                week.isCompleted && week.quizCompleted
+                                                    ? 'bg-green-500 text-white'
+                                                    : week.isCompleted
+                                                    ? 'bg-orange-500 text-white'
+                                                    : 'bg-gray-200 text-gray-600'
+                                            }`}>
+                                                {week.isCompleted && week.quizCompleted ? '✓' : week.weekNumber}
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-bold text-gray-900">Week {week.weekNumber}</h3>
+                                                {week.isCompleted && week.quizCompleted && (
+                                                    <span className="text-sm text-green-600 font-medium">✓ Completed</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {week.isCompleted && !week.quizCompleted && (
+                                            <button
+                                                onClick={() => {
+                                                    setCurrentWeek(week.weekNumber);
+                                                    generateWeeklyQuiz(week.weekNumber);
+                                                }}
+                                                className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600"
+                                            >
+                                                Take Quiz
+                                            </button>
+                                        )}
+                                        {!week.isCompleted && (
+                                            <button
+                                                onClick={() => {
+                                                    const updatedWeeks = roadmapData.weeks.map((w, i) =>
+                                                        i === idx ? { ...w, isCompleted: true } : w
+                                                    );
+                                                    setRoadmapData({ ...roadmapData, weeks: updatedWeeks });
+                                                }}
+                                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300"
+                                            >
+                                                Mark Complete
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="ml-16 space-y-4">
+                                        <div>
+                                            <h4 className="font-semibold text-gray-900 mb-2">Main Topics</h4>
+                                            <ul className="list-disc list-inside space-y-1 text-gray-700">
+                                                {week.mainTopics.map((topic, i) => (
+                                                    <li key={i}>{topic}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-semibold text-gray-900 mb-2">Subtopics</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {week.subtopics.map((subtopic, i) => (
+                                                    <span key={i} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm">
+                                                        {subtopic}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-semibold text-gray-900 mb-2">Practical Tasks</h4>
+                                            <ul className="list-disc list-inside space-y-1 text-gray-700">
+                                                {week.practicalTasks.map((task, i) => (
+                                                    <li key={i}>{task}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                            <h4 className="font-semibold text-gray-900 mb-1">Mini Project</h4>
+                                            <p className="text-sm text-gray-700">{week.miniProject}</p>
+                                        </div>
+                                        
+                                        {/* Resources Section */}
+                                        {week.resources && week.resources.length > 0 && (
+                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                                    <span>📚</span> Learning Resources
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {week.resources.map((resource, resIdx) => {
+                                                        const getIcon = () => {
+                                                            switch (resource.type) {
+                                                                case 'gfg': return '📖';
+                                                                case 'youtube': return '▶️';
+                                                                case 'documentation': return '📘';
+                                                                case 'practice': return '💪';
+                                                                case 'article': return '📄';
+                                                                default: return '🔗';
+                                                            }
+                                                        };
+                                                        const getColor = () => {
+                                                            switch (resource.type) {
+                                                                case 'gfg': return 'bg-green-100 text-green-700 border-green-300';
+                                                                case 'youtube': return 'bg-red-100 text-red-700 border-red-300';
+                                                                case 'documentation': return 'bg-blue-100 text-blue-700 border-blue-300';
+                                                                case 'practice': return 'bg-purple-100 text-purple-700 border-purple-300';
+                                                                case 'article': return 'bg-orange-100 text-orange-700 border-orange-300';
+                                                                default: return 'bg-gray-100 text-gray-700 border-gray-300';
+                                                            }
+                                                        };
+                                                        return (
+                                                            <a
+                                                                key={resIdx}
+                                                                href={resource.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className={`flex items-center gap-2 p-3 rounded-lg border-2 hover:shadow-md transition-all ${getColor()}`}
+                                                            >
+                                                                <span className="text-lg">{getIcon()}</span>
+                                                                <span className="text-sm font-medium flex-1">{resource.title}</span>
+                                                                <span className="text-xs opacity-75">↗</span>
+                                                            </a>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {canTakeExam && (
+                            <div className="mt-6 text-center">
+                                <button
+                                    onClick={() => {
+                                        setRoadmapStep('exam');
+                                        generateFinalExam();
+                                    }}
+                                    className="px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all"
+                                >
+                                    Take Final Exam →
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Step 3: Progress Tracking (Weekly Quiz)
+    if (roadmapStep === 'progress' && weeklyQuiz) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
+                <div>
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Week {weeklyQuiz.weekNumber} Quiz</h2>
+                        {weeklyQuiz.questions.map((q, idx) => (
+                            <div key={idx} className="mb-6 p-4 bg-gray-50 rounded-lg">
+                                <p className="font-semibold text-gray-900 mb-3">{idx + 1}. {q.question}</p>
+                                <div className="space-y-2">
+                                    {q.options.map((opt, optIdx) => (
+                                        <label key={optIdx} className="flex items-center gap-3 p-3 bg-white rounded-lg cursor-pointer hover:bg-orange-50 border border-gray-200">
+                                            <input
+                                                type="radio"
+                                                name={`question-${idx}`}
+                                                value={optIdx}
+                                                checked={q.userAnswer === optIdx}
+                                                onChange={() => {
+                                                    const updated = weeklyQuiz.questions.map((qu, i) =>
+                                                        i === idx ? { ...qu, userAnswer: optIdx } : qu
+                                                    );
+                                                    setWeeklyQuiz({ ...weeklyQuiz, questions: updated });
+                                                }}
+                                                className="w-4 h-4 text-orange-500"
+                                            />
+                                            <span className="text-gray-700">{opt}</span>
+                                        </label>
+                                    ))}
                                 </div>
                             </div>
                         ))}
+                        <button
+                            onClick={() => submitWeeklyQuiz()}
+                            className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold"
+                        >
+                            Submit Quiz
+                        </button>
                     </div>
                 </div>
             </div>
+        );
+    }
 
-            {/* Navigation */}
-            <div className="flex justify-between mt-6">
-                <button
-                    onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
-                    disabled={currentStep === 0}
-                    className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                        currentStep === 0
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                >
-                    ← Previous
-                </button>
-                <button
-                    onClick={() => setCurrentStep(prev => Math.min(roadmap.steps.length - 1, prev + 1))}
-                    disabled={currentStep === roadmap.steps.length - 1}
-                    className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                        currentStep === roadmap.steps.length - 1
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/30'
-                    }`}
-                >
-                    Next →
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ============================================
-// INTERNSHIP COMPONENT
-// ============================================
-
-interface InternshipDisplayProps {
-    internship: InternshipData;
-    onStartNew: () => void;
-}
-
-const InternshipDisplay: React.FC<InternshipDisplayProps> = ({ internship, onStartNew }) => (
-    <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Your Virtual Internship</h2>
-            <p className="text-gray-600">Gain practical experience through simulated real-world projects</p>
-        </div>
-
-        <div className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6 mb-8">
-            <div className="grid md:grid-cols-3 gap-6">
-                <div>
-                    <span className="text-sm font-medium text-orange-600">Company</span>
-                    <p className="text-lg font-semibold text-gray-900">{internship.CompanyName}</p>
+    // Step 4: Final Exam
+    if (roadmapStep === 'exam' && finalExam) {
+        if (isGeneratingExam) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8 flex items-center justify-center">
+                    <LoadingSpinner message="Generating final exam..." />
                 </div>
-                <div>
-                    <span className="text-sm font-medium text-orange-600">Your Role</span>
-                    <p className="text-lg font-semibold text-gray-900">{internship.YourRole}</p>
-                </div>
-                <div>
-                    <span className="text-sm font-medium text-orange-600">Duration</span>
-                    <p className="text-lg font-semibold text-gray-900">{internship.phases.length} Phases</p>
-                </div>
-            </div>
-            <p className="mt-4 text-gray-700">{internship.companyDescription}</p>
-        </div>
+            );
+        }
 
-        <div className="mb-8">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Internship Phases</h3>
-            <div className="space-y-4">
-                {internship.phases.map((phase, idx) => (
-                    <div key={idx} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 flex-shrink-0 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center font-bold">
-                                {idx + 1}
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex justify-between items-start mb-2">
-                                    <h4 className="font-semibold text-gray-900">Phase {idx + 1}</h4>
-                                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
-                                        {phase.deadline}
-                                    </span>
-                                </div>
-                                <p className="text-gray-600 mb-2">{phase.task}</p>
-                                <div className="flex flex-wrap gap-2">
-                                    <span className="text-xs text-gray-500">Topics:</span>
-                                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                                        {phase.topicsCovered}
-                                    </span>
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
+                <div>
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-gray-900 mb-2">Final Exam</h2>
+                            <p className="text-gray-600">{roadmapData?.careerGoal} - 20 Questions</p>
+                        </div>
+                        {finalExam.questions.map((q, idx) => (
+                            <div key={idx} className="mb-6 p-6 bg-gray-50 rounded-xl">
+                                <p className="font-semibold text-gray-900 mb-4">{idx + 1}. {q.question}</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {q.options.map((opt, optIdx) => (
+                                        <label key={optIdx} className="flex items-center gap-3 p-3 bg-white rounded-lg cursor-pointer hover:bg-orange-50 border-2 border-gray-200 hover:border-orange-300">
+                                            <input
+                                                type="radio"
+                                                name={`exam-question-${idx}`}
+                                                value={optIdx}
+                                                checked={finalExam.userAnswers[idx] === optIdx}
+                                                onChange={() => {
+                                                    const updated = [...finalExam.userAnswers];
+                                                    updated[idx] = optIdx;
+                                                    setFinalExam({ ...finalExam, userAnswers: updated });
+                                                }}
+                                                className="w-4 h-4 text-orange-500"
+                                            />
+                                            <span className="text-gray-700">{opt}</span>
+                                        </label>
+                                    ))}
                                 </div>
                             </div>
+                        ))}
+                        <button
+                            onClick={() => submitFinalExam()}
+                            disabled={finalExam.userAnswers.some(a => a === undefined)}
+                            className="w-full py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Submit Exam
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Step 5: Evaluation & Certificate
+    if (roadmapStep === 'evaluation' && finalExam && finalExam.score !== undefined) {
+        const passed = finalExam.score >= 80;
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
+                <div>
+                    <div className={`bg-white rounded-2xl shadow-xl border-2 p-8 ${passed ? 'border-green-500' : 'border-red-500'}`}>
+                        <div className="text-center mb-8">
+                            <div className={`w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl ${
+                                passed ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                            }`}>
+                                {passed ? '✓' : '✗'}
+                            </div>
+                            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                                {passed ? 'Congratulations!' : 'Keep Learning!'}
+                            </h2>
+                            <p className="text-2xl font-semibold text-gray-700">
+                                Your Score: {finalExam.score}%
+                            </p>
+                        </div>
+
+                        {passed && certificate && (
+                            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-8 mb-6 text-center">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-4">Certificate of Completion</h3>
+                                <div className="bg-white rounded-lg p-6 border-2 border-gray-300">
+                                    <p className="text-lg text-gray-700 mb-2">This certifies that</p>
+                                    <p className="text-3xl font-bold text-gray-900 mb-4">{certificate.name}</p>
+                                    <p className="text-lg text-gray-700 mb-2">has successfully completed</p>
+                                    <p className="text-2xl font-bold text-orange-600 mb-4">{certificate.career}</p>
+                                    <p className="text-lg text-gray-700 mb-2">with a score of</p>
+                                    <p className="text-3xl font-bold text-gray-900 mb-4">{certificate.score}%</p>
+                                    <p className="text-sm text-gray-600">{certificate.date}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {!passed && (
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
+                                <h3 className="font-semibold text-red-900 mb-3">Areas for Improvement</h3>
+                                <p className="text-red-700 mb-4">Your score is below 80%. Review the following weeks and try again:</p>
+                                <ul className="list-disc list-inside text-red-700 space-y-1">
+                                    {roadmapData?.weeks.slice(0, 3).map((w, i) => (
+                                        <li key={i}>Week {w.weekNumber}</li>
+                                    ))}
+                                </ul>
+                                <button
+                                    onClick={() => {
+                                        setRoadmapStep('roadmap');
+                                        setFinalExam(null);
+                                    }}
+                                    className="mt-4 px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600"
+                                >
+                                    Review & Retake Exam
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="text-center">
+                            <button
+                                onClick={() => {
+                                    setRoadmapStep('analysis');
+                                    setCareerAnalysis(null);
+                                    setRoadmapData(null);
+                                    setFinalExam(null);
+                                    setCertificate(null);
+                                }}
+                                className="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300"
+                            >
+                                Start New Roadmap
+                            </button>
                         </div>
                     </div>
-                ))}
+                </div>
             </div>
-        </div>
+        );
+    }
 
-        <div className="text-center">
-            <button
-                onClick={onStartNew}
-                className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all duration-300"
-            >
-                Generate New Internship
-            </button>
-        </div>
-    </div>
-);
+    return null;
+};
+
+// Old components removed
+
 
 // ============================================
 // MAIN CAREER GUIDANCE PAGE
@@ -1253,12 +2800,18 @@ const CareerGuidancePage: React.FC = () => {
     const [responses, setResponses] = useState<string[][]>([]);
     const [careerResult, setCareerResult] = useState<string[] | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
-    const [roadmapInput, setRoadmapInput] = useState('');
-    const [roadmapLoading, setRoadmapLoading] = useState(false);
-    const [internship, setInternship] = useState<InternshipData | null>(null);
-    const [internshipLoading, setInternshipLoading] = useState(false);
-    const [internshipField, setInternshipField] = useState('');
+    // New Roadmap States
+    const [roadmapStep, setRoadmapStep] = useState<'analysis' | 'roadmap' | 'progress' | 'exam' | 'evaluation'>('analysis');
+    const [careerAnalysis, setCareerAnalysis] = useState<CareerAnalysis | null>(null);
+    const [roadmapData, setRoadmapData] = useState<RoadmapData | null>(null);
+    const [currentWeek, setCurrentWeek] = useState<number | null>(null);
+    const [weeklyQuiz, setWeeklyQuiz] = useState<WeeklyQuiz | null>(null);
+    const [finalExam, setFinalExam] = useState<FinalExam | null>(null);
+    const [certificate, setCertificate] = useState<Certificate | null>(null);
+    const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
+    const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+    const [isGeneratingExam, setIsGeneratingExam] = useState(false);
+    const [roadmapError, setRoadmapError] = useState<string | null>(null);
 
     // Fetch data from API on mount
     useEffect(() => {
@@ -1614,13 +3167,13 @@ const CareerGuidancePage: React.FC = () => {
         { id: 'roadmap' as CareerTab, label: 'Roadmap', icon: <RoadmapIcon /> },
         { id: 'placement' as CareerTab, label: 'Placement Prep', icon: <PlacementIcon /> },
         { id: 'projects' as CareerTab, label: 'Project Ideas', icon: <ProjectIcon /> },
-        { id: 'internship' as CareerTab, label: 'Virtual Internship', icon: <InternshipIcon /> },
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 p-6">
+        <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+            <div className="max-w-7xl mx-auto px-4 py-6">
             {/* Header */}
-            <div className="max-w-5xl mx-auto mb-8">
+            <div className="mb-8">
                 <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
                         <SparkleIcon />
@@ -1638,7 +3191,7 @@ const CareerGuidancePage: React.FC = () => {
             </div>
 
             {/* Tab Navigation */}
-            <div className="max-w-5xl mx-auto mb-8">
+            <div className="mb-8">
                 <div className="flex flex-wrap gap-2 p-1 bg-gray-100 rounded-xl">
                     {tabs.map(tab => (
                         <button
@@ -1658,7 +3211,7 @@ const CareerGuidancePage: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div className="max-w-5xl mx-auto">
+            <div>
                 {/* Trending Careers Tab */}
                 {activeTab === 'trending' && (
                     <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
@@ -1765,159 +3318,43 @@ const CareerGuidancePage: React.FC = () => {
                             <ResultComponent
                                 result={careerResult}
                                 onGenerateAgain={resetRecommendation}
-                                onContinueToRoadmap={(career) => {
-                                    setRoadmapInput(career);
-                                    generateRoadmap(career);
-                                }}
+                                onContinueToRoadmap={handleContinueToRoadmap}
                             />
                         )}
                     </div>
                 )}
 
-                {/* Roadmap Tab */}
+                {/* Roadmap Tab - New Full-Screen Implementation */}
                 {activeTab === 'roadmap' && (
-                    <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
-                        {!roadmap && !roadmapLoading && (
-                            <div className="max-w-2xl mx-auto text-center">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                                    Tell us what you're aspiring to be
-                                </h2>
-                                <p className="text-gray-600 mb-8">
-                                    Enter a career path and we'll generate a personalized learning roadmap for you
-                                </p>
-                                
-                                <div className="flex gap-3 max-w-lg mx-auto">
-                                    <input
-                                        type="text"
-                                        value={roadmapInput}
-                                        onChange={(e) => setRoadmapInput(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && generateRoadmap(roadmapInput)}
-                                        placeholder="e.g., Full Stack Developer, Data Scientist..."
-                                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
-                                    />
-                                    <button
-                                        onClick={() => generateRoadmap(roadmapInput)}
-                                        disabled={!roadmapInput.trim()}
-                                        className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                    >
-                                        Generate
-                                    </button>
-                                </div>
-
-                                <div className="mt-8">
-                                    <p className="text-sm text-gray-500 mb-4">Popular career paths:</p>
-                                    <div className="flex flex-wrap gap-2 justify-center">
-                                        {['Software Developer', 'Data Scientist', 'Machine Learning Engineer', 'Web Developer', 'Product Manager'].map(career => (
-                                            <button
-                                                key={career}
-                                                onClick={() => {
-                                                    setRoadmapInput(career);
-                                                    generateRoadmap(career);
-                                                }}
-                                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                                            >
-                                                {career}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {roadmapLoading && (
-                            <LoadingSpinner message="Generating your personalized roadmap..." />
-                        )}
-
-                        {roadmap && !roadmapLoading && (
-                            <>
-                                <button
-                                    onClick={() => setRoadmap(null)}
-                                    className="mb-6 text-gray-600 hover:text-gray-900 font-medium flex items-center gap-2"
-                                >
-                                    ← Generate another roadmap
-                                </button>
-                                <RoadmapDisplay roadmap={roadmap} />
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {/* Virtual Internship Tab */}
-                {activeTab === 'internship' && (
-                    <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
-                        {!internship && !internshipLoading && (
-                            <div className="max-w-2xl mx-auto text-center">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                                    Start Your Virtual Internship
-                                </h2>
-                                <p className="text-gray-600 mb-8">
-                                    Experience a simulated internship with real-world projects and tasks
-                                </p>
-                                
-                                <div className="flex gap-3 max-w-lg mx-auto">
-                                    <input
-                                        type="text"
-                                        value={internshipField}
-                                        onChange={(e) => setInternshipField(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && generateInternship()}
-                                        placeholder="e.g., Web Development, Data Science..."
-                                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
-                                    />
-                                    <button
-                                        onClick={generateInternship}
-                                        disabled={!internshipField.trim()}
-                                        className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                    >
-                                        Start
-                                    </button>
-                                </div>
-
-                                <div className="mt-8">
-                                    <p className="text-sm text-gray-500 mb-4">Popular internship fields:</p>
-                                    <div className="flex flex-wrap gap-2 justify-center">
-                                        {['Web Development', 'Mobile Development', 'Data Science', 'Machine Learning', 'Cloud Computing'].map(field => (
-                                            <button
-                                                key={field}
-                                                onClick={() => {
-                                                    setInternshipField(field);
-                                                }}
-                                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                                            >
-                                                {field}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {internshipLoading && (
-                            <LoadingSpinner message="Creating your virtual internship experience..." />
-                        )}
-
-                        {internship && !internshipLoading && (
-                            <>
-                                <button
-                                    onClick={() => setInternship(null)}
-                                    className="mb-6 text-gray-600 hover:text-gray-900 font-medium flex items-center gap-2"
-                                >
-                                    ← Start a different internship
-                                </button>
-                                <InternshipDisplay 
-                                    internship={internship} 
-                                    onStartNew={() => {
-                                        setInternship(null);
-                                        setInternshipField('');
-                                    }}
-                                />
-                            </>
-                        )}
-                    </div>
+                    <RoadmapFeature
+                        roadmapStep={roadmapStep}
+                        setRoadmapStep={setRoadmapStep}
+                        careerAnalysis={careerAnalysis}
+                        setCareerAnalysis={setCareerAnalysis}
+                        roadmapData={roadmapData}
+                        setRoadmapData={setRoadmapData}
+                        currentWeek={currentWeek}
+                        setCurrentWeek={setCurrentWeek}
+                        weeklyQuiz={weeklyQuiz}
+                        setWeeklyQuiz={setWeeklyQuiz}
+                        finalExam={finalExam}
+                        setFinalExam={setFinalExam}
+                        certificate={certificate}
+                        setCertificate={setCertificate}
+                        isGeneratingRoadmap={isGeneratingRoadmap}
+                        setIsGeneratingRoadmap={setIsGeneratingRoadmap}
+                        isGeneratingQuiz={isGeneratingQuiz}
+                        setIsGeneratingQuiz={setIsGeneratingQuiz}
+                        isGeneratingExam={isGeneratingExam}
+                        setIsGeneratingExam={setIsGeneratingExam}
+                        roadmapError={roadmapError}
+                        setRoadmapError={setRoadmapError}
+                    />
                 )}
             </div>
 
             {/* Features */}
-            <div className="max-w-5xl mx-auto mt-12">
+            <div className="mt-12">
                 <h3 className="text-center text-lg font-semibold text-gray-900 mb-6">🚀 Everything You Need for Career Success</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     {[
@@ -1926,9 +3363,8 @@ const CareerGuidancePage: React.FC = () => {
                         { icon: <RoadmapIcon />, title: "Learning Roadmap", desc: "Step-by-step guide" },
                         { icon: <PlacementIcon />, title: "Placement Prep", desc: "DSA & interviews" },
                         { icon: <ProjectIcon />, title: "Project Ideas", desc: "Build your portfolio" },
-                        { icon: <InternshipIcon />, title: "Virtual Internship", desc: "Gain experience" },
                     ].map((feature, idx) => (
-                        <div key={idx} className="text-center p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-orange-200 transition-all cursor-pointer" onClick={() => setActiveTab(idx === 0 ? 'trending' : idx === 1 ? 'recommend' : idx === 2 ? 'roadmap' : idx === 3 ? 'placement' : idx === 4 ? 'projects' : 'internship')}>
+                        <div key={idx} className="text-center p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-orange-200 transition-all cursor-pointer" onClick={() => setActiveTab(idx === 0 ? 'trending' : idx === 1 ? 'recommend' : idx === 2 ? 'roadmap' : idx === 3 ? 'placement' : 'projects')}>
                             <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center mx-auto mb-2">
                                 {feature.icon}
                             </div>
@@ -1959,6 +3395,7 @@ const CareerGuidancePage: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );

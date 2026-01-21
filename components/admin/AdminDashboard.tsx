@@ -11,6 +11,7 @@ export type AdminView =
     | 'courses'
     | 'coding-questions'
     | 'career-guidance'
+    | 'roadmap-management'
     | 'user-profile'
     | 'admin-project-details'
     | 'admin-report-details';
