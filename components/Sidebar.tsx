@@ -56,11 +56,6 @@ const buyerNavItems = [
 const sellerNavItems = [
     { name: 'Dashboard', view: 'dashboard' as DashboardView, icon: DashboardIcon },
     { name: 'Post Project', view: 'post-project' as DashboardView, icon: PostProjectIcon },
-    { name: 'Career Guidance', view: 'career-guidance' as DashboardView, icon: CareerGuidanceIcon },
-    { name: 'Mock Assessment', view: 'mock-assessment' as DashboardView, icon: MockAssessmentIcon },
-    { name: 'Coding Questions', view: 'coding-questions' as DashboardView, icon: CodingQuestionsIcon },
-    { name: 'Build Portfolio', view: 'build-portfolio' as DashboardView, icon: PortfolioIcon },
-    { name: 'AI Resume Builder', view: 'build-resume' as DashboardView, icon: ResumeIcon },
     { name: 'My Projects', view: 'my-projects' as DashboardView, icon: ProjectsIcon },
     { name: 'My Courses', view: 'my-courses' as DashboardView, icon: CoursesIcon },
     { name: 'Earnings', view: 'earnings' as DashboardView, icon: EarningsIcon },
