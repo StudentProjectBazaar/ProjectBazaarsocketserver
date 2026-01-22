@@ -68,7 +68,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
   const [showBidForm, setShowBidForm] = useState(false);
   const [bidFormData, setBidFormData] = useState<BidFormData>({
     bidAmount: 0,
-    currency: 'USD',
+    currency: 'INR',
     deliveryTime: 7,
     deliveryTimeUnit: 'days',
     proposal: ''
@@ -811,16 +811,16 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                         {project.type === 'fixed' ? (
                           <div>
                             <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                              ${project.budget.min.toLocaleString()}
-                              {project.budget.max !== project.budget.min && ` - $${project.budget.max.toLocaleString()}`}
+                              ₹{project.budget.min.toLocaleString()}
+                              {project.budget.max !== project.budget.min && ` - ₹${project.budget.max.toLocaleString()}`}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">Fixed Price</div>
                           </div>
                         ) : (
                           <div>
                             <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                              ${project.budget.min}/{project.budget.currency}/hr
-                              {project.budget.max !== project.budget.min && ` - $${project.budget.max}/${project.budget.currency}/hr`}
+                              ₹{project.budget.min}/hr
+                              {project.budget.max !== project.budget.min && ` - ₹${project.budget.max}/hr`}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">Hourly</div>
                           </div>
@@ -924,9 +924,9 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                   <div className="text-right bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl">
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Budget</p>
                     <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                      ${selectedProject.budget.min.toLocaleString()}
+                      ₹{selectedProject.budget.min.toLocaleString()}
                       {selectedProject.budget.max !== selectedProject.budget.min && 
-                        ` - $${selectedProject.budget.max.toLocaleString()}`
+                        ` - ₹${selectedProject.budget.max.toLocaleString()}`
                       }
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -1030,7 +1030,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                     <div>
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100">{selectedProject.title}</h4>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Budget: ${selectedProject.budget.min.toLocaleString()} - ${selectedProject.budget.max.toLocaleString()}
+                        Budget: ₹{selectedProject.budget.min.toLocaleString()} - ₹{selectedProject.budget.max.toLocaleString()}
                       </p>
                     </div>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -1078,7 +1078,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                         />
                       </div>
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Suggested range: ${selectedProject.budget.min.toLocaleString()} - ${selectedProject.budget.max.toLocaleString()}
+                        Suggested range: ₹{selectedProject.budget.min.toLocaleString()} - ₹{selectedProject.budget.max.toLocaleString()}
                       </p>
                     </div>
 

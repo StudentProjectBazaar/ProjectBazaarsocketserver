@@ -260,7 +260,7 @@ const MyBidsPage: React.FC<MyBidsPageProps> = ({ onBack }) => {
                     <div className="text-right ml-4">
                       {bid.project && (
                         <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                          ${bid.project.budget.min.toLocaleString()} - ${bid.project.budget.max.toLocaleString()}
+                          ₹{bid.project.budget.min.toLocaleString()} - ₹{bid.project.budget.max.toLocaleString()}
                         </p>
                       )}
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Project Budget</p>
@@ -279,7 +279,7 @@ const MyBidsPage: React.FC<MyBidsPageProps> = ({ onBack }) => {
                       <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Amount</p>
                         <p className="font-bold text-gray-900 dark:text-gray-100">
-                          ${bid.bidAmount.toLocaleString()} {bid.currency}
+                          ₹{bid.bidAmount.toLocaleString()}
                         </p>
                       </div>
                       <div>

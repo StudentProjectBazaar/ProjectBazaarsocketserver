@@ -196,7 +196,7 @@ const ViewBids: React.FC<ViewBidsProps> = ({ projectId, isProjectOwner = false, 
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {bid.currency}${bid.bidAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{bid.bidAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
                     Delivery in {bid.deliveryTime} {bid.deliveryTimeUnit}

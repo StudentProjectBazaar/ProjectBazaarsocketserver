@@ -48,7 +48,7 @@ const PostBidRequestProjectPage: React.FC<PostBidRequestProjectPageProps> = ({ o
   const [projectType, setProjectType] = useState<'fixed' | 'hourly'>('fixed');
   const [budgetMin, setBudgetMin] = useState<number>(100);
   const [budgetMax, setBudgetMax] = useState<number>(500);
-  const [currency] = useState('USD');
+  const [currency] = useState('INR');
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState('');
   const [category, setCategory] = useState('Web Development');
@@ -756,7 +756,7 @@ const PostBidRequestProjectPage: React.FC<PostBidRequestProjectPageProps> = ({ o
                     <div className="flex flex-col items-end gap-3">
                       <div className="text-right">
                         <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                          ${project.budget.min.toLocaleString()} - ${project.budget.max.toLocaleString()}
+                          ₹{project.budget.min.toLocaleString()} - ₹{project.budget.max.toLocaleString()}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {project.type === 'fixed' ? 'Fixed Price' : 'Per Hour'}
@@ -904,7 +904,7 @@ const PostBidRequestProjectPage: React.FC<PostBidRequestProjectPageProps> = ({ o
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Budget: <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    ${selectedProjectForBids.budget.min.toLocaleString()} - ${selectedProjectForBids.budget.max.toLocaleString()}
+                    ₹{selectedProjectForBids.budget.min.toLocaleString()} - ₹{selectedProjectForBids.budget.max.toLocaleString()}
                   </span>
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -990,7 +990,7 @@ const PostBidRequestProjectPage: React.FC<PostBidRequestProjectPageProps> = ({ o
                                   </svg>
                                   <span className="text-gray-500 dark:text-gray-400">Bid Amount:</span>
                                   <span className="font-bold text-gray-900 dark:text-gray-100">
-                                    ${bid.bidAmount.toLocaleString()} {bid.currency}
+                                    ₹{bid.bidAmount.toLocaleString()}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
