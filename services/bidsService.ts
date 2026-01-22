@@ -4,7 +4,7 @@
  */
 
 import type { Bid, BidFormData } from '../types/bids';
-import { incrementBidCount } from './bidRequestProjectsApi';
+import { incrementBidCount, decrementBidCount } from './bidRequestProjectsApi';
 
 // API Endpoint for Bids Lambda
 const BIDS_API_ENDPOINT = 'https://3bi4qyp5r3.execute-api.ap-south-2.amazonaws.com/default/bids_handler';
@@ -307,8 +307,23 @@ export const deleteBid = (bidId: string): void => {
  */
 export const deleteBidAsync = async (
   bidId: string,
-  freelancerId?: string
+  freelancerId?: string,
+  projectId?: string
 ): Promise<{ success: boolean; error?: string }> => {
+  // Get the bid to find the projectId if not provided
+  let bidProjectId = projectId;
+  if (!bidProjectId) {
+    const bid = getFreelancerBidOnProject(freelancerId || '', '');
+    if (!bid) {
+      // Try to get from all local bids
+      const allBids = getLocalBids();
+      const foundBid = allBids.find(b => b.id === bidId);
+      if (foundBid) {
+        bidProjectId = foundBid.projectId;
+      }
+    }
+  }
+
   if (!USE_API) {
     deleteLocalBid(bidId);
     return { success: true };
@@ -319,6 +334,12 @@ export const deleteBidAsync = async (
 
     if (response.success) {
       deleteLocalBid(bidId);
+      
+      // Decrement bid count on the project
+      if (bidProjectId) {
+        await decrementBidCount(bidProjectId);
+      }
+      
       return { success: true };
     }
 
@@ -401,6 +422,37 @@ export const getFreelancerBidOnProjectAsync = async (
  */
 export const getBidCountForProject = (projectId: string): number => {
   return getBidsByProjectId(projectId).length;
+};
+
+/**
+ * Bid statistics interface
+ */
+export interface BidStats {
+  count: number;
+  averageBid: number;
+  minBid: number;
+  maxBid: number;
+}
+
+/**
+ * Get bid statistics for a project (async)
+ */
+export const getBidStatsForProjectAsync = async (projectId: string): Promise<BidStats> => {
+  const bids = await getBidsByProjectIdAsync(projectId);
+  
+  if (bids.length === 0) {
+    return { count: 0, averageBid: 0, minBid: 0, maxBid: 0 };
+  }
+  
+  const amounts = bids.map(bid => bid.bidAmount);
+  const sum = amounts.reduce((acc, val) => acc + val, 0);
+  
+  return {
+    count: bids.length,
+    averageBid: Math.round(sum / bids.length),
+    minBid: Math.min(...amounts),
+    maxBid: Math.max(...amounts),
+  };
 };
 
 /**

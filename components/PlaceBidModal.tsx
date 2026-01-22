@@ -44,8 +44,29 @@ const PlaceBidModal: React.FC<PlaceBidModalProps> = ({ project, onClose, onSubmi
       return;
     }
 
+    // Validate bid is within reasonable range of project budget
+    if (bidAmount < project.budget.min * 0.5) {
+      setError(`Bid amount seems too low. Project budget starts at ₹${project.budget.min.toLocaleString()}`);
+      return;
+    }
+
+    if (bidAmount > project.budget.max * 3) {
+      setError(`Bid amount seems too high. Project budget is up to ₹${project.budget.max.toLocaleString()}`);
+      return;
+    }
+
     if (proposal.trim().length < 100) {
       setError('Proposal must be at least 100 characters');
+      return;
+    }
+
+    if (proposal.trim().length > 5000) {
+      setError('Proposal must be less than 5000 characters');
+      return;
+    }
+
+    if (deliveryTime <= 0) {
+      setError('Delivery time must be greater than 0');
       return;
     }
 

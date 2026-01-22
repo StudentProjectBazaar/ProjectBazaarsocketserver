@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import type { BrowseProject } from '../types/browse';
 import { useAuth } from '../App';
-import { saveBidAsync, hasFreelancerBidOnProjectAsync } from '../services/bidsService';
+import { saveBidAsync, hasFreelancerBidOnProjectAsync, getBidStatsForProjectAsync, type BidStats } from '../services/bidsService';
 import { getAllBidRequestProjects } from '../services/bidRequestProjectsApi';
 import type { BidFormData } from '../types/bids';
 
@@ -78,6 +78,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
   const [bidSuccess, setBidSuccess] = useState(false);
   const [ownerProfileCache, setOwnerProfileCache] = useState<Map<string, { name?: string; profilePicture?: string }>>(new Map());
   const [hasAlreadyBid, setHasAlreadyBid] = useState(false);
+  const [bidStatsCache, setBidStatsCache] = useState<Map<string, BidStats>>(new Map());
 
   // Fetch owner profile
   const fetchOwnerProfile = useCallback(async (ownerId: string) => {
@@ -110,6 +111,22 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     return undefined;
   }, [ownerProfileCache]);
 
+  // Fetch bid stats for a project
+  const fetchBidStats = useCallback(async (projectId: string) => {
+    if (bidStatsCache.has(projectId)) {
+      return bidStatsCache.get(projectId);
+    }
+    
+    try {
+      const stats = await getBidStatsForProjectAsync(projectId);
+      setBidStatsCache(prev => new Map(prev).set(projectId, stats));
+      return stats;
+    } catch (err) {
+      console.error('Error fetching bid stats:', err);
+    }
+    return undefined;
+  }, [bidStatsCache]);
+
   // Fetch bid request projects from API
   useEffect(() => {
     const fetchProjects = async () => {
@@ -136,6 +153,13 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
               }
             });
           });
+          
+          // Fetch bid stats for projects with bids
+          bidRequestProjects.forEach(project => {
+            if (project.bidsCount > 0) {
+              fetchBidStats(project.id);
+            }
+          });
         } else {
           setProjects([]);
         }
@@ -148,7 +172,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     };
 
     fetchProjects();
-  }, [fetchOwnerProfile]);
+  }, [fetchOwnerProfile, fetchBidStats]);
 
   // Handle opening project details modal (first step)
   const handleViewProjectDetails = async (project: BrowseProject) => {
@@ -176,6 +200,12 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     
     if (hasAlreadyBid) {
       alert('You have already placed a bid on this project');
+      return;
+    }
+    
+    // Check if project is still open
+    if (selectedProject?.status && selectedProject.status !== 'open') {
+      alert('This project is no longer accepting bids');
       return;
     }
     
@@ -742,10 +772,21 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     {/* Left Content */}
                     <div className="flex-1">
-                      {/* Title */}
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer">
-                        {project.title}
-                      </h3>
+                      {/* Title & Average Bid */}
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer">
+                          {project.title}
+                        </h3>
+                        {/* Average Bid Badge */}
+                        {project.bidsCount > 0 && bidStatsCache.get(project.id) && (
+                          <div className="flex-shrink-0 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-3 py-1.5">
+                            <p className="text-xs text-green-600 dark:text-green-400 font-medium">Avg Bid</p>
+                            <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                              ₹{bidStatsCache.get(project.id)!.averageBid.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
 
                       {/* Description */}
                       <p className="text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
@@ -827,12 +868,35 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                         )}
                       </div>
 
+                      {/* Project Status Badge */}
+                      {project.status && project.status !== 'open' && (
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold mb-2 inline-block ${
+                          project.status === 'in_progress' 
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
+                            : project.status === 'completed'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                        }`}>
+                          {project.status === 'in_progress' ? '🎯 Awarded' : 
+                           project.status === 'completed' ? '✓ Completed' : 
+                           project.status === 'cancelled' ? 'Cancelled' : project.status}
+                        </span>
+                      )}
+
                       {/* CTA Button */}
                       <button 
                         onClick={() => handleViewProjectDetails(project)}
-                        className="w-full md:w-auto px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors duration-200 whitespace-nowrap"
+                        className={`w-full md:w-auto px-6 py-3 font-semibold rounded-lg transition-colors duration-200 whitespace-nowrap ${
+                          project.status && project.status !== 'open'
+                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
+                            : 'bg-orange-500 text-white hover:bg-orange-600'
+                        }`}
                       >
-                        {project.bidsCount === 0 ? 'Be First to Bid' : 'Place Bid'}
+                        {project.status && project.status !== 'open' 
+                          ? 'View Details' 
+                          : project.bidsCount === 0 
+                            ? 'Be First to Bid' 
+                            : 'Place Bid'}
                       </button>
                     </div>
                   </div>
@@ -935,6 +999,38 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                   </div>
                 </div>
 
+                {/* Bid Statistics */}
+                {selectedProject.bidsCount > 0 && bidStatsCache.get(selectedProject.id) && (
+                  <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                    <h4 className="text-sm font-semibold text-green-700 dark:text-green-300 mb-3 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Bid Statistics
+                    </h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                          ₹{bidStatsCache.get(selectedProject.id)!.averageBid.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-green-600 dark:text-green-400">Average Bid</p>
+                      </div>
+                      <div className="text-center border-x border-green-200 dark:border-green-800">
+                        <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                          ₹{bidStatsCache.get(selectedProject.id)!.minBid.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-green-600 dark:text-green-400">Lowest Bid</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                          ₹{bidStatsCache.get(selectedProject.id)!.maxBid.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-green-600 dark:text-green-400">Highest Bid</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Description */}
                 <div className="mb-6">
                   <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Description</h4>
@@ -1001,7 +1097,16 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                   >
                     Close
                   </button>
-                  {hasAlreadyBid ? (
+                  {selectedProject.status && selectedProject.status !== 'open' ? (
+                    <div className="flex-1 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 font-semibold rounded-xl flex items-center justify-center gap-2">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      {selectedProject.status === 'in_progress' ? 'Bid Awarded' : 
+                       selectedProject.status === 'completed' ? 'Project Completed' : 
+                       selectedProject.status === 'cancelled' ? 'Project Cancelled' : 'Closed'}
+                    </div>
+                  ) : hasAlreadyBid ? (
                     <div className="flex-1 px-6 py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-semibold rounded-xl flex items-center justify-center gap-2">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

@@ -330,6 +330,28 @@ export const incrementBidCount = async (projectId: string): Promise<{ success: b
 };
 
 /**
+ * Decrement bid count for a project (called when a bid is withdrawn/deleted)
+ */
+export const decrementBidCount = async (projectId: string): Promise<{ success: boolean; error?: string }> => {
+  if (!BID_REQUEST_PROJECTS_API_ENDPOINT) {
+    return { success: false, error: 'API endpoint not configured' };
+  }
+
+  try {
+    const response = await apiRequest<void>('DECREMENT_BIDS_COUNT', { projectId });
+    
+    if (response.success) {
+      return { success: true };
+    }
+    
+    return { success: false, error: response.error?.message || 'Failed to decrement bid count' };
+  } catch (error) {
+    console.error('Error decrementing bid count:', error);
+    return { success: false, error: 'Failed to decrement bid count' };
+  }
+};
+
+/**
  * Set the API endpoint (call this when you have the actual endpoint)
  */
 export const setApiEndpoint = (endpoint: string): void => {

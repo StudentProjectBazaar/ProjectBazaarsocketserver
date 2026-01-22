@@ -43,10 +43,19 @@ const ViewBids: React.FC<ViewBidsProps> = ({ projectId, isProjectOwner = false, 
     try {
       const result = await acceptBid(bidId);
       if (result.success) {
-        setBids(prev => prev.map(bid => 
-          bid.id === bidId ? { ...bid, status: 'accepted' } : bid
-        ));
+        // When a bid is accepted, mark it as accepted and all others as rejected
+        setBids(prev => prev.map(bid => {
+          if (bid.id === bidId) {
+            return { ...bid, status: 'accepted' };
+          } else if (bid.status === 'pending') {
+            return { ...bid, status: 'rejected' };
+          }
+          return bid;
+        }));
         onBidStatusChange?.();
+        
+        // Refresh bids from server to ensure sync
+        setTimeout(() => loadBids(), 1000);
       } else {
         setError(result.error || 'Failed to accept bid');
       }
