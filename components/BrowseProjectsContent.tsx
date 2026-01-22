@@ -8,8 +8,36 @@ import type { BidFormData } from '../types/bids';
 // API endpoint for fetching owner profiles
 const GET_USER_ENDPOINT = 'https://knb5lt8to2.execute-api.ap-south-2.amazonaws.com/default/Get_User_By_ID';
 
-type SortOption = 'latest' | 'budget-high-low';
+type SortOption = 'latest' | 'budget-high-low' | 'most-bids';
 type ProjectTypeFilter = 'all' | 'fixed' | 'hourly';
+
+// Available categories
+const CATEGORIES = [
+  'All Categories',
+  'Web Development',
+  'Mobile Development',
+  'UI/UX Design',
+  'Backend Development',
+  'Full Stack Development',
+  'E-commerce',
+  'WordPress',
+  'Data Science & ML',
+  'DevOps & Cloud',
+  'API Development',
+  'Game Development',
+  'Blockchain',
+  'Other',
+];
+
+// Popular skills for filtering
+const POPULAR_SKILLS = [
+  'React', 'Node.js', 'Python', 'JavaScript', 'TypeScript',
+  'PHP', 'Laravel', 'Vue.js', 'Angular', 'Next.js',
+  'MongoDB', 'PostgreSQL', 'AWS', 'Docker', 'Flutter',
+  'React Native', 'Swift', 'Kotlin', 'Java', 'C#',
+  'HTML', 'CSS', 'TailwindCSS', 'Firebase', 'GraphQL',
+  'Django', 'Flask', 'Spring Boot', 'Express', 'FastAPI',
+];
 
 interface BrowseProjectsContentProps {
   // No props needed for now
@@ -27,8 +55,12 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
   const [receiveAlerts, setReceiveAlerts] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     projectType: true,
-    budget: true
+    budget: true,
+    skills: true,
+    category: true,
   });
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   
   // Project details & Bid modal state
   const [selectedProject, setSelectedProject] = useState<BrowseProject | null>(null);
@@ -261,11 +293,36 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
       return projectMax >= budgetRange[0] && p.budget.min <= budgetRange[1];
     });
 
+    // Skills filter - project must have at least one of the selected skills
+    if (selectedSkills.length > 0) {
+      filtered = filtered.filter(p =>
+        selectedSkills.some(skill =>
+          p.skills.some(pSkill => pSkill.toLowerCase() === skill.toLowerCase())
+        )
+      );
+    }
+
+    // Category filter
+    if (selectedCategory !== 'All Categories') {
+      filtered = filtered.filter(p => {
+        if (p.category) {
+          return p.category.toLowerCase() === selectedCategory.toLowerCase();
+        }
+        // Fallback: check if any skill matches the category keywords
+        const categoryKeywords = selectedCategory.toLowerCase().split(' ');
+        return p.skills.some(skill => 
+          categoryKeywords.some(keyword => skill.toLowerCase().includes(keyword))
+        );
+      });
+    }
+
     // Sort
     filtered.sort((a, b) => {
       switch (sortOption) {
         case 'budget-high-low':
           return b.budget.max - a.budget.max;
+        case 'most-bids':
+          return b.bidsCount - a.bidsCount;
         case 'latest':
         default:
           // Sort by posted time (most recent first)
@@ -274,16 +331,31 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     });
 
     return filtered;
-  }, [projects, searchQuery, projectType, budgetRange, sortOption]);
+  }, [projects, searchQuery, projectType, budgetRange, sortOption, selectedSkills, selectedCategory]);
 
   const clearFilters = () => {
     setProjectType('all');
     setBudgetRange([minBudget, maxBudget]);
     setSearchQuery('');
     setSortOption('latest');
+    setSelectedSkills([]);
+    setSelectedCategory('All Categories');
   };
 
-  const hasActiveFilters = projectType !== 'all' || budgetRange[0] > minBudget || budgetRange[1] < maxBudget;
+  const hasActiveFilters = projectType !== 'all' || 
+    budgetRange[0] > minBudget || 
+    budgetRange[1] < maxBudget ||
+    selectedSkills.length > 0 ||
+    selectedCategory !== 'All Categories';
+
+  // Toggle skill selection
+  const toggleSkill = (skill: string) => {
+    setSelectedSkills(prev => 
+      prev.includes(skill) 
+        ? prev.filter(s => s !== skill)
+        : [...prev, skill]
+    );
+  };
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -383,6 +455,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                 >
                   <option value="latest">Latest</option>
                   <option value="budget-high-low">Budget High → Low</option>
+                  <option value="most-bids">Most Bids</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                   <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -390,6 +463,52 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                   </svg>
                 </div>
               </div>
+            </div>
+
+            {/* Category Filter */}
+            <div className="mb-6">
+              <button
+                onClick={() => toggleSection('category')}
+                className="w-full flex items-center justify-between mb-3 group"
+              >
+                <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 cursor-pointer">
+                  Category
+                </label>
+                <svg
+                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${expandedSections.category ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {expandedSections.category && (
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {CATEGORIES.map((cat) => (
+                    <label
+                      key={cat}
+                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                        selectedCategory === cat 
+                          ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' 
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="category"
+                        value={cat}
+                        checked={selectedCategory === cat}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-4 h-4 text-orange-500 border-gray-300 focus:ring-orange-500"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                        {cat}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Project Type */}
@@ -528,6 +647,63 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                         className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-gray-100 text-sm"
                       />
                     </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Skills Filter */}
+            <div className="mb-6">
+              <button
+                onClick={() => toggleSection('skills')}
+                className="w-full flex items-center justify-between mb-3 group"
+              >
+                <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 cursor-pointer">
+                  Skills {selectedSkills.length > 0 && (
+                    <span className="ml-1 px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs rounded-full">
+                      {selectedSkills.length}
+                    </span>
+                  )}
+                </label>
+                <svg
+                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${expandedSections.skills ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {expandedSections.skills && (
+                <div className="space-y-2">
+                  {/* Selected Skills */}
+                  {selectedSkills.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                      {selectedSkills.map((skill) => (
+                        <button
+                          key={skill}
+                          onClick={() => toggleSkill(skill)}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs font-medium hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors"
+                        >
+                          {skill}
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {/* Available Skills */}
+                  <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                    {POPULAR_SKILLS.filter(s => !selectedSkills.includes(s)).map((skill) => (
+                      <button
+                        key={skill}
+                        onClick={() => toggleSkill(skill)}
+                        className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full text-xs font-medium hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                      >
+                        {skill}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}

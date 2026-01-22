@@ -309,17 +309,17 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
 
     // Start animated progress while waiting for API
     let progressInterval: NodeJS.Timeout | null = null;
-    let currentProgress = 10;
+    let currentProgress = 5;
 
-    const startProgressAnimation = () => {
+    const startProgressAnimation = (targetMax: number = 85) => {
       progressInterval = setInterval(() => {
-        // Smoothly increment progress up to 85% while waiting
-        if (currentProgress < 85) {
-          currentProgress += Math.random() * 3 + 1;
-          if (currentProgress > 85) currentProgress = 85;
+        // Smoothly increment progress up to targetMax while waiting
+        if (currentProgress < targetMax) {
+          currentProgress += Math.random() * 2 + 0.5;
+          if (currentProgress > targetMax) currentProgress = targetMax;
           setStatus(prev => ({ ...prev, progress: Math.round(currentProgress) }));
         }
-      }, 300);
+      }, 200);
     };
 
     const stopProgressAnimation = () => {
@@ -330,33 +330,43 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
     };
 
     try {
-      updateStatus('uploading', 'Reading your resume file...', 10);
+      updateStatus('uploading', 'Reading your resume file...', 5);
+      startProgressAnimation(15); // Start animation immediately for file reading
       console.log('[Portfolio] Starting file read for:', file.name, 'size:', file.size);
       
       let base64: string;
       try {
-        // Use modern arrayBuffer API which is more reliable
-        console.log('[Portfolio] Reading file as ArrayBuffer...');
-        const arrayBuffer = await file.arrayBuffer();
-        console.log('[Portfolio] ArrayBuffer read complete, size:', arrayBuffer.byteLength);
-        
-        // Convert ArrayBuffer to base64
-        const uint8Array = new Uint8Array(arrayBuffer);
-        let binaryString = '';
-        const chunkSize = 8192;
-        for (let i = 0; i < uint8Array.length; i += chunkSize) {
-          const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
-          binaryString += String.fromCharCode.apply(null, Array.from(chunk));
-        }
-        base64 = btoa(binaryString);
+        // Use FileReader.readAsDataURL() which is native and non-blocking
+        console.log('[Portfolio] Reading file as DataURL...');
+        base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            // Extract base64 data from data URL (remove "data:application/pdf;base64," prefix)
+            const base64Data = result.split(',')[1];
+            console.log('[Portfolio] FileReader complete, base64 length:', base64Data?.length);
+            resolve(base64Data);
+          };
+          reader.onerror = () => reject(new Error('FileReader failed'));
+          reader.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 10) + 5;
+              setStatus(prev => ({ ...prev, progress: Math.min(percent, 15) }));
+            }
+          };
+          reader.readAsDataURL(file);
+        });
         console.log('[Portfolio] Base64 conversion complete, length:', base64.length);
       } catch (fileError) {
         console.error('[Portfolio] File reading failed:', fileError);
+        stopProgressAnimation();
         throw new Error('Could not read your resume file. Please try again or use a different file.');
       }
 
+      stopProgressAnimation();
+      currentProgress = 20;
       updateStatus('extracting', 'Analyzing your resume with AI...', 20);
-      startProgressAnimation();
+      startProgressAnimation(85); // Resume animation for API call
       console.log('[Portfolio] Starting API call to:', PORTFOLIO_API_ENDPOINT);
 
       if (DEMO_MODE) {

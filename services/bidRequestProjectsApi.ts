@@ -86,6 +86,10 @@ const mapToBrowseProject = (project: BidRequestProject): BrowseProject => ({
   ownerEmail: project.buyerEmail,
   ownerName: project.buyerName,
   ownerProfilePicture: project.buyerProfilePicture,
+  category: project.category,
+  status: project.status,
+  deadline: project.deadline,
+  estimatedDuration: project.estimatedDuration,
 });
 
 /**
@@ -300,6 +304,28 @@ export const deleteBidRequestProject = async (
   } catch (error) {
     console.error('Error deleting project:', error);
     return { success: false, error: 'Failed to delete project' };
+  }
+};
+
+/**
+ * Increment bid count for a project (called when a new bid is placed)
+ */
+export const incrementBidCount = async (projectId: string): Promise<{ success: boolean; error?: string }> => {
+  if (!BID_REQUEST_PROJECTS_API_ENDPOINT) {
+    return { success: false, error: 'API endpoint not configured' };
+  }
+
+  try {
+    const response = await apiRequest<void>('INCREMENT_BIDS_COUNT', { projectId });
+    
+    if (response.success) {
+      return { success: true };
+    }
+    
+    return { success: false, error: response.error?.message || 'Failed to increment bid count' };
+  } catch (error) {
+    console.error('Error incrementing bid count:', error);
+    return { success: false, error: 'Failed to increment bid count' };
   }
 };
 

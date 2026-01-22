@@ -4,6 +4,7 @@
  */
 
 import type { Bid, BidFormData } from '../types/bids';
+import { incrementBidCount } from './bidRequestProjectsApi';
 
 // API Endpoint for Bids Lambda
 const BIDS_API_ENDPOINT = 'https://3bi4qyp5r3.execute-api.ap-south-2.amazonaws.com/default/bids_handler';
@@ -226,6 +227,10 @@ export const saveBidAsync = async (
       bid.id = response.data.bidId;
       bid.submittedAt = response.data.submittedAt;
       saveLocalBid(bid);
+      
+      // Increment bid count on the project
+      await incrementBidCount(projectId);
+      
       return { success: true, bid };
     }
 
