@@ -20,11 +20,12 @@ interface RoadmapStep {
     }[];
 }
 
-interface Roadmap {
-    title: string;
-    description: string;
-    steps: RoadmapStep[];
-}
+// Roadmap interface - kept for potential future use
+// interface Roadmap {
+//     title: string;
+//     description: string;
+//     steps: RoadmapStep[];
+// }
 
 // New Roadmap Interfaces
 interface CareerAnalysis {
@@ -682,7 +683,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     setCareerAnalysis,
     roadmapData,
     setRoadmapData,
-    currentWeek,
+    currentWeek: _currentWeek,
     setCurrentWeek,
     weeklyQuiz,
     setWeeklyQuiz,
@@ -692,7 +693,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     setCertificate,
     isGeneratingRoadmap,
     setIsGeneratingRoadmap,
-    isGeneratingQuiz,
+    isGeneratingQuiz: _isGeneratingQuiz,
     setIsGeneratingQuiz,
     isGeneratingExam,
     setIsGeneratingExam,
@@ -819,9 +820,9 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
 
             // Fallback to static data
             // Helper function to generate resources for each week
-            const getResourcesForWeek = (categoryId: string, weekIndex: number, topics: string[]): WeekResource[] => {
-                const resources: WeekResource[] = [];
-                const topic = topics[0]?.toLowerCase() || '';
+            const getResourcesForWeek = (categoryId: string, _weekIndex: number, _topics: string[]): WeekResource[] => {
+                const _resources: WeekResource[] = [];
+                const _topic = _topics[0]?.toLowerCase() || '';
                 
                 // Common resources for all categories
                 const commonResources: Record<string, WeekResource[]> = {
@@ -1032,7 +1033,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
             const templates = weekTemplates[categoryId] || weekTemplates['web-dev'];
             
             // Generate weeks based on duration
-            const generatedWeeks = [];
+            const generatedWeeks: Array<Omit<WeekContent, 'isCompleted' | 'quizCompleted'>> = [];
             for (let i = 0; i < totalWeeks; i++) {
                 const templateIndex = i % templates.length;
                 const template = templates[templateIndex];
@@ -1049,19 +1050,20 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
             
             // Add revision week for beginners if duration > 8 weeks
             if (level === 'Beginner' && totalWeeks > 8) {
+                const revisionResources: WeekResource[] = [
+                    { type: 'practice', title: 'LeetCode', url: 'https://leetcode.com/' },
+                    { type: 'practice', title: 'HackerRank', url: 'https://www.hackerrank.com/' },
+                    { type: 'practice', title: 'InterviewBit', url: 'https://www.interviewbit.com/' },
+                    { type: 'article', title: 'Resume Building Guide', url: 'https://www.geeksforgeeks.org/resume-building-for-freshers/' },
+                    { type: 'article', title: 'Interview Preparation', url: 'https://www.geeksforgeeks.org/interview-preparation/' },
+                ];
                 generatedWeeks.push({
                     weekNumber: generatedWeeks.length + 1,
                     mainTopics: ['Revision & Practice', 'Portfolio Building', 'Interview Preparation'],
                     subtopics: ['Review All Topics', 'Build Portfolio', 'Practice Problems', 'Mock Interviews', 'Resume Building'],
                     practicalTasks: ['Review all concepts', 'Complete portfolio projects', 'Solve coding problems', 'Prepare resume'],
                     miniProject: 'Create a comprehensive portfolio showcasing all your projects',
-                    resources: [
-                        { type: 'practice', title: 'LeetCode', url: 'https://leetcode.com/' },
-                        { type: 'practice', title: 'HackerRank', url: 'https://www.hackerrank.com/' },
-                        { type: 'practice', title: 'InterviewBit', url: 'https://www.interviewbit.com/' },
-                        { type: 'article', title: 'Resume Building Guide', url: 'https://www.geeksforgeeks.org/resume-building-for-freshers/' },
-                        { type: 'article', title: 'Interview Preparation', url: 'https://www.geeksforgeeks.org/interview-preparation/' },
-                    ],
+                    resources: revisionResources,
                 });
             }
 
