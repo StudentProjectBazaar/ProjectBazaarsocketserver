@@ -705,20 +705,73 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [duration, setDuration] = useState<number>(8);
     const [currentLevel, setCurrentLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
+    const [categories, setCategories] = useState<Array<{ id: string; name: string; icon: string }>>([]);
+    const [loadingCategories, setLoadingCategories] = useState(true);
 
-    // Available categories
-    const categories = [
-        { id: 'ai-ml', name: 'AI/ML Engineer', icon: '🤖' },
-        { id: 'web-dev', name: 'Web Development', icon: '🌐' },
-        { id: 'data-science', name: 'Data Science', icon: '📊' },
-        { id: 'devops', name: 'DevOps Engineer', icon: '⚙️' },
-        { id: 'mobile-dev', name: 'Mobile Development', icon: '📱' },
-        { id: 'cloud-engineer', name: 'Cloud Engineer', icon: '☁️' },
-        { id: 'cybersecurity', name: 'Cybersecurity', icon: '🔒' },
-        { id: 'blockchain', name: 'Blockchain Developer', icon: '⛓️' },
-        { id: 'ui-ux', name: 'UI/UX Designer', icon: '🎨' },
-        { id: 'fullstack', name: 'Full Stack Developer', icon: '💻' },
-    ];
+    // API Endpoint
+    const ROADMAP_API_ENDPOINT = 'https://07wee2lkxj.execute-api.ap-south-2.amazonaws.com/default/Roadmaps_get_post_put';
+
+    // Load categories from API
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                setLoadingCategories(true);
+                const response = await fetch(ROADMAP_API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resource: 'categories',
+                        action: 'list',
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.categories && data.categories.length > 0) {
+                        setCategories(data.categories);
+                        if (!selectedCategory && data.categories.length > 0) {
+                            setSelectedCategory(data.categories[0].id);
+                        }
+                    } else {
+                        // Fallback to default categories if API returns empty
+                        setCategories([
+                            { id: 'ai-ml', name: 'AI/ML Engineer', icon: '🤖' },
+                            { id: 'web-dev', name: 'Web Development', icon: '🌐' },
+                            { id: 'data-science', name: 'Data Science', icon: '📊' },
+                            { id: 'devops', name: 'DevOps Engineer', icon: '⚙️' },
+                            { id: 'mobile-dev', name: 'Mobile Development', icon: '📱' },
+                            { id: 'cloud-engineer', name: 'Cloud Engineer', icon: '☁️' },
+                            { id: 'cybersecurity', name: 'Cybersecurity', icon: '🔒' },
+                            { id: 'blockchain', name: 'Blockchain Developer', icon: '⛓️' },
+                            { id: 'ui-ux', name: 'UI/UX Designer', icon: '🎨' },
+                            { id: 'fullstack', name: 'Full Stack Developer', icon: '💻' },
+                        ]);
+                    }
+                } else {
+                    throw new Error('Failed to fetch categories');
+                }
+            } catch (err) {
+                console.error('Failed to load categories:', err);
+                // Fallback to default categories on error
+                setCategories([
+                    { id: 'ai-ml', name: 'AI/ML Engineer', icon: '🤖' },
+                    { id: 'web-dev', name: 'Web Development', icon: '🌐' },
+                    { id: 'data-science', name: 'Data Science', icon: '📊' },
+                    { id: 'devops', name: 'DevOps Engineer', icon: '⚙️' },
+                    { id: 'mobile-dev', name: 'Mobile Development', icon: '📱' },
+                    { id: 'cloud-engineer', name: 'Cloud Engineer', icon: '☁️' },
+                    { id: 'cybersecurity', name: 'Cybersecurity', icon: '🔒' },
+                    { id: 'blockchain', name: 'Blockchain Developer', icon: '⛓️' },
+                    { id: 'ui-ux', name: 'UI/UX Designer', icon: '🎨' },
+                    { id: 'fullstack', name: 'Full Stack Developer', icon: '💻' },
+                ]);
+            } finally {
+                setLoadingCategories(false);
+            }
+        };
+
+        loadCategories();
+    }, []);
 
     const handleCategorySelect = (categoryId: string) => {
         setSelectedCategory(categoryId);
@@ -755,12 +808,10 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
         // Simulate loading delay
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Get roadmap data - first try API, then fallback to static
-        const getStaticRoadmap = async (categoryId: string, level: string, totalWeeks: number, categoriesList: typeof categories): Promise<RoadmapData> => {
-            // Try to load from API first
+        // Get roadmap data from API - fully dynamic
+        const getRoadmapFromAPI = async (categoryId: string, totalWeeks: number, categoriesList: Array<{ id: string; name: string; icon: string }>): Promise<RoadmapData> => {
             try {
-                const API_ENDPOINT = 'https://YOUR_API_GATEWAY_URL/roadmap-management'; // Replace with your API Gateway URL
-                const response = await fetch(API_ENDPOINT, {
+                const response = await fetch(ROADMAP_API_ENDPOINT, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -772,328 +823,95 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
 
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.success && data.roadmap && data.roadmap.weeks && data.roadmap.weeks.length > 0) {
-                        // Use API roadmap, but limit to requested duration
-                        const weeksToUse = data.roadmap.weeks.slice(0, totalWeeks).map((w: any, idx: number) => ({
-                            ...w,
-                            weekNumber: idx + 1,
-                            isCompleted: false,
-                            quizCompleted: false,
-                        }));
+                    if (data.success && data.roadmap) {
+                        // If roadmap has weeks, use them (limit to requested duration)
+                        if (data.roadmap.weeks && data.roadmap.weeks.length > 0) {
+                            // Preserve weekNumber from API, but ensure it's a number
+                            const weeksToUse = data.roadmap.weeks.slice(0, totalWeeks).map((w: any, idx: number) => ({
+                                ...w,
+                                weekNumber: typeof w.weekNumber === 'number' ? w.weekNumber : (idx + 1),
+                                mainTopics: w.mainTopics || [],
+                                subtopics: w.subtopics || [],
+                                practicalTasks: w.practicalTasks || [],
+                                miniProject: w.miniProject || '',
+                                resources: w.resources || [],
+                                quiz: w.quiz || [],
+                                isCompleted: false,
+                                quizCompleted: false,
+                            }));
+                            return {
+                                careerGoal: data.roadmap.categoryName || categoriesList.find(c => c.id === categoryId)?.name || categoryId,
+                                totalWeeks: weeksToUse.length,
+                                weeks: weeksToUse,
+                                createdAt: data.roadmap.createdAt || new Date().toISOString(),
+                            };
+                        } else {
+                            // Roadmap exists but has no weeks - return empty roadmap
+                            return {
+                                careerGoal: data.roadmap.categoryName || categoriesList.find(c => c.id === categoryId)?.name || categoryId,
+                                totalWeeks: 0,
+                                weeks: [],
+                                createdAt: data.roadmap.createdAt || new Date().toISOString(),
+                            };
+                        }
+                    } else if (data.success === false && (data.error?.includes('not found') || data.error?.includes('No roadmap'))) {
+                        // Roadmap doesn't exist - return empty roadmap
                         return {
-                            careerGoal: data.roadmap.categoryName || categoriesList.find(c => c.id === categoryId)?.name || categoryId,
-                            totalWeeks: weeksToUse.length,
-                            weeks: weeksToUse,
+                            careerGoal: categoriesList.find(c => c.id === categoryId)?.name || categoryId,
+                            totalWeeks: 0,
+                            weeks: [],
                             createdAt: new Date().toISOString(),
                         };
+                    } else {
+                        throw new Error(data.error || 'Failed to load roadmap from API');
                     }
+                } else if (response.status === 404) {
+                    // Roadmap not found - return empty roadmap
+                    return {
+                        careerGoal: categoriesList.find(c => c.id === categoryId)?.name || categoryId,
+                        totalWeeks: 0,
+                        weeks: [],
+                        createdAt: new Date().toISOString(),
+                    };
+                } else {
+                    throw new Error(`API request failed: ${response.status}`);
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error('Failed to load roadmap from API:', err);
-            }
-
-            // Fallback: Try localStorage
-            try {
-                const stored = localStorage.getItem('admin_roadmaps');
-                if (stored) {
-                    const adminRoadmaps: Record<string, { categoryId: string; categoryName: string; weeks: any[] }> = JSON.parse(stored);
-                    const adminRoadmap = adminRoadmaps[categoryId];
-                    if (adminRoadmap && adminRoadmap.weeks.length > 0) {
-                        const weeksToUse = adminRoadmap.weeks.slice(0, totalWeeks).map((w, idx) => ({
-                            ...w,
-                            weekNumber: idx + 1,
-                            isCompleted: false,
-                            quizCompleted: false,
-                        }));
-                        return {
-                            careerGoal: adminRoadmap.categoryName,
-                            totalWeeks: weeksToUse.length,
-                            weeks: weeksToUse,
-                            createdAt: new Date().toISOString(),
-                        };
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to load admin roadmaps from localStorage:', err);
-            }
-
-            // Fallback to static data
-            // Helper function to generate resources for each week
-            const getResourcesForWeek = (categoryId: string, weekIndex: number, topics: string[]): WeekResource[] => {
-                const resources: WeekResource[] = [];
-                const topic = topics[0]?.toLowerCase() || '';
-                
-                // Common resources for all categories
-                const commonResources: Record<string, WeekResource[]> = {
-                    'ai-ml': [
-                        { type: 'youtube', title: 'Python for Data Science - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=LHBE6Q9XlzI' },
-                        { type: 'gfg', title: 'Python Programming - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/python-programming-language/' },
-                        { type: 'youtube', title: 'Machine Learning Course - Andrew Ng', url: 'https://www.youtube.com/watch?v=PPLop4L2eGk' },
-                        { type: 'gfg', title: 'Machine Learning - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/machine-learning/' },
-                        { type: 'documentation', title: 'NumPy Documentation', url: 'https://numpy.org/doc/stable/' },
-                        { type: 'documentation', title: 'Pandas Documentation', url: 'https://pandas.pydata.org/docs/' },
-                        { type: 'youtube', title: 'Deep Learning Specialization - DeepLearning.AI', url: 'https://www.youtube.com/watch?v=CS4cs9xVecg' },
-                        { type: 'gfg', title: 'Deep Learning - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/deep-learning/' },
-                        { type: 'practice', title: 'Kaggle Learn', url: 'https://www.kaggle.com/learn' },
-                        { type: 'practice', title: 'LeetCode ML Problems', url: 'https://leetcode.com/tag/machine-learning/' },
-                    ],
-                    'web-dev': [
-                        { type: 'youtube', title: 'HTML & CSS Full Course - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=mU6anWqZJcc' },
-                        { type: 'gfg', title: 'HTML Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/html-tutorials/' },
-                        { type: 'gfg', title: 'CSS Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/css-tutorials/' },
-                        { type: 'youtube', title: 'JavaScript Full Course - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=jS4aFq5-91M' },
-                        { type: 'gfg', title: 'JavaScript Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/javascript-tutorial/' },
-                        { type: 'youtube', title: 'React Course - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=bMknfKXIFA8' },
-                        { type: 'gfg', title: 'React Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/reactjs-tutorials/' },
-                        { type: 'documentation', title: 'React Official Docs', url: 'https://react.dev/' },
-                        { type: 'youtube', title: 'Node.js & Express - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=Oe421EPjBEo' },
-                        { type: 'gfg', title: 'Node.js Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/nodejs-tutorials/' },
-                        { type: 'practice', title: 'Frontend Mentor', url: 'https://www.frontendmentor.io/' },
-                        { type: 'practice', title: 'JavaScript30', url: 'https://javascript30.com/' },
-                    ],
-                    'data-science': [
-                        { type: 'youtube', title: 'Data Science Full Course - Simplilearn', url: 'https://www.youtube.com/watch?v=X3paOmcrTjQ' },
-                        { type: 'gfg', title: 'Data Science - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/data-science/' },
-                        { type: 'youtube', title: 'Python for Data Science - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=LHBE6Q9XlzI' },
-                        { type: 'gfg', title: 'Pandas Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/pandas-tutorial/' },
-                        { type: 'documentation', title: 'Matplotlib Documentation', url: 'https://matplotlib.org/stable/contents.html' },
-                        { type: 'documentation', title: 'Seaborn Documentation', url: 'https://seaborn.pydata.org/' },
-                        { type: 'youtube', title: 'Statistics for Data Science - StatQuest', url: 'https://www.youtube.com/c/joshstarmer' },
-                        { type: 'gfg', title: 'Statistics Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/statistics-tutorials/' },
-                        { type: 'practice', title: 'Kaggle Learn', url: 'https://www.kaggle.com/learn' },
-                        { type: 'practice', title: 'DataCamp', url: 'https://www.datacamp.com/' },
-                    ],
-                    'devops': [
-                        { type: 'youtube', title: 'DevOps Full Course - Simplilearn', url: 'https://www.youtube.com/watch?v=5jb9LqXcg4c' },
-                        { type: 'gfg', title: 'DevOps Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/devops-tutorial/' },
-                        { type: 'youtube', title: 'Docker Tutorial - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=fqMOX6JJhGo' },
-                        { type: 'gfg', title: 'Docker Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/docker-tutorial/' },
-                        { type: 'youtube', title: 'Kubernetes Tutorial - TechWorld with Nana', url: 'https://www.youtube.com/watch?v=X48VuDVv0do' },
-                        { type: 'gfg', title: 'Kubernetes Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/kubernetes-tutorial/' },
-                        { type: 'documentation', title: 'Docker Documentation', url: 'https://docs.docker.com/' },
-                        { type: 'documentation', title: 'Kubernetes Documentation', url: 'https://kubernetes.io/docs/' },
-                        { type: 'youtube', title: 'AWS Tutorial - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=ulprqHHWlng' },
-                        { type: 'gfg', title: 'AWS Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/aws-tutorial/' },
-                    ],
-                    'mobile-dev': [
-                        { type: 'youtube', title: 'React Native Tutorial - Programming with Mosh', url: 'https://www.youtube.com/watch?v=0-S5a0eXPoc' },
-                        { type: 'gfg', title: 'React Native Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/react-native-tutorial/' },
-                        { type: 'youtube', title: 'Flutter Tutorial - The Net Ninja', url: 'https://www.youtube.com/watch?v=1ukSR1GRtMU' },
-                        { type: 'gfg', title: 'Flutter Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/flutter-tutorial/' },
-                        { type: 'documentation', title: 'React Native Docs', url: 'https://reactnative.dev/docs/getting-started' },
-                        { type: 'documentation', title: 'Flutter Docs', url: 'https://docs.flutter.dev/' },
-                        { type: 'youtube', title: 'iOS Development - CodeWithChris', url: 'https://www.youtube.com/c/CodeWithChris' },
-                        { type: 'youtube', title: 'Android Development - Coding with Mitch', url: 'https://www.youtube.com/c/CodingWithMitch' },
-                        { type: 'practice', title: 'App Ideas', url: 'https://github.com/florinpop17/app-ideas' },
-                    ],
-                    'cloud-engineer': [
-                        { type: 'youtube', title: 'AWS Full Course - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=ulprqHHWlng' },
-                        { type: 'gfg', title: 'AWS Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/aws-tutorial/' },
-                        { type: 'youtube', title: 'Azure Tutorial - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=3hHmUes6z9k' },
-                        { type: 'gfg', title: 'Azure Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/azure-tutorial/' },
-                        { type: 'youtube', title: 'GCP Tutorial - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=18OP6c1hSaI' },
-                        { type: 'documentation', title: 'AWS Documentation', url: 'https://docs.aws.amazon.com/' },
-                        { type: 'documentation', title: 'Azure Documentation', url: 'https://docs.microsoft.com/azure/' },
-                        { type: 'documentation', title: 'GCP Documentation', url: 'https://cloud.google.com/docs' },
-                        { type: 'practice', title: 'AWS Hands-On Labs', url: 'https://aws.amazon.com/training/' },
-                    ],
-                    'cybersecurity': [
-                        { type: 'youtube', title: 'Cybersecurity Full Course - Simplilearn', url: 'https://www.youtube.com/watch?v=inWWhr5tnEA' },
-                        { type: 'gfg', title: 'Cybersecurity Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/cyber-security-tutorial/' },
-                        { type: 'youtube', title: 'Ethical Hacking - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=3Kq1MIfTWCE' },
-                        { type: 'gfg', title: 'Ethical Hacking - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/ethical-hacking-tutorial/' },
-                        { type: 'practice', title: 'TryHackMe', url: 'https://tryhackme.com/' },
-                        { type: 'practice', title: 'HackTheBox', url: 'https://www.hackthebox.com/' },
-                        { type: 'article', title: 'OWASP Top 10', url: 'https://owasp.org/www-project-top-ten/' },
-                    ],
-                    'blockchain': [
-                        { type: 'youtube', title: 'Blockchain Full Course - Simplilearn', url: 'https://www.youtube.com/watch?v=SyVMma1IkXM' },
-                        { type: 'gfg', title: 'Blockchain Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/blockchain-tutorial/' },
-                        { type: 'youtube', title: 'Solidity Tutorial - Dapp University', url: 'https://www.youtube.com/c/DappUniversity' },
-                        { type: 'gfg', title: 'Solidity Tutorial - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/solidity-basics/' },
-                        { type: 'documentation', title: 'Solidity Documentation', url: 'https://docs.soliditylang.org/' },
-                        { type: 'documentation', title: 'Ethereum Documentation', url: 'https://ethereum.org/en/developers/docs/' },
-                        { type: 'practice', title: 'CryptoZombies', url: 'https://cryptozombies.io/' },
-                    ],
-                    'ui-ux': [
-                        { type: 'youtube', title: 'UI/UX Design Course - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=c9Wg6Cb_YlU' },
-                        { type: 'gfg', title: 'UI/UX Design - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/ui-ux-design/' },
-                        { type: 'youtube', title: 'Figma Tutorial - Flux', url: 'https://www.youtube.com/watch?v=FTFaQWZBqQ8' },
-                        { type: 'article', title: 'Design Principles', url: 'https://www.interaction-design.org/literature/topics/design-principles' },
-                        { type: 'practice', title: 'Dribbble', url: 'https://dribbble.com/' },
-                        { type: 'practice', title: 'Behance', url: 'https://www.behance.net/' },
-                    ],
-                    'fullstack': [
-                        { type: 'youtube', title: 'Full Stack Web Development - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=zJSY8tbf_ys' },
-                        { type: 'gfg', title: 'Full Stack Development - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/full-stack-development/' },
-                        { type: 'youtube', title: 'MERN Stack Tutorial - FreeCodeCamp', url: 'https://www.youtube.com/watch?v=7CqJlxBYj-M' },
-                        { type: 'gfg', title: 'MERN Stack - GeeksforGeeks', url: 'https://www.geeksforgeeks.org/mern-stack/' },
-                        { type: 'practice', title: 'Full Stack Open', url: 'https://fullstackopen.com/en/' },
-                        { type: 'practice', title: 'The Odin Project', url: 'https://www.theodinproject.com/' },
-                    ],
+                // Return empty roadmap instead of throwing error
+                return {
+                    careerGoal: categoriesList.find(c => c.id === categoryId)?.name || categoryId,
+                    totalWeeks: 0,
+                    weeks: [],
+                    createdAt: new Date().toISOString(),
                 };
-
-                const categoryResources = commonResources[categoryId] || commonResources['web-dev'];
-                
-                // Select 4-6 resources based on week index
-                const selectedResources = categoryResources.slice(weekIndex % categoryResources.length, (weekIndex % categoryResources.length) + 5);
-                if (selectedResources.length < 4) {
-                    selectedResources.push(...categoryResources.slice(0, 4 - selectedResources.length));
-                }
-                
-                return selectedResources.slice(0, 6);
-            };
-
-            // Category-specific week templates
-            const weekTemplates: Record<string, any[]> = {
-                'ai-ml': [
-                    { mainTopics: ['Python Fundamentals', 'NumPy & Pandas', 'Data Structures'], subtopics: ['Python Basics', 'NumPy Arrays', 'DataFrames', 'Data Cleaning', 'Data Visualization'], practicalTasks: ['Install Python & libraries', 'Practice NumPy operations', 'Load and clean datasets', 'Create visualizations'], miniProject: 'Build a data analysis script for a dataset' },
-                    { mainTopics: ['Machine Learning Basics', 'Scikit-learn', 'Model Training'], subtopics: ['Supervised Learning', 'Classification', 'Regression', 'Model Evaluation', 'Cross-validation'], practicalTasks: ['Train first ML model', 'Evaluate model performance', 'Tune hyperparameters', 'Compare models'], miniProject: 'Create a classification model for predicting outcomes' },
-                    { mainTopics: ['Deep Learning', 'Neural Networks', 'TensorFlow/Keras'], subtopics: ['Neural Network Basics', 'CNNs', 'RNNs', 'Transfer Learning', 'Model Architecture'], practicalTasks: ['Build first neural network', 'Train on image data', 'Use pre-trained models', 'Optimize architecture'], miniProject: 'Build an image classifier using deep learning' },
-                    { mainTopics: ['Natural Language Processing', 'Text Processing', 'NLP Models'], subtopics: ['Text Preprocessing', 'Tokenization', 'Word Embeddings', 'Transformers', 'BERT/GPT'], practicalTasks: ['Process text data', 'Build sentiment analyzer', 'Use transformer models', 'Fine-tune models'], miniProject: 'Create a text sentiment analysis application' },
-                    { mainTopics: ['Computer Vision', 'Image Processing', 'CV Models'], subtopics: ['Image Preprocessing', 'Object Detection', 'Image Segmentation', 'OpenCV', 'YOLO'], practicalTasks: ['Process images', 'Detect objects', 'Segment images', 'Build CV pipeline'], miniProject: 'Build an object detection system' },
-                    { mainTopics: ['Model Deployment', 'MLOps', 'Production Systems'], subtopics: ['Model Serving', 'API Development', 'Containerization', 'Monitoring', 'A/B Testing'], practicalTasks: ['Deploy ML model', 'Create prediction API', 'Monitor model performance', 'Set up CI/CD'], miniProject: 'Deploy an ML model to production with API' },
-                ],
-                'web-dev': [
-                    { mainTopics: ['HTML & CSS', 'Responsive Design', 'CSS Frameworks'], subtopics: ['HTML5', 'CSS3', 'Flexbox', 'Grid', 'Bootstrap', 'Tailwind'], practicalTasks: ['Build static pages', 'Create responsive layouts', 'Use CSS frameworks', 'Practice animations'], miniProject: 'Build a responsive portfolio website' },
-                    { mainTopics: ['JavaScript Fundamentals', 'DOM Manipulation', 'ES6+'], subtopics: ['Variables & Functions', 'Arrays & Objects', 'DOM API', 'Async/Await', 'Promises', 'Closures'], practicalTasks: ['Write JavaScript functions', 'Manipulate DOM', 'Handle events', 'Work with APIs'], miniProject: 'Create an interactive todo application' },
-                    { mainTopics: ['React/Vue Basics', 'Components', 'State Management'], subtopics: ['Component Lifecycle', 'Props & State', 'Hooks', 'Routing', 'Context API'], practicalTasks: ['Build components', 'Manage state', 'Add routing', 'Handle side effects'], miniProject: 'Build a single-page application with React/Vue' },
-                    { mainTopics: ['Backend Development', 'Node.js/Express', 'REST APIs'], subtopics: ['Server Setup', 'API Endpoints', 'Database Integration', 'Authentication', 'Middleware'], practicalTasks: ['Create API server', 'Connect to database', 'Implement auth', 'Add validation'], miniProject: 'Build a RESTful API with authentication' },
-                    { mainTopics: ['Database Integration', 'MongoDB/PostgreSQL', 'ORM'], subtopics: ['Database Design', 'Queries', 'Relationships', 'Migrations', 'Indexing'], practicalTasks: ['Design schema', 'Write queries', 'Handle relationships', 'Optimize queries'], miniProject: 'Create a full-stack app with database' },
-                    { mainTopics: ['Deployment', 'Hosting', 'CI/CD'], subtopics: ['Cloud Platforms', 'Docker', 'CI/CD Pipelines', 'Domain Setup', 'SSL Certificates'], practicalTasks: ['Deploy application', 'Set up CI/CD', 'Configure domain', 'Monitor performance'], miniProject: 'Deploy full-stack application to production' },
-                ],
-                'data-science': [
-                    { mainTopics: ['Python for Data Science', 'Pandas', 'Data Exploration'], subtopics: ['Data Loading', 'Data Cleaning', 'Exploratory Analysis', 'Visualization', 'Statistical Summary'], practicalTasks: ['Load datasets', 'Clean data', 'Create visualizations', 'Identify patterns'], miniProject: 'Perform EDA on a real-world dataset' },
-                    { mainTopics: ['Statistics & Probability', 'Hypothesis Testing', 'Statistical Analysis'], subtopics: ['Descriptive Stats', 'Inferential Stats', 'A/B Testing', 'Correlation', 'Regression Analysis'], practicalTasks: ['Calculate statistics', 'Run hypothesis tests', 'Analyze relationships', 'Interpret results'], miniProject: 'Conduct statistical analysis on dataset' },
-                    { mainTopics: ['Machine Learning', 'Model Building', 'Evaluation'], subtopics: ['Supervised Learning', 'Unsupervised Learning', 'Model Selection', 'Cross-validation', 'Feature Engineering'], practicalTasks: ['Build ML models', 'Evaluate performance', 'Compare models', 'Feature selection'], miniProject: 'Build and compare multiple ML models' },
-                    { mainTopics: ['Data Visualization', 'Matplotlib/Seaborn', 'Dashboards'], subtopics: ['Plotting', 'Interactive Charts', 'Dashboard Creation', 'Storytelling', 'Tableau/PowerBI'], practicalTasks: ['Create visualizations', 'Build dashboards', 'Present insights', 'Share reports'], miniProject: 'Create an interactive data dashboard' },
-                    { mainTopics: ['Big Data Tools', 'SQL', 'Data Warehousing'], subtopics: ['SQL Queries', 'Data Warehouses', 'ETL Processes', 'Data Pipelines', 'Apache Spark'], practicalTasks: ['Write complex SQL', 'Design data warehouse', 'Build ETL pipeline', 'Process large datasets'], miniProject: 'Build a data pipeline for analytics' },
-                    { mainTopics: ['Advanced Analytics', 'Time Series', 'Predictive Modeling'], subtopics: ['Time Series Analysis', 'Forecasting', 'Advanced ML', 'Model Deployment', 'A/B Testing'], practicalTasks: ['Analyze time series', 'Build forecasts', 'Deploy models', 'Monitor predictions'], miniProject: 'Create a predictive analytics solution' },
-                ],
-                'devops': [
-                    { mainTopics: ['Linux Fundamentals', 'Command Line', 'Shell Scripting'], subtopics: ['Linux Commands', 'File System', 'Permissions', 'Process Management', 'Shell Scripts'], practicalTasks: ['Master Linux commands', 'Write shell scripts', 'Manage processes', 'Configure system'], miniProject: 'Automate system tasks with shell scripts' },
-                    { mainTopics: ['Version Control', 'Git', 'CI/CD Basics'], subtopics: ['Git Workflows', 'Branching Strategies', 'GitHub Actions', 'Jenkins', 'GitLab CI'], practicalTasks: ['Set up Git workflows', 'Create CI/CD pipelines', 'Automate builds', 'Configure deployments'], miniProject: 'Set up a complete CI/CD pipeline' },
-                    { mainTopics: ['Containerization', 'Docker', 'Container Orchestration'], subtopics: ['Docker Basics', 'Docker Compose', 'Kubernetes', 'Container Registry', 'Orchestration'], practicalTasks: ['Containerize applications', 'Use Docker Compose', 'Deploy to Kubernetes', 'Manage containers'], miniProject: 'Containerize and orchestrate a microservices application' },
-                    { mainTopics: ['Cloud Platforms', 'AWS/Azure/GCP', 'Infrastructure as Code'], subtopics: ['Cloud Services', 'EC2/Compute', 'S3/Storage', 'Terraform', 'CloudFormation'], practicalTasks: ['Set up cloud infrastructure', 'Use IaC tools', 'Configure services', 'Manage resources'], miniProject: 'Deploy infrastructure using Terraform' },
-                    { mainTopics: ['Monitoring & Logging', 'Observability', 'Alerting'], subtopics: ['Prometheus', 'Grafana', 'ELK Stack', 'CloudWatch', 'Alerting Systems'], practicalTasks: ['Set up monitoring', 'Create dashboards', 'Configure alerts', 'Analyze logs'], miniProject: 'Build a complete monitoring and alerting system' },
-                    { mainTopics: ['Security', 'Compliance', 'Best Practices'], subtopics: ['Security Scanning', 'Secrets Management', 'Compliance', 'Security Policies', 'Vulnerability Management'], practicalTasks: ['Implement security measures', 'Manage secrets', 'Scan for vulnerabilities', 'Enforce policies'], miniProject: 'Secure a cloud infrastructure setup' },
-                ],
-                'mobile-dev': [
-                    { mainTopics: ['Mobile Development Basics', 'Platforms', 'Development Tools'], subtopics: ['iOS/Android', 'React Native/Flutter', 'IDE Setup', 'Emulators', 'Device Testing'], practicalTasks: ['Set up development environment', 'Create first app', 'Test on devices', 'Configure build tools'], miniProject: 'Build a simple mobile app' },
-                    { mainTopics: ['UI/UX for Mobile', 'Design Patterns', 'Navigation'], subtopics: ['Mobile Design Principles', 'Navigation Patterns', 'Responsive Layouts', 'Material Design', 'iOS Guidelines'], practicalTasks: ['Design mobile UI', 'Implement navigation', 'Create responsive layouts', 'Follow design guidelines'], miniProject: 'Create a mobile app with beautiful UI' },
-                    { mainTopics: ['State Management', 'Data Persistence', 'Local Storage'], subtopics: ['State Management', 'AsyncStorage', 'SQLite', 'Realm', 'Redux/MobX'], practicalTasks: ['Implement state management', 'Store data locally', 'Handle offline mode', 'Sync data'], miniProject: 'Build an app with offline data storage' },
-                    { mainTopics: ['API Integration', 'Networking', 'Authentication'], subtopics: ['REST APIs', 'GraphQL', 'Authentication', 'Token Management', 'Error Handling'], practicalTasks: ['Integrate APIs', 'Handle authentication', 'Manage tokens', 'Handle errors'], miniProject: 'Build an app with API integration and auth' },
-                    { mainTopics: ['Native Features', 'Device APIs', 'Permissions'], subtopics: ['Camera', 'Location', 'Notifications', 'Biometrics', 'Device Sensors'], practicalTasks: ['Access device features', 'Handle permissions', 'Use device APIs', 'Implement features'], miniProject: 'Create an app using native device features' },
-                    { mainTopics: ['App Deployment', 'App Stores', 'Testing'], subtopics: ['App Store Submission', 'Play Store', 'Beta Testing', 'App Signing', 'Release Management'], practicalTasks: ['Prepare for release', 'Submit to stores', 'Manage versions', 'Handle updates'], miniProject: 'Deploy an app to app stores' },
-                ],
-                'cloud-engineer': [
-                    { mainTopics: ['Cloud Fundamentals', 'Cloud Models', 'Service Models'], subtopics: ['IaaS, PaaS, SaaS', 'Cloud Providers', 'Regions & Zones', 'Cloud Architecture', 'Cost Management'], practicalTasks: ['Understand cloud models', 'Explore cloud providers', 'Set up accounts', 'Calculate costs'], miniProject: 'Design a cloud architecture for a startup' },
-                    { mainTopics: ['AWS Core Services', 'EC2, S3, VPC', 'Networking'], subtopics: ['EC2 Instances', 'S3 Storage', 'VPC Configuration', 'Load Balancers', 'Auto Scaling'], practicalTasks: ['Launch EC2 instances', 'Configure S3 buckets', 'Set up VPC', 'Configure networking'], miniProject: 'Deploy a scalable web application on AWS' },
-                    { mainTopics: ['Container Services', 'ECS, EKS', 'Serverless'], subtopics: ['ECS/EKS', 'Lambda Functions', 'API Gateway', 'EventBridge', 'Step Functions'], practicalTasks: ['Deploy containers', 'Create Lambda functions', 'Set up API Gateway', 'Build serverless apps'], miniProject: 'Build a serverless application with Lambda' },
-                    { mainTopics: ['Database Services', 'RDS, DynamoDB', 'Data Management'], subtopics: ['RDS Setup', 'DynamoDB', 'ElastiCache', 'Data Migration', 'Backup & Recovery'], practicalTasks: ['Set up databases', 'Configure backups', 'Migrate data', 'Optimize performance'], miniProject: 'Design and implement a database solution' },
-                    { mainTopics: ['Security & Compliance', 'IAM', 'Security Best Practices'], subtopics: ['IAM Policies', 'Security Groups', 'Encryption', 'Compliance', 'Security Monitoring'], practicalTasks: ['Configure IAM', 'Set up security', 'Enable encryption', 'Monitor security'], miniProject: 'Secure a cloud infrastructure' },
-                    { mainTopics: ['DevOps on Cloud', 'CI/CD', 'Infrastructure Automation'], subtopics: ['CodePipeline', 'CloudFormation', 'Terraform', 'Monitoring', 'Cost Optimization'], practicalTasks: ['Set up CI/CD', 'Automate infrastructure', 'Monitor services', 'Optimize costs'], miniProject: 'Build a complete CI/CD pipeline on cloud' },
-                ],
-                'cybersecurity': [
-                    { mainTopics: ['Security Fundamentals', 'Threats & Vulnerabilities', 'Security Principles'], subtopics: ['Security Concepts', 'Attack Vectors', 'Vulnerability Assessment', 'Risk Management', 'Security Policies'], practicalTasks: ['Understand threats', 'Assess vulnerabilities', 'Create security policies', 'Identify risks'], miniProject: 'Conduct a security assessment' },
-                    { mainTopics: ['Network Security', 'Firewalls', 'Intrusion Detection'], subtopics: ['Network Protocols', 'Firewall Configuration', 'IDS/IPS', 'VPN', 'Network Monitoring'], practicalTasks: ['Configure firewalls', 'Set up IDS', 'Implement VPN', 'Monitor networks'], miniProject: 'Secure a network infrastructure' },
-                    { mainTopics: ['Cryptography', 'Encryption', 'Digital Signatures'], subtopics: ['Encryption Algorithms', 'Public Key Infrastructure', 'SSL/TLS', 'Hashing', 'Key Management'], practicalTasks: ['Implement encryption', 'Set up PKI', 'Configure SSL/TLS', 'Manage keys'], miniProject: 'Implement encryption for data protection' },
-                    { mainTopics: ['Ethical Hacking', 'Penetration Testing', 'Security Tools'], subtopics: ['Penetration Testing', 'Vulnerability Scanning', 'Security Tools', 'Exploitation', 'Reporting'], practicalTasks: ['Perform pentesting', 'Use security tools', 'Identify vulnerabilities', 'Create reports'], miniProject: 'Conduct a penetration test' },
-                    { mainTopics: ['Incident Response', 'Forensics', 'Compliance'], subtopics: ['Incident Handling', 'Digital Forensics', 'Compliance Standards', 'Security Audits', 'Recovery'], practicalTasks: ['Handle incidents', 'Perform forensics', 'Ensure compliance', 'Conduct audits'], miniProject: 'Create an incident response plan' },
-                    { mainTopics: ['Security Operations', 'SIEM', 'Threat Intelligence'], subtopics: ['SIEM Tools', 'Log Analysis', 'Threat Hunting', 'Security Monitoring', 'Automation'], practicalTasks: ['Set up SIEM', 'Analyze logs', 'Hunt threats', 'Automate responses'], miniProject: 'Build a security operations center' },
-                ],
-                'blockchain': [
-                    { mainTopics: ['Blockchain Fundamentals', 'Cryptography', 'Distributed Systems'], subtopics: ['Blockchain Basics', 'Cryptographic Hash', 'Consensus Mechanisms', 'Distributed Ledger', 'Smart Contracts Intro'], practicalTasks: ['Understand blockchain', 'Study cryptography', 'Learn consensus', 'Explore blockchains'], miniProject: 'Create a simple blockchain implementation' },
-                    { mainTopics: ['Ethereum Development', 'Solidity', 'Smart Contracts'], subtopics: ['Solidity Language', 'Smart Contract Development', 'Remix IDE', 'Truffle', 'Hardhat'], practicalTasks: ['Write Solidity code', 'Deploy contracts', 'Test contracts', 'Use development tools'], miniProject: 'Build and deploy a smart contract' },
-                    { mainTopics: ['DApp Development', 'Web3.js', 'Frontend Integration'], subtopics: ['DApp Architecture', 'Web3.js', 'Ethers.js', 'MetaMask Integration', 'IPFS'], practicalTasks: ['Build DApp frontend', 'Connect to blockchain', 'Integrate wallet', 'Use IPFS'], miniProject: 'Create a decentralized application' },
-                    { mainTopics: ['DeFi Concepts', 'Token Standards', 'DeFi Protocols'], subtopics: ['ERC-20/ERC-721', 'DeFi Protocols', 'Liquidity Pools', 'Yield Farming', 'DEX'], practicalTasks: ['Create tokens', 'Interact with DeFi', 'Build DeFi features', 'Understand protocols'], miniProject: 'Build a DeFi application' },
-                    { mainTopics: ['Security & Testing', 'Auditing', 'Best Practices'], subtopics: ['Smart Contract Security', 'Common Vulnerabilities', 'Testing Strategies', 'Auditing', 'Gas Optimization'], practicalTasks: ['Test contracts', 'Find vulnerabilities', 'Optimize gas', 'Audit code'], miniProject: 'Audit and secure a smart contract' },
-                    { mainTopics: ['Blockchain Infrastructure', 'Nodes', 'Networks'], subtopics: ['Running Nodes', 'Network Participation', 'Scaling Solutions', 'Layer 2', 'Interoperability'], practicalTasks: ['Run blockchain node', 'Participate in network', 'Explore scaling', 'Use Layer 2'], miniProject: 'Set up and run a blockchain node' },
-                ],
-                'ui-ux': [
-                    { mainTopics: ['Design Fundamentals', 'Principles', 'Color Theory'], subtopics: ['Design Principles', 'Color Theory', 'Typography', 'Layout', 'Visual Hierarchy'], practicalTasks: ['Study design principles', 'Create color palettes', 'Design layouts', 'Practice typography'], miniProject: 'Design a brand identity system' },
-                    { mainTopics: ['User Research', 'Personas', 'User Journey'], subtopics: ['User Research Methods', 'Persona Creation', 'User Journey Mapping', 'Usability Testing', 'Interviews'], practicalTasks: ['Conduct research', 'Create personas', 'Map journeys', 'Run usability tests'], miniProject: 'Complete a user research project' },
-                    { mainTopics: ['Wireframing & Prototyping', 'Tools', 'Interaction Design'], subtopics: ['Wireframing', 'Prototyping', 'Figma/Sketch', 'Interaction Design', 'User Flows'], practicalTasks: ['Create wireframes', 'Build prototypes', 'Design interactions', 'Test prototypes'], miniProject: 'Design and prototype a mobile app' },
-                    { mainTopics: ['Visual Design', 'UI Design', 'Design Systems'], subtopics: ['Visual Design', 'Component Libraries', 'Design Systems', 'Style Guides', 'Iconography'], practicalTasks: ['Create UI designs', 'Build components', 'Develop design system', 'Create style guide'], miniProject: 'Build a complete design system' },
-                    { mainTopics: ['Responsive Design', 'Accessibility', 'Usability'], subtopics: ['Responsive Principles', 'Accessibility Standards', 'Usability Testing', 'Cross-platform', 'Performance'], practicalTasks: ['Design responsive layouts', 'Ensure accessibility', 'Test usability', 'Optimize performance'], miniProject: 'Design an accessible, responsive website' },
-                    { mainTopics: ['Portfolio & Presentation', 'Case Studies', 'Client Work'], subtopics: ['Portfolio Building', 'Case Study Creation', 'Presentation Skills', 'Client Communication', 'Freelancing'], practicalTasks: ['Build portfolio', 'Create case studies', 'Present work', 'Handle clients'], miniProject: 'Create a professional design portfolio' },
-                ],
-                'fullstack': [
-                    { mainTopics: ['Frontend Basics', 'HTML, CSS, JavaScript', 'Responsive Design'], subtopics: ['HTML5', 'CSS3', 'JavaScript ES6+', 'Responsive Design', 'CSS Frameworks'], practicalTasks: ['Build static pages', 'Style with CSS', 'Add interactivity', 'Make responsive'], miniProject: 'Build a responsive portfolio website' },
-                    { mainTopics: ['Frontend Framework', 'React/Vue', 'State Management'], subtopics: ['React/Vue Basics', 'Components', 'State Management', 'Routing', 'Hooks'], practicalTasks: ['Build components', 'Manage state', 'Add routing', 'Handle side effects'], miniProject: 'Create a single-page application' },
-                    { mainTopics: ['Backend Development', 'Node.js/Python', 'Server Setup'], subtopics: ['Server Development', 'API Creation', 'Middleware', 'Error Handling', 'Validation'], practicalTasks: ['Set up server', 'Create APIs', 'Handle requests', 'Add validation'], miniProject: 'Build a RESTful API server' },
-                    { mainTopics: ['Database Integration', 'SQL/NoSQL', 'ORM'], subtopics: ['Database Design', 'SQL Queries', 'MongoDB/PostgreSQL', 'ORM Usage', 'Migrations'], practicalTasks: ['Design database', 'Write queries', 'Integrate database', 'Handle migrations'], miniProject: 'Create a full-stack app with database' },
-                    { mainTopics: ['Authentication & Security', 'JWT', 'Security Best Practices'], subtopics: ['Authentication', 'Authorization', 'JWT Tokens', 'Password Hashing', 'Security Measures'], practicalTasks: ['Implement auth', 'Secure APIs', 'Handle tokens', 'Add security'], miniProject: 'Build a secure full-stack application' },
-                    { mainTopics: ['Deployment & DevOps', 'CI/CD', 'Cloud Deployment'], subtopics: ['Deployment Strategies', 'CI/CD Pipelines', 'Cloud Platforms', 'Docker', 'Monitoring'], practicalTasks: ['Deploy application', 'Set up CI/CD', 'Use containers', 'Monitor app'], miniProject: 'Deploy a full-stack application to production' },
-                ],
-            };
-
-            // Get templates for selected category or default to web-dev
-            const templates = weekTemplates[categoryId] || weekTemplates['web-dev'];
-            
-            // Generate weeks based on duration
-            const generatedWeeks = [];
-            for (let i = 0; i < totalWeeks; i++) {
-                const templateIndex = i % templates.length;
-                const template = templates[templateIndex];
-                const resources = getResourcesForWeek(categoryId, i, template.mainTopics);
-                generatedWeeks.push({
-                    weekNumber: i + 1,
-                    mainTopics: template.mainTopics,
-                    subtopics: template.subtopics,
-                    practicalTasks: template.practicalTasks,
-                    miniProject: template.miniProject,
-                    resources: resources,
-                });
             }
-            
-            // Add revision week for beginners if duration > 8 weeks
-            if (level === 'Beginner' && totalWeeks > 8) {
-                generatedWeeks.push({
-                    weekNumber: generatedWeeks.length + 1,
-                    mainTopics: ['Revision & Practice', 'Portfolio Building', 'Interview Preparation'],
-                    subtopics: ['Review All Topics', 'Build Portfolio', 'Practice Problems', 'Mock Interviews', 'Resume Building'],
-                    practicalTasks: ['Review all concepts', 'Complete portfolio projects', 'Solve coding problems', 'Prepare resume'],
-                    miniProject: 'Create a comprehensive portfolio showcasing all your projects',
-                    resources: [
-                        { type: 'practice', title: 'LeetCode', url: 'https://leetcode.com/' },
-                        { type: 'practice', title: 'HackerRank', url: 'https://www.hackerrank.com/' },
-                        { type: 'practice', title: 'InterviewBit', url: 'https://www.interviewbit.com/' },
-                        { type: 'article', title: 'Resume Building Guide', url: 'https://www.geeksforgeeks.org/resume-building-for-freshers/' },
-                        { type: 'article', title: 'Interview Preparation', url: 'https://www.geeksforgeeks.org/interview-preparation/' },
-                    ],
-                });
-            }
-
-            // Get category name for display
-            const categoryName = categoriesList.find(c => c.id === categoryId)?.name || categoryId;
-
-            return {
-                careerGoal: categoryName,
-                totalWeeks: generatedWeeks.length,
-                weeks: generatedWeeks.map(w => ({
-                    ...w,
-                    isCompleted: false,
-                    quizCompleted: false,
-                })),
-                createdAt: new Date().toISOString(),
-            };
         };
 
         try {
             // Get category ID from selected category
-            const categoryId = selectedCategory || 'web-dev';
-            const roadmap = await getStaticRoadmap(categoryId, analysis.currentLevel, totalWeeks, categories);
+            if (!selectedCategory) {
+                setRoadmapError('Please select a category first');
+                setIsGeneratingRoadmap(false);
+                return;
+            }
+
+            const roadmap = await getRoadmapFromAPI(selectedCategory, totalWeeks, categories);
             setRoadmapData(roadmap);
+            // If roadmap has no weeks, show "No data available" message
+            if (!roadmap.weeks || roadmap.weeks.length === 0) {
+                setRoadmapError('No data available for this category. Please add roadmap data in admin dashboard.');
+            }
+            setRoadmapStep('roadmap');
         } catch (err: any) {
             console.error('Roadmap generation error:', err);
-            setRoadmapError('Failed to generate roadmap. Please try again.');
+            setRoadmapError(err.message || 'Failed to generate roadmap. Please ensure the roadmap exists in admin dashboard.');
         } finally {
             setIsGeneratingRoadmap(false);
         }
     };
 
-    // Generate weekly quiz - use admin-managed quiz if available, else static
+    // Generate weekly quiz - use admin-managed quiz from API
     const generateWeeklyQuiz = async (weekNumber: number) => {
         setIsGeneratingQuiz(true);
         setRoadmapError(null);
@@ -1123,493 +941,9 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
             return;
         }
 
-        // Fallback to static quiz
-
-        // Static quiz questions based on week number
-        const staticQuizzes: Record<number, QuizQuestion[]> = {
-            1: [
-                {
-                    question: 'What is the primary purpose of version control systems like Git?',
-                    options: [
-                        'To track changes in code and collaborate with others',
-                        'To compile code into executable files',
-                        'To design user interfaces',
-                        'To deploy applications to servers'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'Which Git command is used to create a new branch?',
-                    options: [
-                        'git branch new-branch',
-                        'git create branch new-branch',
-                        'git new branch new-branch',
-                        'git add branch new-branch'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is a variable in programming?',
-                    options: [
-                        'A container that stores data values',
-                        'A function that performs calculations',
-                        'A loop that repeats code',
-                        'A condition that checks values'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'Which of the following is NOT a data type?',
-                    options: [
-                        'String',
-                        'Integer',
-                        'Boolean',
-                        'Function'
-                    ],
-                    correctAnswer: 3
-                },
-                {
-                    question: 'What does IDE stand for?',
-                    options: [
-                        'Integrated Development Environment',
-                        'Internal Development Engine',
-                        'Interactive Design Editor',
-                        'Internet Development Extension'
-                    ],
-                    correctAnswer: 0
-                }
-            ],
-            2: [
-                {
-                    question: 'What is the main principle of Object-Oriented Programming?',
-                    options: [
-                        'Encapsulation, Inheritance, and Polymorphism',
-                        'Variables, Functions, and Loops',
-                        'HTML, CSS, and JavaScript',
-                        'Servers, Clients, and Databases'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is the purpose of unit testing?',
-                    options: [
-                        'To test individual components of code in isolation',
-                        'To test the entire application at once',
-                        'To test user interfaces only',
-                        'To test network connections'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'Which keyword is used to handle exceptions in most programming languages?',
-                    options: [
-                        'try-catch',
-                        'if-else',
-                        'for-while',
-                        'switch-case'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is code documentation?',
-                    options: [
-                        'Comments and explanations that describe what code does',
-                        'The process of writing code',
-                        'The compilation of code',
-                        'The execution of code'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is the benefit of code review?',
-                    options: [
-                        'Improves code quality and catches bugs early',
-                        'Makes code run faster',
-                        'Reduces file size',
-                        'Changes programming language'
-                    ],
-                    correctAnswer: 0
-                }
-            ],
-            3: [
-                {
-                    question: 'What is a framework in software development?',
-                    options: [
-                        'A reusable set of libraries and tools that provide structure',
-                        'A programming language',
-                        'A database system',
-                        'A web browser'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is the purpose of a package manager?',
-                    options: [
-                        'To manage and install project dependencies',
-                        'To compile code',
-                        'To design user interfaces',
-                        'To deploy applications'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What does npm stand for?',
-                    options: [
-                        'Node Package Manager',
-                        'New Project Manager',
-                        'Network Protocol Manager',
-                        'Next Program Manager'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is a module in programming?',
-                    options: [
-                        'A file containing code that can be imported and reused',
-                        'A database table',
-                        'A user interface component',
-                        'A network protocol'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'Why is project structure important?',
-                    options: [
-                        'It helps organize code and makes it easier to maintain',
-                        'It makes code run faster',
-                        'It reduces file size',
-                        'It changes programming syntax'
-                    ],
-                    correctAnswer: 0
-                }
-            ],
-            4: [
-                {
-                    question: 'What does SQL stand for?',
-                    options: [
-                        'Structured Query Language',
-                        'Simple Query Language',
-                        'System Query Language',
-                        'Standard Query Language'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is a primary key in a database?',
-                    options: [
-                        'A unique identifier for each row in a table',
-                        'A foreign key reference',
-                        'A data type',
-                        'A query statement'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is the purpose of database indexing?',
-                    options: [
-                        'To improve query performance by speeding up data retrieval',
-                        'To store more data',
-                        'To delete data',
-                        'To change data types'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is a foreign key?',
-                    options: [
-                        'A field that references the primary key of another table',
-                        'A unique identifier',
-                        'A data type',
-                        'A query result'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is normalization in database design?',
-                    options: [
-                        'The process of organizing data to reduce redundancy',
-                        'The process of adding more data',
-                        'The process of deleting data',
-                        'The process of changing data types'
-                    ],
-                    correctAnswer: 0
-                }
-            ],
-            5: [
-                {
-                    question: 'What does REST stand for?',
-                    options: [
-                        'Representational State Transfer',
-                        'Remote Execution System Transfer',
-                        'Resource Exchange Standard Transfer',
-                        'Request Execution System Transfer'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'Which HTTP method is used to retrieve data?',
-                    options: [
-                        'GET',
-                        'POST',
-                        'PUT',
-                        'DELETE'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is JWT used for?',
-                    options: [
-                        'Authentication and authorization',
-                        'Database queries',
-                        'File storage',
-                        'Network routing'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is the purpose of API documentation?',
-                    options: [
-                        'To explain how to use the API endpoints',
-                        'To compile code',
-                        'To design interfaces',
-                        'To deploy applications'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What status code indicates a successful request?',
-                    options: [
-                        '200',
-                        '400',
-                        '404',
-                        '500'
-                    ],
-                    correctAnswer: 0
-                }
-            ],
-            6: [
-                {
-                    question: 'What is state management in frontend development?',
-                    options: [
-                        'Managing and sharing data across components',
-                        'Managing server resources',
-                        'Managing database connections',
-                        'Managing file systems'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is component architecture?',
-                    options: [
-                        'Breaking UI into reusable, independent components',
-                        'Organizing server files',
-                        'Structuring database tables',
-                        'Designing network protocols'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is responsive design?',
-                    options: [
-                        'Designing websites that work on all screen sizes',
-                        'Designing fast websites',
-                        'Designing secure websites',
-                        'Designing colorful websites'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is routing in frontend applications?',
-                    options: [
-                        'Navigating between different views or pages',
-                        'Sending network requests',
-                        'Connecting to databases',
-                        'Compiling code'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is the purpose of CSS frameworks?',
-                    options: [
-                        'To provide pre-built styles and components',
-                        'To compile JavaScript',
-                        'To manage databases',
-                        'To handle authentication'
-                    ],
-                    correctAnswer: 0
-                }
-            ],
-            7: [
-                {
-                    question: 'What is caching?',
-                    options: [
-                        'Storing frequently accessed data for faster retrieval',
-                        'Deleting old data',
-                        'Compressing files',
-                        'Encrypting data'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is performance optimization?',
-                    options: [
-                        'Improving application speed and efficiency',
-                        'Adding more features',
-                        'Changing programming languages',
-                        'Increasing file sizes'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is SQL injection?',
-                    options: [
-                        'A security vulnerability where malicious SQL is injected',
-                        'A database query',
-                        'A data type',
-                        'A programming language'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is code profiling?',
-                    options: [
-                        'Analyzing code to identify performance bottlenecks',
-                        'Writing code',
-                        'Compiling code',
-                        'Deploying code'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is scalability?',
-                    options: [
-                        'The ability of a system to handle growing amounts of work',
-                        'The size of files',
-                        'The number of lines of code',
-                        'The complexity of algorithms'
-                    ],
-                    correctAnswer: 0
-                }
-            ],
-            8: [
-                {
-                    question: 'What is containerization?',
-                    options: [
-                        'Packaging applications with their dependencies in containers',
-                        'Storing data in databases',
-                        'Organizing code files',
-                        'Designing user interfaces'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What does CI/CD stand for?',
-                    options: [
-                        'Continuous Integration/Continuous Deployment',
-                        'Code Integration/Code Deployment',
-                        'Computer Integration/Computer Deployment',
-                        'Component Integration/Component Deployment'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is the purpose of cloud platforms?',
-                    options: [
-                        'To host and deploy applications with scalability',
-                        'To write code',
-                        'To design interfaces',
-                        'To compile programs'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is application monitoring?',
-                    options: [
-                        'Tracking application performance and health',
-                        'Writing application code',
-                        'Designing application UI',
-                        'Compiling application'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'Why are backups important?',
-                    options: [
-                        'To prevent data loss and enable recovery',
-                        'To increase performance',
-                        'To reduce costs',
-                        'To improve security'
-                    ],
-                    correctAnswer: 0
-                }
-            ],
-            9: [
-                {
-                    question: 'What should be included in a developer portfolio?',
-                    options: [
-                        'Projects, code samples, and technical skills',
-                        'Personal photos only',
-                        'Social media links only',
-                        'Resume only'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is the purpose of mock interviews?',
-                    options: [
-                        'To practice and prepare for real interviews',
-                        'To get a job',
-                        'To learn programming',
-                        'To deploy applications'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is important in a technical resume?',
-                    options: [
-                        'Relevant skills, projects, and experience',
-                        'Only education',
-                        'Only personal information',
-                        'Only hobbies'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'Why is portfolio building important?',
-                    options: [
-                        'To showcase skills and projects to employers',
-                        'To store files',
-                        'To organize code',
-                        'To compile programs'
-                    ],
-                    correctAnswer: 0
-                },
-                {
-                    question: 'What is the best way to prepare for technical interviews?',
-                    options: [
-                        'Practice coding problems and review fundamentals',
-                        'Only read books',
-                        'Only watch videos',
-                        'Only attend classes'
-                    ],
-                    correctAnswer: 0
-                }
-            ]
-        };
-
-        try {
-            const questions = staticQuizzes[weekNumber] || staticQuizzes[1];
-            const quiz: WeeklyQuiz = {
-                weekNumber,
-                questions: questions,
-            };
-            setWeeklyQuiz(quiz);
-            setRoadmapStep('progress');
-        } catch (err: any) {
-            setRoadmapError('Failed to generate quiz');
-        } finally {
-            setIsGeneratingQuiz(false);
-        }
+        // No quiz available - show error
+        setRoadmapError(`No quiz available for Week ${weekNumber}. Please add quiz questions in admin dashboard.`);
+        setIsGeneratingQuiz(false);
     };
 
     const submitWeeklyQuiz = () => {
@@ -1643,7 +977,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
         }, 3000);
     };
 
-    // Generate static final exam
+    // Generate final exam - using static questions for now
     const generateFinalExam = async () => {
         setIsGeneratingExam(true);
         setRoadmapError(null);
@@ -1657,7 +991,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
         // Simulate loading
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Static final exam questions
+        // Final exam questions (static for now - can be moved to API later)
         const examQuestions: QuizQuestion[] = [
             {
                 question: 'What is the primary purpose of version control systems?',
@@ -1922,9 +1256,21 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                         <div className="space-y-8">
                             {/* Category Selection */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-4">Select Category *</label>
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                                    {categories.map((category) => (
+                                <label className="block text-sm font-semibold text-gray-700 mb-4">
+                                    Select Category * 
+                                    <span className="text-xs font-normal text-gray-500 ml-2">
+                                        ({categories.length} {categories.length === 1 ? 'category' : 'categories'} available from API)
+                                    </span>
+                                </label>
+                                {categories.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-xl">
+                                        <div className="text-4xl mb-3">📚</div>
+                                        <p className="font-semibold mb-2">No categories available</p>
+                                        <p className="text-sm">Please add categories in admin dashboard.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                        {categories.map((category) => (
                                         <button
                                             key={category.id}
                                             onClick={() => handleCategorySelect(category.id)}
@@ -1938,7 +1284,8 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                                             <div className="text-sm font-semibold text-gray-900">{category.name}</div>
                                         </button>
                                     ))}
-                                </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Duration Input */}
@@ -2020,12 +1367,50 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
             );
         }
 
+        // Check if roadmap has no data
+        if (!roadmapData.weeks || roadmapData.weeks.length === 0) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+                            <div className="text-center py-12">
+                                <div className="text-6xl mb-4">📚</div>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-3">No Data Available</h2>
+                                <p className="text-gray-600 text-lg mb-6">
+                                    No roadmap data is available for <span className="font-semibold">{roadmapData.careerGoal}</span> category.
+                                </p>
+                                <p className="text-gray-500 mb-8">
+                                    Please add roadmap data in the admin dashboard to view the learning path.
+                                </p>
+                                <button
+                                    onClick={() => {
+                                        setRoadmapStep('categorySelection');
+                                        setRoadmapData(null);
+                                        setRoadmapError(null);
+                                    }}
+                                    className="px-6 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+                                >
+                                    ← Back to Categories
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         const allWeeksCompleted = roadmapData.weeks.every(w => w.isCompleted && w.quizCompleted);
         const canTakeExam = allWeeksCompleted;
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
                 <div>
+                    {roadmapError && (
+                        <div className="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+                            {roadmapError}
+                            <button onClick={() => setRoadmapError(null)} className="ml-2 font-bold">×</button>
+                        </div>
+                    )}
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mb-6">
                         <div className="flex items-center justify-between mb-6">
                             <div>
