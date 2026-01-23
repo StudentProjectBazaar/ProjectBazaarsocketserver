@@ -706,7 +706,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     const [duration, setDuration] = useState<number>(8);
     const [currentLevel, setCurrentLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
     const [categories, setCategories] = useState<Array<{ id: string; name: string; icon: string }>>([]);
-    const [loadingCategories, setLoadingCategories] = useState(true);
+    const [_loadingCategories, setLoadingCategories] = useState(true);
 
     // API Endpoint
     const ROADMAP_API_ENDPOINT = 'https://07wee2lkxj.execute-api.ap-south-2.amazonaws.com/default/Roadmaps_get_post_put';
@@ -801,7 +801,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     };
 
     // Generate static roadmap based on career goal and duration
-    const generateRoadmap = async (analysis: CareerAnalysis, totalWeeks: number) => {
+    const generateRoadmap = async (_analysis: CareerAnalysis, totalWeeks: number) => {
         setIsGeneratingRoadmap(true);
         setRoadmapError(null);
 
@@ -1133,7 +1133,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
             }
             
             // Add revision week for beginners if duration > 8 weeks
-            if (level === 'Beginner' && totalWeeks > 8) {
+            if (currentLevel === 'Beginner' && totalWeeks > 8) {
                 const revisionResources: WeekResource[] = [
                     { type: 'practice', title: 'LeetCode', url: 'https://leetcode.com/' },
                     { type: 'practice', title: 'HackerRank', url: 'https://www.hackerrank.com/' },
@@ -1662,7 +1662,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                                 </p>
                                 <button
                                     onClick={() => {
-                                        setRoadmapStep('categorySelection');
+                                        setRoadmapStep('analysis');
                                         setRoadmapData(null);
                                         setRoadmapError(null);
                                     }}
