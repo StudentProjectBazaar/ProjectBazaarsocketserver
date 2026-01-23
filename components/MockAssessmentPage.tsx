@@ -861,9 +861,10 @@ const StarIcon = () => (
 
 interface MockAssessmentPageProps {
   initialView?: AssessmentView;
+  toggleSidebar?: () => void;
 }
 
-const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = 'list' }) => {
+const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = 'list', toggleSidebar }) => {
   const [view, setView] = useState<AssessmentView>(initialView === 'history' ? 'list' : initialView);
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -1506,16 +1507,28 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
+              {/* Mobile Menu Button */}
+              {toggleSidebar && (
+                <button
+                  onClick={toggleSidebar}
+                  className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                  aria-label="Toggle sidebar"
+                >
+                  <svg className="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              )}
               <button
                 onClick={() => window.history.back()}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                className="hidden sm:block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
               >
                 <ArrowLeftIcon />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mock Assessments</h1>
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">Mock Assessments</h1>
             </div>
             
             {/* Tabs */}

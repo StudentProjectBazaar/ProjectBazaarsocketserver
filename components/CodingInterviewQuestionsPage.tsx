@@ -1051,7 +1051,11 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
 };
 
 // Main Component
-const CodingInterviewQuestionsPage: React.FC = () => {
+interface CodingInterviewQuestionsPageProps {
+  toggleSidebar?: () => void;
+}
+
+const CodingInterviewQuestionsPage: React.FC<CodingInterviewQuestionsPageProps> = ({ toggleSidebar }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'bookmarks' | 'attempted' | 'solved'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
@@ -1440,20 +1444,32 @@ const CodingInterviewQuestionsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile Menu Button */}
+            {toggleSidebar && (
+              <button
+                onClick={toggleSidebar}
+                className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                aria-label="Toggle sidebar"
+              >
+                <svg className="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            )}
             <button
               onClick={() => {
                 window.history.pushState({}, '', '/dashboard');
                 window.dispatchEvent(new PopStateEvent('popstate'));
               }}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="hidden sm:block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Coding Interview Questions</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">Coding Interview Questions</h1>
           </div>
         </div>
       </header>

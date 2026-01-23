@@ -561,11 +561,11 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'build-resume':
                 return <ResumeBuilderPage embedded onBack={() => setActiveView('dashboard')} />;
             case 'career-guidance':
-                return <CareerGuidancePage />;
+                return <CareerGuidancePage toggleSidebar={toggleSidebar} />;
             case 'mock-assessment':
-                return <MockAssessmentPage />;
+                return <MockAssessmentPage toggleSidebar={toggleSidebar} />;
             case 'coding-questions':
-                return <CodingInterviewQuestionsPage />;
+                return <CodingInterviewQuestionsPage toggleSidebar={toggleSidebar} />;
             case 'course-details':
                 if (!selectedCourse) return null;
                 return (
@@ -659,11 +659,11 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'build-resume':
                 return <ResumeBuilderPage embedded onBack={() => setActiveView('dashboard')} />;
             case 'career-guidance':
-                return <CareerGuidancePage />;
+                return <CareerGuidancePage toggleSidebar={toggleSidebar} />;
             case 'mock-assessment':
-                return <MockAssessmentPage />;
+                return <MockAssessmentPage toggleSidebar={toggleSidebar} />;
             case 'coding-questions':
-                return <CodingInterviewQuestionsPage />;
+                return <CodingInterviewQuestionsPage toggleSidebar={toggleSidebar} />;
             case 'my-projects':
                 return <MyProjectsPage />;
             case 'my-courses':
