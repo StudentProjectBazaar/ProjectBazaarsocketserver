@@ -13,6 +13,7 @@ leaderboard_table = dynamodb.Table('Leaderboard')
 daily_challenges_table = dynamodb.Table('DailyChallenges')
 daily_challenge_completions_table = dynamodb.Table('DailyChallengeCompletions')
 study_resources_table = dynamodb.Table('StudyResources')
+assessments_table = dynamodb.Table('Assessments')
 
 # Response helper function
 def response(status_code, body):
@@ -922,6 +923,256 @@ def get_study_resources(body):
 
 
 # ========================================
+# ASSESSMENT MANAGEMENT
+# ========================================
+def create_assessment(body):
+    """Create a new assessment."""
+    try:
+        # Required fields
+        assessment_id = body.get('id') or str(uuid.uuid4())
+        title = body.get('title')
+        
+        if not title:
+            return response(400, {
+                "success": False,
+                "error": {"code": "VALIDATION_ERROR", "message": "title is required"}
+            })
+        
+        # Check if assessment already exists
+        try:
+            existing = assessments_table.get_item(Key={'id': assessment_id})
+            if 'Item' in existing:
+                return response(409, {
+                    "success": False,
+                    "error": {"code": "ASSESSMENT_EXISTS", "message": f"Assessment with id '{assessment_id}' already exists"}
+                })
+        except Exception:
+            pass  # Table might not exist yet, continue
+        
+        # Prepare assessment data
+        now = datetime.utcnow().isoformat()
+        assessment_data = {
+            'id': assessment_id,
+            'title': title,
+            'logo': body.get('logo', ''),
+            'time': body.get('time', '30 Minutes'),
+            'objective': body.get('objective', 0),
+            'programming': body.get('programming', 0),
+            'registrations': body.get('registrations', 0),
+            'category': body.get('category', 'technical'),
+            'popular': body.get('popular', False),
+            'difficulty': body.get('difficulty', 'medium'),
+            'difficulties': body.get('difficulties', [body.get('difficulty', 'medium')]),
+            'company': body.get('company'),
+            'xpReward': body.get('xpReward', 100),
+            'status': body.get('status', 'draft'),
+            'createdAt': now,
+            'updatedAt': now,
+            'questions': body.get('questions', [])
+        }
+        
+        # Save to DynamoDB
+        assessments_table.put_item(Item=assessment_data)
+        
+        return response(200, {
+            "success": True,
+            "message": "Assessment created successfully",
+            "data": {
+                "assessment": assessment_data
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error creating assessment: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return response(500, {
+            "success": False,
+            "error": {"code": "INTERNAL_SERVER_ERROR", "message": "Failed to create assessment"}
+        })
+
+
+def update_assessment(body):
+    """Update an existing assessment."""
+    try:
+        assessment_id = body.get('id')
+        
+        if not assessment_id:
+            return response(400, {
+                "success": False,
+                "error": {"code": "VALIDATION_ERROR", "message": "id is required"}
+            })
+        
+        # Get existing assessment
+        try:
+            existing = assessments_table.get_item(Key={'id': assessment_id})
+            if 'Item' not in existing:
+                return response(404, {
+                    "success": False,
+                    "error": {"code": "ASSESSMENT_NOT_FOUND", "message": f"Assessment with id '{assessment_id}' not found"}
+                })
+            existing_data = existing['Item']
+        except Exception as e:
+            return response(404, {
+                "success": False,
+                "error": {"code": "ASSESSMENT_NOT_FOUND", "message": f"Assessment with id '{assessment_id}' not found"}
+            })
+        
+        # Update fields (preserve existing if not provided)
+        now = datetime.utcnow().isoformat()
+        updated_data = {
+            'id': assessment_id,
+            'title': body.get('title', existing_data.get('title')),
+            'logo': body.get('logo', existing_data.get('logo', '')),
+            'time': body.get('time', existing_data.get('time', '30 Minutes')),
+            'objective': body.get('objective', existing_data.get('objective', 0)),
+            'programming': body.get('programming', existing_data.get('programming', 0)),
+            'registrations': body.get('registrations', existing_data.get('registrations', 0)),
+            'category': body.get('category', existing_data.get('category', 'technical')),
+            'popular': body.get('popular', existing_data.get('popular', False)),
+            'difficulty': body.get('difficulty', existing_data.get('difficulty', 'medium')),
+            'difficulties': body.get('difficulties', existing_data.get('difficulties', [existing_data.get('difficulty', 'medium')])),
+            'company': body.get('company', existing_data.get('company')),
+            'xpReward': body.get('xpReward', existing_data.get('xpReward', 100)),
+            'status': body.get('status', existing_data.get('status', 'draft')),
+            'createdAt': existing_data.get('createdAt', now),
+            'updatedAt': now,
+            'questions': body.get('questions', existing_data.get('questions', []))
+        }
+        
+        # Save to DynamoDB
+        assessments_table.put_item(Item=updated_data)
+        
+        return response(200, {
+            "success": True,
+            "message": "Assessment updated successfully",
+            "data": {
+                "assessment": updated_data
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error updating assessment: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return response(500, {
+            "success": False,
+            "error": {"code": "INTERNAL_SERVER_ERROR", "message": "Failed to update assessment"}
+        })
+
+
+def delete_assessment(body):
+    """Delete an assessment."""
+    try:
+        assessment_id = body.get('assessmentId') or body.get('id')
+        
+        if not assessment_id:
+            return response(400, {
+                "success": False,
+                "error": {"code": "VALIDATION_ERROR", "message": "assessmentId is required"}
+            })
+        
+        # Check if assessment exists
+        try:
+            existing = assessments_table.get_item(Key={'id': assessment_id})
+            if 'Item' not in existing:
+                return response(404, {
+                    "success": False,
+                    "error": {"code": "ASSESSMENT_NOT_FOUND", "message": f"Assessment with id '{assessment_id}' not found"}
+                })
+        except Exception:
+            return response(404, {
+                "success": False,
+                "error": {"code": "ASSESSMENT_NOT_FOUND", "message": f"Assessment with id '{assessment_id}' not found"}
+            })
+        
+        # Delete from DynamoDB
+        assessments_table.delete_item(Key={'id': assessment_id})
+        
+        return response(200, {
+            "success": True,
+            "message": "Assessment deleted successfully"
+        })
+        
+    except Exception as e:
+        print(f"Error deleting assessment: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return response(500, {
+            "success": False,
+            "error": {"code": "INTERNAL_SERVER_ERROR", "message": "Failed to delete assessment"}
+        })
+
+
+def list_assessments(body):
+    """List all assessments, optionally filtered by category or status."""
+    try:
+        category = body.get('category')
+        status = body.get('status')
+        limit = body.get('limit', 100)
+        
+        # Scan assessments table
+        if category or status:
+            # Use filter expression
+            filter_expr = None
+            if category and status:
+                filter_expr = Attr('category').eq(category) & Attr('status').eq(status)
+            elif category:
+                filter_expr = Attr('category').eq(category)
+            elif status:
+                filter_expr = Attr('status').eq(status)
+            
+            result = assessments_table.scan(
+                FilterExpression=filter_expr,
+                Limit=limit
+            )
+        else:
+            result = assessments_table.scan(Limit=limit)
+        
+        items = result.get('Items', [])
+        
+        # Format assessments
+        assessments = []
+        for item in items:
+            assessments.append({
+                'id': item.get('id'),
+                'title': item.get('title'),
+                'logo': item.get('logo', ''),
+                'time': item.get('time', '30 Minutes'),
+                'objective': item.get('objective', 0),
+                'programming': item.get('programming', 0),
+                'registrations': item.get('registrations', 0),
+                'category': item.get('category', 'technical'),
+                'popular': item.get('popular', False),
+                'difficulty': item.get('difficulty', 'medium'),
+                'difficulties': item.get('difficulties', [item.get('difficulty', 'medium')]),
+                'company': item.get('company'),
+                'xpReward': item.get('xpReward', 100),
+                'status': item.get('status', 'draft'),
+                'createdAt': item.get('createdAt'),
+                'updatedAt': item.get('updatedAt'),
+                'questions': item.get('questions', [])
+            })
+        
+        return response(200, {
+            "success": True,
+            "data": {
+                "assessments": assessments,
+                "count": len(assessments)
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error listing assessments: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return response(500, {
+            "success": False,
+            "error": {"code": "INTERNAL_SERVER_ERROR", "message": "Failed to list assessments"}
+        })
+
+
+# ========================================
 # MAIN LAMBDA HANDLER
 # ========================================
 def lambda_handler(event, context):
@@ -966,6 +1217,14 @@ def lambda_handler(event, context):
             return complete_daily_challenge(body)
         elif action == 'get_study_resources':
             return get_study_resources(body)
+        elif action == 'create_assessment':
+            return create_assessment(body)
+        elif action == 'update_assessment':
+            return update_assessment(body)
+        elif action == 'delete_assessment':
+            return delete_assessment(body)
+        elif action == 'list_assessments':
+            return list_assessments(body)
         else:
             return response(400, {
                 "success": False,
@@ -1022,6 +1281,13 @@ AWS SETUP INSTRUCTIONS
    - GSI1: topic-index
      - Partition Key: topic (String)
      - Sort Key: createdAt (String)
+   
+   Table 7: Assessments
+   - Partition Key: id (String)
+   - GSI1: category-index (optional)
+     - Partition Key: category (String)
+   - GSI2: status-index (optional)
+     - Partition Key: status (String)
 
 2. Create Lambda Function:
    - Function name: mock-assessment-handler
@@ -1052,7 +1318,9 @@ AWS SETUP INSTRUCTIONS
                    "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/DailyChallenges",
                    "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/DailyChallengeCompletions",
                    "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/StudyResources",
-                   "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/StudyResources/index/*"
+                   "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/StudyResources/index/*",
+                   "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/Assessments",
+                   "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/Assessments/index/*"
                ]
            }
        ]
@@ -1130,6 +1398,43 @@ AWS SETUP INSTRUCTIONS
      "topic": "Java",
      "type": "video",
      "limit": 20
+   }
+   
+   POST /mock-assessment
+   Body: {
+     "action": "create_assessment",
+     "id": "java",
+     "title": "Java",
+     "logo": "/mock_assessments_logo/java.png",
+     "time": "30 Minutes",
+     "objective": 15,
+     "programming": 0,
+     "category": "language",
+     "difficulties": ["easy", "medium"],
+     "status": "published",
+     "questions": [...]
+   }
+   
+   POST /mock-assessment
+   Body: {
+     "action": "update_assessment",
+     "id": "java",
+     "title": "Java Advanced",
+     "status": "published"
+   }
+   
+   POST /mock-assessment
+   Body: {
+     "action": "delete_assessment",
+     "assessmentId": "java"
+   }
+   
+   POST /mock-assessment
+   Body: {
+     "action": "list_assessments",
+     "category": "language",
+     "status": "published",
+     "limit": 50
    }
 
 ========================================

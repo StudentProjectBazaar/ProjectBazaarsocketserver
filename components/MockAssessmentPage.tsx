@@ -879,7 +879,40 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   const [historyViewMode, setHistoryViewMode] = useState<'list' | 'grid'>('grid');
   
   // Code editor state for programming questions
-  const [selectedLanguage, setSelectedLanguage] = useState('python');
+  // Determine if assessment title matches a language
+  const getLanguageFromAssessment = (assessmentTitle: string): string | null => {
+    const titleLower = assessmentTitle.toLowerCase();
+    const matchedLang = supportedLanguages.find(lang => 
+      lang.id === titleLower || 
+      lang.name.toLowerCase().includes(titleLower) ||
+      titleLower.includes(lang.id)
+    );
+    return matchedLang ? matchedLang.id : null;
+  };
+
+  // Get initial language based on assessment
+  const getInitialLanguage = (): string => {
+    if (selectedAssessment) {
+      const lang = getLanguageFromAssessment(selectedAssessment.title);
+      if (lang) return lang;
+    }
+    return 'python';
+  };
+
+  const [selectedLanguage, setSelectedLanguage] = useState(getInitialLanguage());
+  
+  // Update language when assessment changes
+  useEffect(() => {
+    if (selectedAssessment) {
+      const lang = getLanguageFromAssessment(selectedAssessment.title);
+      if (lang) {
+        setSelectedLanguage(lang);
+      }
+    }
+  }, [selectedAssessment]);
+  
+  // Check if language is locked based on assessment
+  const isLanguageLocked = selectedAssessment ? !!getLanguageFromAssessment(selectedAssessment.title) : false;
   const [codeAnswers, setCodeAnswers] = useState<Record<number, string>>({});
   const [codeTestResults, setCodeTestResults] = useState<Record<number, { passed: boolean; output: string; expected: string; error?: string }[]>>({});
   const [isRunningCode, setIsRunningCode] = useState(false);
@@ -1039,6 +1072,10 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   const getCurrentCode = (questionIndex: number, question: ProgrammingQuestion) => {
     if (codeAnswers[questionIndex]) {
       return codeAnswers[questionIndex];
+    }
+    // If language is locked, only use that language's starter code
+    if (isLanguageLocked) {
+      return question.starterCode[selectedLanguage] || '';
     }
     return question.starterCode[selectedLanguage] || question.starterCode.python || '';
   };
@@ -3075,21 +3112,29 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                         {/* Editor Header */}
                         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700 bg-[#2d2d2d]">
                           <div className="flex items-center gap-3">
-                            <select
-                              value={selectedLanguage}
-                              onChange={(e) => setSelectedLanguage(e.target.value)}
-                              className="px-3 py-1.5 bg-[#3c3c3c] border border-gray-600 rounded-md text-sm font-medium text-gray-200 focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer hover:bg-[#4a4a4a] transition"
-                            >
-                              {supportedLanguages.map(lang => (
-                                <option key={lang.id} value={lang.id}>{lang.name}</option>
-                              ))}
-                            </select>
+                            {isLanguageLocked ? (
+                              <div className="px-3 py-1.5 bg-[#3c3c3c] border border-gray-600 rounded-md text-sm font-medium text-gray-200">
+                                {supportedLanguages.find(l => l.id === selectedLanguage)?.name || selectedLanguage}
+                              </div>
+                            ) : (
+                              <select
+                                value={selectedLanguage}
+                                onChange={(e) => setSelectedLanguage(e.target.value)}
+                                className="px-3 py-1.5 bg-[#3c3c3c] border border-gray-600 rounded-md text-sm font-medium text-gray-200 focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer hover:bg-[#4a4a4a] transition"
+                              >
+                                {supportedLanguages.map(lang => (
+                                  <option key={lang.id} value={lang.id}>{lang.name}</option>
+                                ))}
+                              </select>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => {
                                 // Reset to starter code for the current language
-                                const starterCode = currentQuestion.starterCode[selectedLanguage] || currentQuestion.starterCode.python || '';
+                                const starterCode = isLanguageLocked 
+                                  ? (currentQuestion.starterCode[selectedLanguage] || '')
+                                  : (currentQuestion.starterCode[selectedLanguage] || currentQuestion.starterCode.python || '');
                                 setCodeAnswers(prev => ({ ...prev, [currentQuestionIndex]: starterCode }));
                               }}
                               className="p-1.5 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded transition"

@@ -50,27 +50,16 @@ interface AdminSidebarProps {
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeView, setActiveView, isOpen, isCollapsed, onCollapseToggle }) => {
     const { userEmail, logout } = useAuth();
-    const [isHovered, setIsHovered] = React.useState(false);
 
-    const isExpanded = isOpen && (!isCollapsed || isHovered);
+    const isExpanded = isOpen && !isCollapsed;
     const sidebarWidth = isExpanded ? 'w-64' : 'w-16';
 
     return (
         <>
             <div 
-                className={`fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out shadow-sm ${
-                    isOpen ? 'translate-x-0' : '-translate-x-full'
-                } ${sidebarWidth} ${isCollapsed && isHovered ? 'shadow-xl z-[60]' : ''}`}
-                onMouseEnter={() => {
-                    if (isCollapsed && isOpen) {
-                        setIsHovered(true);
-                    }
-                }}
-                onMouseLeave={() => {
-                    if (isCollapsed) {
-                        setIsHovered(false);
-                    }
-                }}
+                className={`fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out shadow-sm lg:shadow-none ${
+                    isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+                } ${sidebarWidth}`}
             >
                 {/* Header with logo */}
                 <div className={`flex items-center ${isExpanded ? 'justify-start' : 'justify-center'} h-16 border-b border-gray-200 ${isExpanded ? 'px-4' : 'px-2'}`}>
@@ -92,11 +81,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeView, setActiveView, 
                             key={item.name}
                             onClick={() => {
                                 setActiveView(item.view);
-                                if (isCollapsed && !isHovered) {
-                                    onCollapseToggle();
+                                // Close sidebar on mobile after selection
+                                if (window.innerWidth < 1024) {
+                                    // Sidebar will be closed by parent component
                                 }
                             }}
-                            className={`w-full flex items-center ${isExpanded ? 'px-4' : 'px-2 justify-center'} py-2.5 text-sm font-medium rounded-lg transition-colors relative group ${
+                            className={`w-full flex items-center ${isExpanded ? 'px-4' : 'px-2 justify-center'} py-2.5 text-sm font-medium rounded-lg transition-colors ${
                                 activeView === item.view
                                     ? 'bg-orange-500 text-white'
                                     : 'text-gray-600 hover:bg-orange-50'
@@ -109,12 +99,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeView, setActiveView, 
                                 <span className="ml-3 whitespace-nowrap">
                                     {item.name}
                                 </span>
-                            )}
-                            {!isExpanded && (
-                                <div className="absolute left-full ml-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50 shadow-lg">
-                                    {item.name}
-                                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                                </div>
                             )}
                         </button>
                     ))}

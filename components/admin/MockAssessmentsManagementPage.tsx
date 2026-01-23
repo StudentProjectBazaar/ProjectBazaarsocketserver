@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 
 // Lambda API endpoint for Mock Assessments
-// TODO: Update with actual API endpoint when Lambda is deployed
-// const MOCK_ASSESSMENTS_API = 'https://your-api-gateway.execute-api.ap-south-2.amazonaws.com/default/mock-assessment-handler';
+const MOCK_ASSESSMENTS_API = 'https://w7k9vplo2j.execute-api.ap-south-2.amazonaws.com/default/mock_assessment_handler';
 
 // AI Types (shared with other admin pages like CodingQuestions & CareerContent)
 type AIProvider = 'gemini' | 'groq';
@@ -53,7 +52,8 @@ interface Assessment {
   registrations: number;
   category: AssessmentCategory;
   popular?: boolean;
-  difficulty?: DifficultyLevel;
+  difficulty?: DifficultyLevel; // For backward compatibility
+  difficulties?: DifficultyLevel[]; // Multiple difficulty levels
   company?: string;
   xpReward?: number;
   status: 'draft' | 'published' | 'archived';
@@ -64,6 +64,107 @@ interface Assessment {
 
 const categories: AssessmentCategory[] = ['technical', 'language', 'framework', 'database', 'devops', 'company'];
 const difficulties: DifficultyLevel[] = ['easy', 'medium', 'hard'];
+
+// Technology name to Simple Icons mapping
+const technologyLogoMap: Record<string, string> = {
+  // Languages
+  'java': 'java',
+  'python': 'python',
+  'javascript': 'javascript',
+  'typescript': 'typescript',
+  'c++': 'cplusplus',
+  'cpp': 'cplusplus',
+  'c': 'c',
+  'go': 'go',
+  'rust': 'rust',
+  'ruby': 'ruby',
+  'php': 'php',
+  'kotlin': 'kotlin',
+  'swift': 'swift',
+  'c#': 'csharp',
+  'csharp': 'csharp',
+  'scala': 'scala',
+  'r': 'r',
+  'perl': 'perl',
+  'lua': 'lua',
+  'dart': 'dart',
+  'bash': 'gnubash',
+  'shell': 'gnubash',
+  
+  // Frameworks & Libraries
+  'react': 'react',
+  'vue': 'vuedotjs',
+  'angular': 'angular',
+  'node.js': 'nodedotjs',
+  'nodejs': 'nodedotjs',
+  'next.js': 'nextdotjs',
+  'nextjs': 'nextdotjs',
+  'express': 'express',
+  'django': 'django',
+  'flask': 'flask',
+  'spring': 'spring',
+  'laravel': 'laravel',
+  'rails': 'rubyonrails',
+  'ruby on rails': 'rubyonrails',
+  
+  // Databases
+  'mysql': 'mysql',
+  'postgresql': 'postgresql',
+  'mongodb': 'mongodb',
+  'redis': 'redis',
+  'sqlite': 'sqlite',
+  'oracle': 'oracle',
+  'microsoft sql server': 'microsoftsqlserver',
+  'sql server': 'microsoftsqlserver',
+  
+  // DevOps & Tools
+  'docker': 'docker',
+  'kubernetes': 'kubernetes',
+  'aws': 'amazonaws',
+  'azure': 'microsoftazure',
+  'gcp': 'googlecloud',
+  'git': 'git',
+  'github': 'github',
+  'gitlab': 'gitlab',
+  'jenkins': 'jenkins',
+  'terraform': 'terraform',
+  'ansible': 'ansible',
+  
+  // Companies
+  'google': 'google',
+  'microsoft': 'microsoft',
+  'amazon': 'amazon',
+  'apple': 'apple',
+  'meta': 'meta',
+  'facebook': 'meta',
+  'netflix': 'netflix',
+  'uber': 'uber',
+  'airbnb': 'airbnb',
+  'twitter': 'x',
+  'linkedin': 'linkedin',
+};
+
+// Function to get logo URL from title
+const getLogoFromTitle = (title: string): string => {
+  if (!title) return '';
+  
+  const titleLower = title.toLowerCase().trim();
+  
+  // Check direct match
+  if (technologyLogoMap[titleLower]) {
+    return `https://cdn.simpleicons.org/${technologyLogoMap[titleLower]}/000000`;
+  }
+  
+  // Check partial matches
+  for (const [key, iconName] of Object.entries(technologyLogoMap)) {
+    if (titleLower.includes(key) || key.includes(titleLower)) {
+      return `https://cdn.simpleicons.org/${iconName}/000000`;
+    }
+  }
+  
+  // Default: return empty string (user can manually enter)
+  return '';
+};
 
 const MockAssessmentsManagementPage: React.FC = () => {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -88,7 +189,7 @@ const MockAssessmentsManagementPage: React.FC = () => {
     registrations: 0,
     category: 'technical',
     popular: false,
-    difficulty: 'medium',
+    difficulties: ['medium'], // Default to medium, but allow multiple
     company: '',
     xpReward: 100,
     status: 'draft',
@@ -115,41 +216,60 @@ const MockAssessmentsManagementPage: React.FC = () => {
     setIsLoading(true);
     setApiError(null);
     try {
-      // For now, use mock data. Replace with actual API call later
-      const mockAssessments: Assessment[] = [
-        {
-          id: 'java',
-          title: 'Java',
-          logo: '/mock_assessments_logo/java.png',
-          time: '30 Minutes',
-          objective: 15,
-          programming: 0,
-          registrations: 6626,
-          category: 'language',
-          difficulty: 'medium',
-          status: 'published',
-          createdAt: '2024-01-15',
-          updatedAt: '2024-01-15',
-        },
-        {
-          id: 'react',
-          title: 'React',
-          logo: '/mock_assessments_logo/react.png',
-          time: '30 Minutes',
-          objective: 15,
-          programming: 0,
-          registrations: 2262,
-          category: 'framework',
-          difficulty: 'medium',
-          status: 'published',
-          createdAt: '2024-01-16',
-          updatedAt: '2024-01-16',
-        },
-      ];
-      setAssessments(mockAssessments);
+      // Call API to fetch assessments
+      const response = await fetch(MOCK_ASSESSMENTS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'list_assessments',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data && data.data.assessments) {
+          // Transform API response to match our Assessment interface
+          const fetchedAssessments: Assessment[] = data.data.assessments.map((a: any) => {
+            // Always try to get a logo - use existing if valid, otherwise auto-fetch
+            const existingLogo = a.logo && a.logo.trim() ? a.logo : '';
+            const autoLogo = getLogoFromTitle(a.title);
+            const finalLogo = existingLogo || autoLogo;
+            
+            return {
+              id: a.id,
+              title: a.title,
+              logo: finalLogo, // Always set logo (either from DB or auto-fetched)
+              time: a.time || '30 Minutes',
+              objective: a.objective || 0,
+              programming: a.programming || 0,
+              registrations: a.registrations || 0,
+              category: a.category || 'technical',
+              difficulty: a.difficulty || 'medium',
+              difficulties: a.difficulties || [a.difficulty || 'medium'],
+              popular: a.popular || false,
+              company: a.company,
+              xpReward: a.xpReward || 100,
+              status: a.status || 'draft',
+              createdAt: a.createdAt,
+              updatedAt: a.updatedAt,
+              questions: a.questions || [],
+            };
+          });
+          setAssessments(fetchedAssessments);
+        } else {
+          // If API returns empty or error, fallback to empty array
+          setAssessments([]);
+        }
+      } else {
+        // If API call fails, fallback to empty array (or could show error)
+        console.warn('Failed to fetch assessments from API, using empty list');
+        setAssessments([]);
+      }
     } catch (error) {
       console.error('Error fetching assessments:', error);
-      setApiError('Failed to fetch assessments');
+      // On error, show empty list instead of mock data
+      setAssessments([]);
+      setApiError('Failed to fetch assessments. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -159,65 +279,95 @@ const MockAssessmentsManagementPage: React.FC = () => {
     setIsSaving(true);
     setApiError(null);
     try {
-      // TODO: Implement API call to save assessment
-      // const response = await fetch(MOCK_ASSESSMENTS_API, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     action: editingAssessment ? 'update_assessment' : 'create_assessment',
-      //     ...assessment,
-      //     questions: questions,
-      //   }),
-      // });
-
-      // For now, simulate save
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      if (editingAssessment) {
-        setAssessments(assessments.map(a => 
-          a.id === editingAssessment.id 
-            ? { ...a, ...assessment, updatedAt: new Date().toISOString().split('T')[0] }
-            : a
-        ));
-      } else {
-        const newAssessment: Assessment = {
-          id: assessment.id || `assessment-${Date.now()}`,
-          title: assessment.title || '',
-          logo: assessment.logo || '',
-          time: assessment.time || '30 Minutes',
-          objective: assessment.objective || 0,
-          programming: assessment.programming || 0,
-          registrations: 0,
-          category: assessment.category || 'technical',
-          popular: assessment.popular || false,
-          difficulty: assessment.difficulty || 'medium',
-          company: assessment.company,
-          xpReward: assessment.xpReward || 100,
-          status: assessment.status || 'draft',
-          createdAt: new Date().toISOString().split('T')[0],
-          updatedAt: new Date().toISOString().split('T')[0],
+      // TODO: Add 'create_assessment' and 'update_assessment' actions to Lambda handler
+      const response = await fetch(MOCK_ASSESSMENTS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: editingAssessment ? 'update_assessment' : 'create_assessment',
+          ...assessment,
           questions: questions,
-        };
-        setAssessments([...assessments, newAssessment]);
-      }
-
-      setShowAddModal(false);
-      setEditingAssessment(null);
-      setFormData({
-        title: '',
-        logo: '',
-        time: '30 Minutes',
-        objective: 15,
-        programming: 0,
-        registrations: 0,
-        category: 'technical',
-        popular: false,
-        difficulty: 'medium',
-        company: '',
-        xpReward: 100,
-        status: 'draft',
+        }),
       });
-      setQuestions([]);
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Refresh assessments list
+          await fetchAssessments();
+          // Close modal and reset form
+          setShowAddModal(false);
+          setEditingAssessment(null);
+          setFormData({
+            title: '',
+            logo: '',
+            time: '30 Minutes',
+            objective: 15,
+            programming: 0,
+            registrations: 0,
+            category: 'technical',
+            popular: false,
+            difficulty: 'medium',
+            difficulties: ['medium'],
+            company: '',
+            xpReward: 100,
+            status: 'draft',
+          });
+          setQuestions([]);
+        } else {
+          throw new Error(data.error?.message || 'Failed to save assessment');
+        }
+      } else {
+        // Fallback to local save if API doesn't support this action yet
+        console.warn('Assessment management API not available, using local storage');
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        if (editingAssessment) {
+          setAssessments(assessments.map(a => 
+            a.id === editingAssessment.id 
+              ? { ...a, ...assessment, updatedAt: new Date().toISOString().split('T')[0] }
+              : a
+          ));
+        } else {
+          const newAssessment: Assessment = {
+            id: assessment.id || `assessment-${Date.now()}`,
+            title: assessment.title || '',
+            logo: assessment.logo || '',
+            time: assessment.time || '30 Minutes',
+            objective: assessment.objective || 0,
+            programming: assessment.programming || 0,
+            registrations: 0,
+            category: assessment.category || 'technical',
+            popular: assessment.popular || false,
+            difficulty: assessment.difficulty || 'medium',
+            company: assessment.company,
+            xpReward: assessment.xpReward || 100,
+            status: assessment.status || 'draft',
+            createdAt: new Date().toISOString().split('T')[0],
+            updatedAt: new Date().toISOString().split('T')[0],
+            questions: questions,
+          };
+          setAssessments([...assessments, newAssessment]);
+        }
+
+        setShowAddModal(false);
+        setEditingAssessment(null);
+        setFormData({
+          title: '',
+          logo: '',
+          time: '30 Minutes',
+          objective: 15,
+          programming: 0,
+          registrations: 0,
+          category: 'technical',
+          popular: false,
+          difficulty: 'medium',
+          company: '',
+          xpReward: 100,
+          status: 'draft',
+        });
+        setQuestions([]);
+      }
     } catch (error) {
       console.error('Error saving assessment:', error);
       setApiError('Failed to save assessment');
@@ -230,11 +380,34 @@ const MockAssessmentsManagementPage: React.FC = () => {
     if (!confirm('Are you sure you want to delete this assessment?')) return;
     
     try {
-      // TODO: Implement API call
-      setAssessments(assessments.filter(a => a.id !== id));
+      // TODO: Add 'delete_assessment' action to Lambda handler
+      const response = await fetch(MOCK_ASSESSMENTS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_assessment',
+          assessmentId: id,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Refresh assessments list
+          await fetchAssessments();
+        } else {
+          throw new Error(data.error?.message || 'Failed to delete assessment');
+        }
+      } else {
+        // Fallback to local delete if API doesn't support this action yet
+        console.warn('Assessment management API not available, using local delete');
+        setAssessments(assessments.filter(a => a.id !== id));
+      }
     } catch (error) {
       console.error('Error deleting assessment:', error);
       setApiError('Failed to delete assessment');
+      // Fallback to local delete
+      setAssessments(assessments.filter(a => a.id !== id));
     }
   };
 
@@ -322,6 +495,7 @@ const MockAssessmentsManagementPage: React.FC = () => {
       category: assessment.category,
       popular: assessment.popular,
       difficulty: assessment.difficulty,
+      difficulties: assessment.difficulties || (assessment.difficulty ? [assessment.difficulty] : ['medium']),
       company: assessment.company,
       xpReward: assessment.xpReward,
       status: assessment.status,
@@ -342,6 +516,7 @@ const MockAssessmentsManagementPage: React.FC = () => {
       category: 'technical',
       popular: false,
       difficulty: 'medium',
+      difficulties: ['medium'],
       company: '',
       xpReward: 100,
       status: 'draft',
@@ -470,7 +645,40 @@ const MockAssessmentsManagementPage: React.FC = () => {
                     <tr key={assessment.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <img src={assessment.logo} alt={assessment.title} className="w-10 h-10 object-contain" />
+                          {(() => {
+                            // Always try to get a logo - use existing or auto-fetch
+                            const logoUrl = (assessment.logo && assessment.logo.trim()) || getLogoFromTitle(assessment.title);
+                            if (logoUrl) {
+                              return (
+                                <img 
+                                  key={`${assessment.id}-${logoUrl}`}
+                                  src={logoUrl} 
+                                  alt={assessment.title} 
+                                  className="w-10 h-10 object-contain"
+                                  onError={(e) => {
+                                    // Try alternative logo sources
+                                    const fallbackLogo = getLogoFromTitle(assessment.title);
+                                    const img = e.target as HTMLImageElement;
+                                    if (fallbackLogo && img.src !== fallbackLogo) {
+                                      img.src = fallbackLogo;
+                                    } else {
+                                      // If all logos fail, replace with placeholder
+                                      img.style.display = 'none';
+                                      const placeholder = document.createElement('div');
+                                      placeholder.className = 'w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs font-medium';
+                                      placeholder.textContent = assessment.title.charAt(0).toUpperCase();
+                                      img.parentElement?.replaceChild(placeholder, img);
+                                    }
+                                  }}
+                                />
+                              );
+                            }
+                            return (
+                              <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs font-medium">
+                                {assessment.title.charAt(0).toUpperCase()}
+                              </div>
+                            );
+                          })()}
                           <div>
                             <div className="font-medium text-gray-900">{assessment.title}</div>
                             <div className="text-sm text-gray-500">{assessment.id}</div>
@@ -532,7 +740,31 @@ const MockAssessmentsManagementPage: React.FC = () => {
               {filteredAssessments.map((assessment) => (
                 <div key={assessment.id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition">
                   <div className="flex items-center gap-3 mb-3">
-                    <img src={assessment.logo} alt={assessment.title} className="w-12 h-12 object-contain" />
+                    {assessment.logo ? (
+                      <img 
+                        src={assessment.logo} 
+                        alt={assessment.title} 
+                        className="w-12 h-12 object-contain"
+                        onError={(e) => {
+                          // Fallback to auto-fetched logo if original fails
+                          const fallbackLogo = getLogoFromTitle(assessment.title);
+                          if (fallbackLogo && (e.target as HTMLImageElement).src !== fallbackLogo) {
+                            (e.target as HTMLImageElement).src = fallbackLogo;
+                          } else {
+                            // If fallback also fails, show placeholder
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm font-medium';
+                            placeholder.textContent = assessment.title.charAt(0).toUpperCase();
+                            (e.target as HTMLImageElement).parentElement?.appendChild(placeholder);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm font-medium">
+                        {assessment.title.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900">{assessment.title}</h3>
                       <p className="text-sm text-gray-500">{assessment.category}</p>
@@ -1022,6 +1254,67 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
   const [generationProgress, setGenerationProgress] = useState({ current: 0, total: 0, type: '' });
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle file upload
+  const handleFileUpload = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file (PNG, JPG, GIF, SVG, etc.)');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setFormData({ ...formData, logo: result });
+    };
+    reader.onerror = () => {
+      alert('Error reading file. Please try again.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -1044,20 +1337,144 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) => {
+                  const newTitle = e.target.value;
+                  const autoLogo = getLogoFromTitle(newTitle);
+                  setFormData({ 
+                    ...formData, 
+                    title: newTitle,
+                    logo: autoLogo || formData.logo || '' // Auto-fill logo if found, otherwise keep existing
+                  });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                 placeholder="e.g., Java, React, Python"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
-              <input
-                type="text"
-                value={formData.logo}
-                onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                placeholder="/mock_assessments_logo/java.png"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Logo URL
+                {formData.logo && formData.logo.includes('simpleicons.org') && (
+                  <span className="ml-2 text-xs text-green-600">(Auto-detected)</span>
+                )}
+              </label>
+              
+              {/* Drag and Drop Area */}
+              <div
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-lg p-4 transition-colors ${
+                  isDragging
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <svg
+                    className={`w-8 h-8 ${isDragging ? 'text-orange-500' : 'text-gray-400'}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-orange-500 hover:text-orange-600 font-medium underline"
+                      >
+                        Click to upload
+                      </button>
+                      {' or drag and drop'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF, SVG up to 5MB</p>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+
+              {/* URL Input */}
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Or enter URL:</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={formData.logo && formData.logo.startsWith('data:') ? '' : formData.logo}
+                    onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-sm"
+                    placeholder="/mock_assessments_logo/java.png or https://cdn.simpleicons.org/..."
+                  />
+                  {formData.title && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const autoLogo = getLogoFromTitle(formData.title || '');
+                        if (autoLogo) {
+                          setFormData({ ...formData, logo: autoLogo });
+                        } else {
+                          alert(`No logo found for "${formData.title}". Please enter manually.`);
+                        }
+                      }}
+                      className="px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition whitespace-nowrap"
+                      title="Auto-fetch logo from Simple Icons"
+                    >
+                      🔍 Fetch
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Preview */}
+              {formData.logo && (
+                <div className="mt-3 flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <img
+                    src={formData.logo}
+                    alt="Logo preview"
+                    className="w-12 h-12 object-contain border border-gray-200 rounded bg-white p-1"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-700 truncate">
+                      {formData.logo.startsWith('data:') ? 'Uploaded Image' : 'Logo Preview'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {formData.logo.startsWith('data:')
+                        ? `${Math.round(formData.logo.length / 1024)}KB`
+                        : formData.logo.length > 50
+                        ? formData.logo.substring(0, 50) + '...'
+                        : formData.logo}
+                    </p>
+                  </div>
+                  {formData.logo && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, logo: '' })}
+                      className="p-1 text-gray-400 hover:text-red-500 transition"
+                      title="Remove logo"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
@@ -1102,16 +1519,42 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-              <select
-                value={formData.difficulty}
-                onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as DifficultyLevel })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              >
-                {difficulties.map(diff => (
-                  <option key={diff} value={diff}>{diff.charAt(0).toUpperCase() + diff.slice(1)}</option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty (Select Multiple)</label>
+              <div className="space-y-2">
+                {difficulties.map(diff => {
+                  const isSelected = formData.difficulties?.includes(diff) || false;
+                  return (
+                    <label key={diff} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const currentDifficulties = formData.difficulties || [];
+                          if (e.target.checked) {
+                            setFormData({ 
+                              ...formData, 
+                              difficulties: [...currentDifficulties, diff],
+                              difficulty: diff // Keep for backward compatibility
+                            });
+                          } else {
+                            const updated = currentDifficulties.filter(d => d !== diff);
+                            setFormData({ 
+                              ...formData, 
+                              difficulties: updated.length > 0 ? updated : ['medium'], // At least one must be selected
+                              difficulty: updated.length > 0 ? updated[0] : 'medium'
+                            });
+                          }
+                        }}
+                        className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                      />
+                      <span className="text-sm text-gray-700">{diff.charAt(0).toUpperCase() + diff.slice(1)}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {(!formData.difficulties || formData.difficulties.length === 0) && (
+                <p className="text-xs text-red-500 mt-1">Please select at least one difficulty level</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">XP Reward</label>
@@ -1184,16 +1627,21 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                     setIsGeneratingQuestions(true);
                     setGenerationError(null);
                     const generatedQuestions: AnyQuestion[] = [];
-                    const difficulty = formData.difficulty || 'medium';
+                    const selectedDifficulties = formData.difficulties && formData.difficulties.length > 0 
+                      ? formData.difficulties 
+                      : ['medium'];
                     const category = formData.category || 'technical';
                     const topic = formData.title || category;
 
                     try {
-                      // Generate MCQ questions
+                      // Generate MCQ questions - distribute across selected difficulties
                       if (mcqCount > 0) {
                         setGenerationProgress({ current: 0, total: mcqCount, type: 'MCQ' });
                         const generatedMCQs: MCQQuestion[] = [];
                         for (let i = 0; i < mcqCount; i++) {
+                          // Distribute questions across selected difficulties
+                          const difficultyIndex = i % selectedDifficulties.length;
+                          const difficulty = selectedDifficulties[difficultyIndex] as DifficultyLevel;
                           const mcq = await generateMCQQuestion(apiKeyConfig, topic, difficulty, category, i + 1, mcqCount, generatedMCQs);
                           if (mcq) {
                             generatedMCQs.push(mcq);
@@ -1205,11 +1653,14 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                         }
                       }
 
-                      // Generate Programming questions
+                      // Generate Programming questions - distribute across selected difficulties
                       if (progCount > 0) {
                         setGenerationProgress({ current: 0, total: progCount, type: 'Programming' });
                         const generatedProgs: ProgrammingQuestion[] = [];
                         for (let i = 0; i < progCount; i++) {
+                          // Distribute questions across selected difficulties
+                          const difficultyIndex = i % selectedDifficulties.length;
+                          const difficulty = selectedDifficulties[difficultyIndex] as DifficultyLevel;
                           const prog = await generateProgrammingQuestion(apiKeyConfig, topic, difficulty, category, i + 1, progCount, generatedProgs);
                           if (prog) {
                             generatedProgs.push(prog);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminSidebar from './AdminSidebar';
 import AdminContent from './AdminContent';
 
@@ -19,8 +19,14 @@ export type AdminView =
 
 const AdminDashboard: React.FC = () => {
     const [activeView, setActiveView] = useState<AdminView>('project-management');
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+    // Sidebar closed by default on mobile, open on desktop
+    const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.innerWidth >= 1024; // lg breakpoint
+        }
+        return true;
+    });
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     const handleNavClick = (view: AdminView) => {
         setActiveView(view);
@@ -29,12 +35,32 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    // Handle window resize to adjust sidebar state
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 1024) {
+                // On desktop, ensure sidebar is open
+                if (!isSidebarOpen) {
+                    setIsSidebarOpen(true);
+                }
+            } else {
+                // On mobile, close sidebar if it was open
+                if (isSidebarOpen) {
+                    setIsSidebarOpen(false);
+                }
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isSidebarOpen]);
+
     return (
-        <div className={`flex h-screen bg-white text-gray-900 font-sans transition-colors duration-300 relative`}>
+        <div className={`flex h-screen bg-white text-gray-900 font-sans transition-colors duration-300 relative overflow-hidden`}>
             {/* Overlay for mobile */}
             {isSidebarOpen && (
                 <div 
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300"
                     onClick={() => setIsSidebarOpen(false)}
                 ></div>
             )}

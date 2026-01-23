@@ -166,22 +166,23 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
     return (
         <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
+            <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+                <div className="flex items-center gap-3 sm:gap-4">
                     <button
                         onClick={toggleSidebar}
-                        className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                        aria-label="Toggle sidebar"
                     >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
-                    <h1 className="text-2xl font-bold text-gray-900">{viewTitles[activeView]}</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{viewTitles[activeView]}</h1>
                 </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                 {activeView === 'project-management' && (
                     <ProjectManagementPage 
                         onViewUser={handleViewUser}
