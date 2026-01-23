@@ -4,6 +4,15 @@ import React, { useState, useMemo, useEffect } from 'react';
 // TODO: Update with actual API endpoint when Lambda is deployed
 // const MOCK_ASSESSMENTS_API = 'https://your-api-gateway.execute-api.ap-south-2.amazonaws.com/default/mock-assessment-handler';
 
+// AI Types (shared with other admin pages like CodingQuestions & CareerContent)
+type AIProvider = 'gemini' | 'groq';
+
+interface APIKeyConfig {
+  provider: AIProvider;
+  geminiKey: string;
+  groqKey: string;
+}
+
 // Types
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
 type AssessmentCategory = 'technical' | 'language' | 'framework' | 'database' | 'devops' | 'company';
@@ -89,6 +98,14 @@ const MockAssessmentsManagementPage: React.FC = () => {
   const [editingQuestionIndex, setEditingQuestionIndex] = useState<number | null>(null);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [questionType, setQuestionType] = useState<'mcq' | 'programming'>('mcq');
+
+  // API Key Management State
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [apiKeyConfig, setApiKeyConfig] = useState<APIKeyConfig>({
+    provider: 'gemini',
+    geminiKey: '',
+    groqKey: ''
+  });
 
   // ========================================
   // API Functions
@@ -224,6 +241,34 @@ const MockAssessmentsManagementPage: React.FC = () => {
   useEffect(() => {
     fetchAssessments();
   }, []);
+
+  // Load API key configuration on mount
+  useEffect(() => {
+    const loadApiKeyConfig = async () => {
+      try {
+        const storedConfig = localStorage.getItem('ai_api_config');
+        if (storedConfig) {
+          const config = JSON.parse(storedConfig);
+          setApiKeyConfig(config);
+        }
+      } catch (error) {
+        console.error('Failed to load API key config:', error);
+      }
+    };
+    loadApiKeyConfig();
+  }, []);
+
+  // Save API key configuration
+  const saveApiKeyConfig = async (config: APIKeyConfig) => {
+    try {
+      localStorage.setItem('ai_api_config', JSON.stringify(config));
+      setApiKeyConfig(config);
+      return true;
+    } catch (error) {
+      console.error('Failed to save API key config:', error);
+      return false;
+    }
+  };
 
   // ========================================
   // Filtering and Search
@@ -570,6 +615,8 @@ const MockAssessmentsManagementPage: React.FC = () => {
           onEditQuestion={editQuestion}
           onDeleteQuestion={deleteQuestion}
           isSaving={isSaving}
+          apiKeyConfig={apiKeyConfig}
+          onRequestApiKey={() => setShowApiKeyModal(true)}
         />
       )}
 
@@ -584,6 +631,22 @@ const MockAssessmentsManagementPage: React.FC = () => {
             setShowQuestionModal(false);
             setEditingQuestionIndex(null);
           }}
+          onRequestApiKey={() => setShowApiKeyModal(true)}
+          apiKeyConfig={apiKeyConfig}
+        />
+      )}
+
+      {/* API Key Configuration Modal */}
+      {showApiKeyModal && (
+        <ApiKeyModal
+          apiKeyConfig={apiKeyConfig}
+          onSave={async (config) => {
+            const success = await saveApiKeyConfig(config);
+            if (success) {
+              setShowApiKeyModal(false);
+            }
+          }}
+          onClose={() => setShowApiKeyModal(false)}
         />
       )}
 
@@ -602,6 +665,328 @@ const MockAssessmentsManagementPage: React.FC = () => {
   );
 };
 
+// Helper function to generate MCQ question
+const generateMCQQuestion = async (
+  apiKeyConfig: APIKeyConfig,
+  topic: string,
+  difficulty: DifficultyLevel,
+  category: AssessmentCategory,
+  questionNum: number,
+  totalQuestions: number,
+  existingQuestions: MCQQuestion[] = []
+): Promise<MCQQuestion | null> => {
+  // Create a list of existing questions to avoid duplicates
+  const existingQuestionsText = existingQuestions.length > 0
+    ? `\n\nIMPORTANT: Avoid generating questions similar to these already generated questions:\n${existingQuestions.slice(-5).map((q, i) => `${i + 1}. ${q.question}`).join('\n')}\n\nGenerate a COMPLETELY DIFFERENT question on a different subtopic or aspect.`
+    : '';
+
+  // Add variety by requesting different subtopics
+  const subtopicHints = [
+    'Focus on a different subtopic or concept',
+    'Cover a different aspect or use case',
+    'Test a different skill or knowledge area',
+    'Explore a different edge case or scenario',
+    'Ask about a different implementation detail',
+  ];
+  const varietyHint = subtopicHints[(questionNum - 1) % subtopicHints.length];
+
+  const prompt = `Generate ONE unique multiple choice question for a mock assessment.
+
+Topic: ${topic}
+Category: ${category}
+Difficulty: ${difficulty}
+Question ${questionNum} of ${totalQuestions}
+${varietyHint}${existingQuestionsText}
+
+CRITICAL: This question must be UNIQUE and DIFFERENT from any previous questions. Cover a different subtopic, concept, or aspect of ${topic}.
+
+Return ONLY valid JSON (no markdown, no comments, no extra text):
+{
+  "question": "string - unique question text",
+  "options": ["option A", "option B", "option C", "option D"],
+  "correctIndex": 0,
+  "topic": "string",
+  "explanation": "string explaining why the correct answer is right",
+  "difficulty": "${difficulty}"
+}`;
+
+  try {
+    let response: Response | null = null;
+    let useGemini = apiKeyConfig.provider === 'gemini' && !!apiKeyConfig.geminiKey;
+    let useGroq = !useGemini && !!apiKeyConfig.groqKey;
+
+    // Try Gemini first if available
+    if (useGemini) {
+      try {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKeyConfig.geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          if (response.status === 429 || errorText.includes('quota') || errorText.includes('exceeded')) {
+            // Fallback to Groq if Gemini quota exceeded
+            if (apiKeyConfig.groqKey) {
+              useGroq = true;
+              useGemini = false;
+            } else {
+              throw new Error('Gemini API quota exceeded. Please update your API key.');
+            }
+          } else {
+            throw new Error(`Gemini API error: ${response.status}`);
+          }
+        }
+      } catch (error: any) {
+        if (apiKeyConfig.groqKey && !error.message.includes('quota')) {
+          useGroq = true;
+          useGemini = false;
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    // Use Groq if Gemini failed or is not available
+    if (useGroq) {
+      response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKeyConfig.groqKey}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: 'You are a technical interviewer. Return ONLY valid JSON, no markdown or extra text.' },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.8,
+          max_tokens: 1024,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Groq API error: ${response.status}`);
+      }
+    }
+
+    if (!response) {
+      throw new Error('No API key configured');
+    }
+
+    const data = await response.json();
+    let rawText: string;
+
+    if (useGemini) {
+      rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    } else {
+      rawText = data?.choices?.[0]?.message?.content || '';
+    }
+
+    if (!rawText) {
+      throw new Error('No content returned from API');
+    }
+
+    const cleaned = rawText.replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
+    const parsed = JSON.parse(cleaned);
+
+    if (!parsed.question || !parsed.options || parsed.options.length < 2) {
+      throw new Error('Incomplete MCQ data returned');
+    }
+
+    return {
+      id: Date.now() + questionNum,
+      question: parsed.question,
+      options: parsed.options.slice(0, 4),
+      correctAnswer: typeof parsed.correctIndex === 'number' ? parsed.correctIndex : 0,
+      topic: parsed.topic || topic,
+      explanation: parsed.explanation || '',
+      difficulty: (parsed.difficulty as DifficultyLevel) || difficulty,
+      type: 'mcq',
+    };
+  } catch (error: any) {
+    console.error(`Error generating MCQ question ${questionNum}:`, error);
+    return null;
+  }
+};
+
+// Helper function to generate Programming question
+const generateProgrammingQuestion = async (
+  apiKeyConfig: APIKeyConfig,
+  topic: string,
+  difficulty: DifficultyLevel,
+  category: AssessmentCategory,
+  questionNum: number,
+  totalQuestions: number,
+  existingQuestions: ProgrammingQuestion[] = []
+): Promise<ProgrammingQuestion | null> => {
+  // Create a list of existing questions to avoid duplicates
+  const existingQuestionsText = existingQuestions.length > 0
+    ? `\n\nIMPORTANT: Avoid generating questions similar to these already generated questions:\n${existingQuestions.slice(-5).map((q, i) => `${i + 1}. ${q.question.split('\n')[0]}`).join('\n')}\n\nGenerate a COMPLETELY DIFFERENT problem on a different algorithm, data structure, or concept.`
+    : '';
+
+  // Add variety by requesting different problem types
+  const problemTypeHints = [
+    'Focus on a different algorithm (e.g., sorting, searching, graph traversal)',
+    'Cover a different data structure (e.g., arrays, trees, hash maps)',
+    'Test a different problem-solving approach (e.g., dynamic programming, greedy, two pointers)',
+    'Explore a different complexity requirement (e.g., time/space optimization)',
+    'Ask about a different edge case or scenario',
+  ];
+  const varietyHint = problemTypeHints[(questionNum - 1) % problemTypeHints.length];
+
+  const prompt = `Generate ONE unique programming question for a mock assessment (LeetCode-style).
+
+Topic: ${topic}
+Category: ${category}
+Difficulty: ${difficulty}
+Question ${questionNum} of ${totalQuestions}
+${varietyHint}${existingQuestionsText}
+
+CRITICAL: This problem must be UNIQUE and DIFFERENT from any previous questions. Cover a different algorithm, data structure, or problem-solving approach related to ${topic}.
+
+Return ONLY valid JSON (no markdown, no comments, no extra text):
+{
+  "question": "Title on first line\\n\\nFull problem description",
+  "topic": "string",
+  "difficulty": "${difficulty}",
+  "constraints": "string with constraints",
+  "examples": [
+    { "input": "string", "output": "string", "explanation": "string" }
+  ],
+  "testCases": [
+    { "input": "string", "expectedOutput": "string", "hidden": false }
+  ],
+  "starterCode": {
+    "python": "def solution(params):\\n    # Your code here\\n    pass",
+    "javascript": "function solution(params) {\\n    // Your code here\\n}",
+    "java": "class Solution {\\n    public ReturnType solution(ParamType params) {\\n        // Your code here\\n    }\\n}",
+    "cpp": "class Solution {\\npublic:\\n    ReturnType solution(ParamType params) {\\n        // Your code here\\n    }\\n};"
+  },
+  "explanation": "High-level explanation"
+}`;
+
+  try {
+    let response: Response | null = null;
+    let useGemini = apiKeyConfig.provider === 'gemini' && !!apiKeyConfig.geminiKey;
+    let useGroq = !useGemini && !!apiKeyConfig.groqKey;
+
+    // Try Gemini first if available
+    if (useGemini) {
+      try {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKeyConfig.geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          if (response.status === 429 || errorText.includes('quota') || errorText.includes('exceeded')) {
+            // Fallback to Groq if Gemini quota exceeded
+            if (apiKeyConfig.groqKey) {
+              useGroq = true;
+              useGemini = false;
+            } else {
+              throw new Error('Gemini API quota exceeded. Please update your API key.');
+            }
+          } else {
+            throw new Error(`Gemini API error: ${response.status}`);
+          }
+        }
+      } catch (error: any) {
+        if (apiKeyConfig.groqKey && !error.message.includes('quota')) {
+          useGroq = true;
+          useGemini = false;
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    // Use Groq if Gemini failed or is not available
+    if (useGroq) {
+      response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKeyConfig.groqKey}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: 'You are a technical interviewer. Return ONLY valid JSON, no markdown or extra text.' },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.8,
+          max_tokens: 2048,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Groq API error: ${response.status}`);
+      }
+    }
+
+    if (!response) {
+      throw new Error('No API key configured');
+    }
+
+    const data = await response.json();
+    let rawText: string;
+
+    if (useGemini) {
+      rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    } else {
+      rawText = data?.choices?.[0]?.message?.content || '';
+    }
+
+    if (!rawText) {
+      throw new Error('No content returned from API');
+    }
+
+    const cleaned = rawText.replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
+    const parsed = JSON.parse(cleaned);
+
+    if (!parsed.question || !parsed.examples || !parsed.testCases || !parsed.starterCode) {
+      throw new Error('Incomplete programming question data returned');
+    }
+
+    return {
+      id: Date.now() + questionNum + 10000,
+      question: parsed.question,
+      topic: parsed.topic || topic,
+      difficulty: (parsed.difficulty as DifficultyLevel) || difficulty,
+      constraints: parsed.constraints || '',
+      examples: parsed.examples || [],
+      starterCode: parsed.starterCode || {
+        python: '',
+        javascript: '',
+        java: '',
+        cpp: '',
+      },
+      testCases: parsed.testCases || [],
+      explanation: parsed.explanation || '',
+      type: 'programming',
+    };
+  } catch (error: any) {
+    console.error(`Error generating Programming question ${questionNum}:`, error);
+    return null;
+  }
+};
+
 // Assessment Modal Component
 interface AssessmentModalProps {
   formData: Partial<Assessment>;
@@ -615,12 +1000,15 @@ interface AssessmentModalProps {
   onEditQuestion: (index: number) => void;
   onDeleteQuestion: (index: number) => void;
   isSaving: boolean;
+  apiKeyConfig: APIKeyConfig;
+  onRequestApiKey: () => void;
 }
 
 const AssessmentModal: React.FC<AssessmentModalProps> = ({
   formData,
   setFormData,
   questions,
+  setQuestions,
   editingAssessment,
   onSave,
   onClose,
@@ -628,7 +1016,12 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
   onEditQuestion,
   onDeleteQuestion,
   isSaving,
+  apiKeyConfig,
+  onRequestApiKey,
 }) => {
+  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState({ current: 0, total: 0, type: '' });
+  const [generationError, setGenerationError] = useState<string | null>(null);
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -770,16 +1163,111 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Questions ({questions.length})</h3>
-              <button
-                onClick={onAddQuestion}
-                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Question
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    const mcqCount = formData.objective || 0;
+                    const progCount = formData.programming || 0;
+                    const total = mcqCount + progCount;
+                    
+                    if (total === 0) {
+                      alert('Please specify the number of MCQ and/or Programming questions to generate.');
+                      return;
+                    }
+
+                    const apiKey = apiKeyConfig.provider === 'gemini' ? apiKeyConfig.geminiKey : apiKeyConfig.groqKey;
+                    if (!apiKey) {
+                      onRequestApiKey();
+                      return;
+                    }
+
+                    setIsGeneratingQuestions(true);
+                    setGenerationError(null);
+                    const generatedQuestions: AnyQuestion[] = [];
+                    const difficulty = formData.difficulty || 'medium';
+                    const category = formData.category || 'technical';
+                    const topic = formData.title || category;
+
+                    try {
+                      // Generate MCQ questions
+                      if (mcqCount > 0) {
+                        setGenerationProgress({ current: 0, total: mcqCount, type: 'MCQ' });
+                        const generatedMCQs: MCQQuestion[] = [];
+                        for (let i = 0; i < mcqCount; i++) {
+                          const mcq = await generateMCQQuestion(apiKeyConfig, topic, difficulty, category, i + 1, mcqCount, generatedMCQs);
+                          if (mcq) {
+                            generatedMCQs.push(mcq);
+                            generatedQuestions.push(mcq);
+                          }
+                          setGenerationProgress({ current: i + 1, total: mcqCount, type: 'MCQ' });
+                          // Small delay to avoid rate limits
+                          await new Promise(resolve => setTimeout(resolve, 800));
+                        }
+                      }
+
+                      // Generate Programming questions
+                      if (progCount > 0) {
+                        setGenerationProgress({ current: 0, total: progCount, type: 'Programming' });
+                        const generatedProgs: ProgrammingQuestion[] = [];
+                        for (let i = 0; i < progCount; i++) {
+                          const prog = await generateProgrammingQuestion(apiKeyConfig, topic, difficulty, category, i + 1, progCount, generatedProgs);
+                          if (prog) {
+                            generatedProgs.push(prog);
+                            generatedQuestions.push(prog);
+                          }
+                          setGenerationProgress({ current: i + 1, total: progCount, type: 'Programming' });
+                          // Small delay to avoid rate limits
+                          await new Promise(resolve => setTimeout(resolve, 800));
+                        }
+                      }
+
+                      setQuestions([...questions, ...generatedQuestions]);
+                      setGenerationError(null);
+                    } catch (error: any) {
+                      console.error('Error generating questions:', error);
+                      setGenerationError(error.message || 'Failed to generate some questions. Please try again.');
+                    } finally {
+                      setIsGeneratingQuestions(false);
+                      setGenerationProgress({ current: 0, total: 0, type: '' });
+                    }
+                  }}
+                  disabled={isGeneratingQuestions || !formData.title}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGeneratingQuestions ? (
+                    <>
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Generating {generationProgress.type} ({generationProgress.current}/{generationProgress.total})...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                      </svg>
+                      Generate Questions
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={onAddQuestion}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Question
+                </button>
+              </div>
             </div>
+
+            {generationError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                {generationError}
+              </div>
+            )}
 
             {questions.length === 0 ? (
               <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
@@ -788,9 +1276,9 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
             ) : (
               <div className="space-y-2">
                 {questions.map((q, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-2">
                         <span className="px-2 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-800">
                           {q.type === 'programming' ? 'Coding' : 'MCQ'}
                         </span>
@@ -798,9 +1286,31 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                           {q.type === 'programming' ? (q as ProgrammingQuestion).question.split('\n')[0] : (q as MCQQuestion).question}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500">Topic: {q.topic}</p>
+                      {q.type === 'mcq' && (q as MCQQuestion).options && (
+                        <div className="ml-0 mb-2">
+                          <div className="text-xs text-gray-600 mb-1">Options:</div>
+                          <div className="grid grid-cols-2 gap-1">
+                            {(q as MCQQuestion).options.map((option, optIndex) => (
+                              <div
+                                key={optIndex}
+                                className={`text-xs px-2 py-1 rounded ${
+                                  optIndex === (q as MCQQuestion).correctAnswer
+                                    ? 'bg-green-100 text-green-800 font-medium border border-green-300'
+                                    : 'bg-white text-gray-700 border border-gray-200'
+                                }`}
+                              >
+                                <span className="font-medium">{String.fromCharCode(65 + optIndex)}.</span> {option}
+                                {optIndex === (q as MCQQuestion).correctAnswer && (
+                                  <span className="ml-1 text-green-600">✓</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-500">Topic: {q.topic} • Difficulty: {q.difficulty || 'medium'}</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 ml-4">
                       <button
                         onClick={() => onEditQuestion(index)}
                         className="px-3 py-1 text-sm text-orange-600 hover:bg-orange-50 rounded"
@@ -848,6 +1358,8 @@ interface QuestionModalProps {
   question?: AnyQuestion;
   onSave: (question: AnyQuestion) => void;
   onClose: () => void;
+  onRequestApiKey: () => void;
+  apiKeyConfig: APIKeyConfig;
 }
 
 const QuestionModal: React.FC<QuestionModalProps> = ({
@@ -856,6 +1368,8 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
   question,
   onSave,
   onClose,
+  onRequestApiKey,
+  apiKeyConfig: parentApiKeyConfig,
 }) => {
   const [mcqData, setMcqData] = useState<Partial<MCQQuestion>>({
     question: '',
@@ -884,6 +1398,16 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
     explanation: '',
   });
 
+  // AI / Gemini state
+  const [apiKeyConfig, setApiKeyConfig] = useState<APIKeyConfig>(parentApiKeyConfig);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  // Sync with parent API key config
+  useEffect(() => {
+    setApiKeyConfig(parentApiKeyConfig);
+  }, [parentApiKeyConfig]);
+
   useEffect(() => {
     if (question) {
       if (question.type === 'programming') {
@@ -895,6 +1419,304 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
       }
     }
   }, [question]);
+
+  const handleGenerateWithAI = async () => {
+    setAiError(null);
+
+    const hasGemini = !!apiKeyConfig.geminiKey;
+    const hasGroq = !!apiKeyConfig.groqKey;
+
+    // If no keys at all, open API key modal
+    if (!hasGemini && !hasGroq) {
+      onRequestApiKey();
+      return;
+    }
+
+    setIsGenerating(true);
+
+    const difficultyText =
+      questionType === 'mcq'
+        ? (mcqData.difficulty || 'medium')
+        : (progData.difficulty || 'medium');
+
+    const topicText =
+      questionType === 'mcq'
+        ? (mcqData.topic || 'general programming / web development')
+        : (progData.topic || 'data structures and algorithms');
+
+    const basePrompt = questionType === 'mcq'
+      ? `You are an experienced technical interviewer. Generate ONE high-quality multiple choice question for a mock assessment.
+
+Topic: ${topicText}
+Difficulty: ${difficultyText} (easy, medium, or hard)
+
+Return ONLY valid JSON (no markdown, no comments, no extra text) in the following format:
+{
+  "question": "string",
+  "options": ["option A", "option B", "option C", "option D"],
+  "correctIndex": 0,
+  "topic": "string",
+  "explanation": "string",
+  "difficulty": "easy | medium | hard"
+}`
+      : `You are an experienced technical interviewer. Generate ONE programming question for a mock assessment (LeetCode-style).
+
+Topic: ${topicText}
+Difficulty: ${difficultyText} (easy, medium, or hard)
+
+Return ONLY valid JSON (no markdown, no comments, no extra text) in the following format:
+{
+  "question": "Full problem statement with title on first line and description below",
+  "topic": "string",
+  "difficulty": "easy | medium | hard",
+  "constraints": "string with line breaks",
+  "examples": [
+    { "input": "string", "output": "string", "explanation": "string" }
+  ],
+  "testCases": [
+    { "input": "string", "expectedOutput": "string", "hidden": false }
+  ],
+  "starterCode": {
+    "python": "string",
+    "javascript": "string",
+    "java": "string",
+    "cpp": "string"
+  },
+  "explanation": "High-level explanation or hints"
+}`;
+
+    const callProvider = async (provider: 'gemini' | 'groq') => {
+      let response: Response;
+
+      if (provider === 'gemini') {
+        if (!apiKeyConfig.geminiKey) {
+          throw new Error('Gemini API key is not configured.');
+        }
+
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKeyConfig.geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      text: basePrompt,
+                    },
+                  ],
+                },
+              ],
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const text = await response.text();
+
+          try {
+            const errJson = JSON.parse(text);
+            const rawMessage: string = errJson?.error?.message || '';
+
+            if (
+              response.status === 429 ||
+              rawMessage.includes('RESOURCE_EXHAUSTED') ||
+              rawMessage.toLowerCase().includes('quota')
+            ) {
+              throw new Error(
+                'Gemini API quota has been exceeded for this key. Please check your Google AI Studio plan/limits or use a different API key.'
+              );
+            }
+
+            if (rawMessage) {
+              throw new Error(`Gemini API error: ${rawMessage}`);
+            }
+          } catch {
+            throw new Error(`Gemini API error (${response.status}). Please try again or update your API key.`);
+          }
+        }
+
+        const data = await response.json();
+        const rawText: string | undefined =
+          data?.candidates?.[0]?.content?.parts
+            ?.map((p: any) => p.text || '')
+            .join(' ')
+            .trim();
+
+        if (!rawText) {
+          throw new Error('No content returned from Gemini API.');
+        }
+
+        return rawText;
+      } else {
+        if (!apiKeyConfig.groqKey) {
+          throw new Error('Groq API key is not configured.');
+        }
+
+        response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKeyConfig.groqKey}`,
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are a coding question generator. Always respond with a single valid JSON object only, no markdown or extra text.',
+              },
+              {
+                role: 'user',
+                content: basePrompt,
+              },
+            ],
+            temperature: 0.8,
+            max_tokens: 4096,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            `Groq API request failed: ${response.statusText}. ${errorData.error?.message || ''}`.trim()
+          );
+        }
+
+        const data = await response.json();
+        const rawText: string | undefined = data?.choices?.[0]?.message?.content;
+
+        if (!rawText) {
+          throw new Error('No content returned from Groq API.');
+        }
+
+        return rawText;
+      }
+    };
+
+    const applyParsedQuestion = (parsed: any) => {
+      if (questionType === 'mcq') {
+        const options: string[] = parsed.options || [];
+        if (!parsed.question || options.length < 2) {
+          throw new Error('AI returned incomplete MCQ data.');
+        }
+        setMcqData({
+          id: mcqData.id,
+          question: parsed.question,
+          options: options.slice(0, 4),
+          correctAnswer: typeof parsed.correctIndex === 'number' ? parsed.correctIndex : 0,
+          topic: parsed.topic || topicText,
+          explanation: parsed.explanation || '',
+          difficulty: (parsed.difficulty as DifficultyLevel) || mcqData.difficulty || 'medium',
+          type: 'mcq',
+        });
+      } else {
+        if (!parsed.question || !parsed.examples || !parsed.testCases || !parsed.starterCode) {
+          throw new Error('AI returned incomplete programming question data.');
+        }
+        setProgData({
+          id: progData.id,
+          question: parsed.question,
+          topic: parsed.topic || topicText,
+          difficulty: (parsed.difficulty as DifficultyLevel) || progData.difficulty || 'medium',
+          constraints: parsed.constraints || '',
+          examples: parsed.examples || [],
+          starterCode: parsed.starterCode || {
+            python: '',
+            javascript: '',
+            java: '',
+            cpp: '',
+          },
+          testCases: parsed.testCases || [],
+          explanation: parsed.explanation || '',
+          type: 'programming',
+        });
+      }
+    };
+
+    try {
+      // Decide primary provider based on settings and available keys
+      const primary: 'gemini' | 'groq' =
+        apiKeyConfig.provider === 'groq' && hasGroq
+          ? 'groq'
+          : hasGemini
+          ? 'gemini'
+          : 'groq';
+
+      let rawText = await callProvider(primary);
+
+      // Parse JSON (shared for both providers)
+      let cleaned = rawText
+        .replace(/^```json/i, '')
+        .replace(/^```/i, '')
+        .replace(/```$/i, '')
+        .trim();
+      let parsed = JSON.parse(cleaned);
+
+      applyParsedQuestion(parsed);
+    } catch (primaryError: any) {
+      console.error('Primary AI provider error:', primaryError);
+
+      const primaryMessage = primaryError?.message || '';
+
+      // Try fallback provider automatically if possible
+      const canUseFallbackGemini = hasGemini && apiKeyConfig.provider === 'groq';
+      const canUseFallbackGroq = hasGroq && apiKeyConfig.provider === 'gemini';
+
+      if (canUseFallbackGemini || canUseFallbackGroq) {
+        try {
+          const fallbackProvider: 'gemini' | 'groq' =
+            apiKeyConfig.provider === 'gemini' ? 'groq' : 'gemini';
+
+          const rawText = await callProvider(fallbackProvider);
+          let cleaned = rawText
+            .replace(/^```json/i, '')
+            .replace(/^```/i, '')
+            .replace(/```$/i, '')
+            .trim();
+          let parsed = JSON.parse(cleaned);
+
+          applyParsedQuestion(parsed);
+          setAiError(
+            `Primary ${
+              apiKeyConfig.provider === 'gemini' ? 'Gemini' : 'Groq'
+            } call failed. Fallback to ${fallbackProvider.toUpperCase()} succeeded.`
+          );
+          return;
+        } catch (fallbackError: any) {
+          console.error('Fallback AI provider error:', fallbackError);
+          setAiError(
+            fallbackError?.message ||
+              'Both AI providers failed. Please check your API keys and try again.'
+          );
+          if (
+            fallbackError?.message?.toLowerCase().includes('api key') ||
+            fallbackError?.message?.toLowerCase().includes('quota')
+          ) {
+            onRequestApiKey();
+          }
+          return;
+        }
+      }
+
+      // No fallback available or fallback disabled
+      const message =
+        primaryMessage || 'Failed to generate question with AI provider. Please try again.';
+      setAiError(message);
+
+      if (
+        message.toLowerCase().includes('api key') ||
+        message.toLowerCase().includes('quota') ||
+        message.includes('429')
+      ) {
+        onRequestApiKey();
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleSave = () => {
     if (questionType === 'mcq') {
@@ -935,6 +1757,40 @@ const QuestionModal: React.FC<QuestionModalProps> = ({
         </div>
 
         <div className="p-6 space-y-4">
+          {/* AI Generation Helper */}
+          <div className="flex items-start justify-between gap-4 border border-dashed border-orange-200 rounded-lg p-3 bg-orange-50/60">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Generate with Gemini AI</p>
+              <p className="text-xs text-gray-600 mt-1">
+                Use Gemini to auto-generate a high-quality {questionType === 'mcq' ? 'MCQ' : 'coding'} question based on topic and difficulty.
+              </p>
+              {aiError && (
+                <p className="mt-1 text-xs text-red-600">
+                  {aiError}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={handleGenerateWithAI}
+              disabled={isGenerating}
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isGenerating ? (
+                <>
+                  <span className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118L2.027 10.1c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                  Generate with AI
+                </>
+              )}
+            </button>
+          </div>
+
           {/* Question Type Toggle */}
           <div className="flex gap-2">
             <button
@@ -1306,6 +2162,233 @@ const ViewAssessmentModal: React.FC<ViewAssessmentModalProps> = ({ assessment, o
             className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
           >
             Edit
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// API Key Configuration Modal
+interface ApiKeyModalProps {
+  apiKeyConfig: APIKeyConfig;
+  onSave: (config: APIKeyConfig) => Promise<void>;
+  onClose: () => void;
+}
+
+const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ apiKeyConfig: initialConfig, onSave, onClose }) => {
+  const [provider, setProvider] = useState<AIProvider>(initialConfig.provider);
+  const [geminiKey, setGeminiKey] = useState(initialConfig.geminiKey);
+  const [groqKey, setGroqKey] = useState(initialConfig.groqKey);
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showGroqKey, setShowGroqKey] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    setError(null);
+    
+    if (provider === 'gemini' && !geminiKey.trim()) {
+      setError('Please enter your Gemini API key');
+      return;
+    }
+    
+    if (provider === 'groq' && !groqKey.trim()) {
+      setError('Please enter your Groq API key');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onSave({
+        provider,
+        geminiKey: geminiKey.trim(),
+        groqKey: groqKey.trim(),
+      });
+    } catch (err: any) {
+      setError(err.message || 'Failed to save API key');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900">Configure AI API Key</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {/* Provider Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">AI Provider</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setProvider('gemini')}
+                className={`flex-1 px-4 py-2 rounded-lg transition ${
+                  provider === 'gemini'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Gemini
+              </button>
+              <button
+                onClick={() => setProvider('groq')}
+                className={`flex-1 px-4 py-2 rounded-lg transition ${
+                  provider === 'groq'
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Groq
+              </button>
+            </div>
+          </div>
+
+          {/* Gemini API Key */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gemini API Key
+              <a
+                href="https://makersuite.google.com/app/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-2 text-blue-500 hover:text-blue-600 text-xs"
+              >
+                Get key →
+              </a>
+            </label>
+            <div className="relative">
+              <input
+                type={showGeminiKey ? 'text' : 'password'}
+                value={geminiKey}
+                onChange={(e) => setGeminiKey(e.target.value)}
+                placeholder="AIzaSy..."
+                className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                  provider === 'gemini' ? 'border-blue-300 bg-blue-50/30' : 'border-gray-200'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowGeminiKey(!showGeminiKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showGeminiKey ? (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Groq API Key */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Groq API Key
+              <a
+                href="https://console.groq.com/keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-2 text-orange-500 hover:text-orange-600 text-xs"
+              >
+                Get key →
+              </a>
+            </label>
+            <div className="relative">
+              <input
+                type={showGroqKey ? 'text' : 'password'}
+                value={groqKey}
+                onChange={(e) => setGroqKey(e.target.value)}
+                placeholder="gsk_..."
+                className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${
+                  provider === 'groq' ? 'border-orange-300 bg-orange-50/30' : 'border-gray-200'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowGroqKey(!showGroqKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showGroqKey ? (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Info Box */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="flex gap-3">
+              <svg className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="text-sm text-gray-600">
+                <p className="font-medium text-gray-700 mb-1">Your API keys are stored securely</p>
+                <p>Keys are saved locally in your browser. They will be used to generate questions with AI.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="px-5 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all disabled:opacity-50 font-medium flex items-center gap-2"
+          >
+            {isSaving ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Save API Key
+              </>
+            )}
           </button>
         </div>
       </div>
