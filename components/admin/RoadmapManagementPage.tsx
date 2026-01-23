@@ -42,7 +42,7 @@ interface Category {
 // API CONFIGURATION
 // ============================================
 
-const API_ENDPOINT = 'https://YOUR_API_GATEWAY_URL/roadmap-management'; // Replace with your API Gateway URL
+const API_ENDPOINT = ' https://07wee2lkxj.execute-api.ap-south-2.amazonaws.com/default/Roadmaps_get_post_put'; // Replace with your API Gateway URL
 
 // ============================================
 // MAIN COMPONENT

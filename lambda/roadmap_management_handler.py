@@ -1,12 +1,13 @@
 import json
 import boto3
+from botocore.exceptions import ClientError
 from decimal import Decimal
 from datetime import datetime
 from typing import Dict, List, Any
 
 # Initialize DynamoDB
 dynamodb = boto3.resource('dynamodb', region_name='ap-south-2')
-ROADMAP_TABLE = 'CareerGuidanceRoadmaps'  # Single table for all roadmap data
+ROADMAP_TABLE = 'Roadmaps'  # Single table for all roadmap data
 
 def response(status_code: int, body: Dict[str, Any]) -> Dict[str, Any]:
     """Create API Gateway response with CORS headers"""
@@ -32,8 +33,8 @@ def handle_list_categories():
     """List all categories from roadmaps table"""
     try:
         table = dynamodb.Table(ROADMAP_TABLE)
-        response = table.scan()
-        items = response.get('Items', [])
+        scan_response = table.scan()
+        items = scan_response.get('Items', [])
         
         # Extract unique categories
         categories = []
@@ -57,6 +58,19 @@ def handle_list_categories():
             'success': True,
             'categories': categories
         })
+    except ClientError as e:
+        error_code = e.response.get('Error', {}).get('Code', '')
+        if error_code == 'ResourceNotFoundException':
+            # Table doesn't exist - return empty list
+            return response(200, {
+                'success': True,
+                'categories': []
+            })
+        else:
+            return response(500, {
+                'success': False,
+                'error': str(e)
+            })
     except Exception as e:
         return response(500, {
             'success': False,
@@ -113,6 +127,26 @@ def handle_get_roadmap(category_id: str):
                     'createdAt': datetime.utcnow().isoformat(),
                     'updatedAt': datetime.utcnow().isoformat()
                 }
+            })
+    except ClientError as e:
+        error_code = e.response.get('Error', {}).get('Code', '')
+        if error_code == 'ResourceNotFoundException':
+            # Table doesn't exist or item doesn't exist - return empty roadmap
+            return response(200, {
+                'success': True,
+                'roadmap': {
+                    'categoryId': category_id,
+                    'categoryName': '',
+                    'icon': '📚',
+                    'weeks': [],
+                    'createdAt': datetime.utcnow().isoformat(),
+                    'updatedAt': datetime.utcnow().isoformat()
+                }
+            })
+        else:
+            return response(500, {
+                'success': False,
+                'error': f'Failed to get roadmap: {str(e)}'
             })
     except Exception as e:
         return response(500, {
@@ -203,6 +237,12 @@ def handle_save_roadmap(event_body: Dict):
         try:
             existing_response = table.get_item(Key={'categoryId': category_id})
             existing_item = existing_response.get('Item', {})
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', '')
+            if error_code == 'ResourceNotFoundException':
+                existing_item = {}
+            else:
+                raise
         except:
             existing_item = {}
         
@@ -224,6 +264,18 @@ def handle_save_roadmap(event_body: Dict):
             'message': 'Roadmap saved successfully with all data (category, weeks, resources, quiz questions)',
             'roadmap': item
         })
+    except ClientError as e:
+        error_code = e.response.get('Error', {}).get('Code', '')
+        if error_code == 'ResourceNotFoundException':
+            return response(500, {
+                'success': False,
+                'error': f'DynamoDB table "{ROADMAP_TABLE}" does not exist. Please create the table first.'
+            })
+        else:
+            return response(500, {
+                'success': False,
+                'error': f'Failed to save roadmap: {str(e)}'
+            })
     except Exception as e:
         return response(500, {
             'success': False,
@@ -234,8 +286,8 @@ def handle_list_all_roadmaps():
     """List all roadmaps"""
     try:
         table = dynamodb.Table(ROADMAP_TABLE)
-        response = table.scan()
-        roadmaps = response.get('Items', [])
+        scan_response = table.scan()
+        roadmaps = scan_response.get('Items', [])
         
         # Sort weeks for each roadmap
         for roadmap in roadmaps:
@@ -246,6 +298,19 @@ def handle_list_all_roadmaps():
             'success': True,
             'roadmaps': roadmaps
         })
+    except ClientError as e:
+        error_code = e.response.get('Error', {}).get('Code', '')
+        if error_code == 'ResourceNotFoundException':
+            # Table doesn't exist - return empty list
+            return response(200, {
+                'success': True,
+                'roadmaps': []
+            })
+        else:
+            return response(500, {
+                'success': False,
+                'error': str(e)
+            })
     except Exception as e:
         return response(500, {
             'success': False,
