@@ -526,7 +526,7 @@ const MockAssessmentsManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -628,7 +628,8 @@ const MockAssessmentsManagementPage: React.FC = () => {
             </div>
           ) : viewMode === 'table' ? (
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <table className="w-full">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[800px]">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assessment</th>
@@ -734,6 +735,7 @@ const MockAssessmentsManagementPage: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
