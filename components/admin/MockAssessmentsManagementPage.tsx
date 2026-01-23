@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
 // Lambda API endpoint for Mock Assessments
-const MOCK_ASSESSMENTS_API = 'https://your-api-gateway.execute-api.ap-south-2.amazonaws.com/default/mock-assessment-handler';
+// TODO: Update with actual API endpoint when Lambda is deployed
+// const MOCK_ASSESSMENTS_API = 'https://your-api-gateway.execute-api.ap-south-2.amazonaws.com/default/mock-assessment-handler';
 
 // Types
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
