@@ -878,16 +878,6 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                 }
             } catch (err: any) {
                 console.error('Failed to load roadmap from API:', err);
-<<<<<<< HEAD
-                // Return empty roadmap instead of throwing error
-                return {
-                    careerGoal: categoriesList.find(c => c.id === categoryId)?.name || categoryId,
-                    totalWeeks: 0,
-                    weeks: [],
-                    createdAt: new Date().toISOString(),
-                };
-            }
-=======
             }
 
             // Fallback: Try localStorage
@@ -1174,7 +1164,6 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                 })),
                 createdAt: new Date().toISOString(),
             };
->>>>>>> 077b1bf9949a459efa800f3c3fb4afb7e1b43216
         };
 
         try {
