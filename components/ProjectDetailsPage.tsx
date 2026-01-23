@@ -29,9 +29,10 @@ interface ProjectDetailsPageProps {
     project: ExtendedProject;
     onBack: () => void;
     onViewSeller?: (seller: ExtendedProject['seller']) => void;
+    toggleSidebar?: () => void;
 }
 
-const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack, onViewSeller }) => {
+const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack, onViewSeller, toggleSidebar }) => {
     const { isInWishlist, toggleWishlist } = useWishlist();
     const { userId } = useAuth();
     const [activeTab, setActiveTab] = useState<'description' | 'features' | 'support'>('description');
@@ -94,16 +95,31 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
 
     return (
         <div className="max-w-7xl mx-auto">
-            {/* Back Button */}
-            <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-gray-600 hover:text-orange-600 mb-6 transition-colors"
-            >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span className="font-medium">Back to Projects</span>
-            </button>
+            {/* Header with Mobile Menu and Back Button */}
+            <div className="flex items-center gap-2 mb-6">
+                {/* Mobile Menu Button */}
+                {toggleSidebar && (
+                    <button
+                        onClick={toggleSidebar}
+                        className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        aria-label="Toggle sidebar"
+                    >
+                        <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                )}
+                <button
+                    onClick={onBack}
+                    className="flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors"
+                >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span className="font-medium hidden sm:inline">Back to Projects</span>
+                    <span className="font-medium sm:hidden">Back</span>
+                </button>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                 {/* Left Column - Image Carousel */}

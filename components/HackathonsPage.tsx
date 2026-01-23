@@ -6,7 +6,11 @@ import HackathonsFeatured from './HackathonsFeatured';
 import Pagination from './Pagination';
 import { fetchHackathons } from '../services/buyerApi';
 
-const HackathonsPage: React.FC = () => {
+interface HackathonsPageProps {
+  toggleSidebar?: () => void;
+}
+
+const HackathonsPage: React.FC<HackathonsPageProps> = ({ toggleSidebar }) => {
   const [hackathons, setHackathons] = useState<Hackathon[]>([]);
   const [filteredHackathons, setFilteredHackathons] = useState<Hackathon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -149,11 +153,25 @@ const HackathonsPage: React.FC = () => {
   ];
 
   return (
-    <div className="mt-8">
+    <div className="mt-4 sm:mt-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">Discover Hackathons</h1>
-        <p className="text-base text-gray-600 leading-relaxed">Find and participate in exciting hackathons from top platforms</p>
+        <div className="flex items-center gap-3 mb-3">
+          {/* Mobile Menu Button */}
+          {toggleSidebar && (
+            <button
+              onClick={toggleSidebar}
+              className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Toggle sidebar"
+            >
+              <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 tracking-tight">Discover Hackathons</h1>
+        </div>
+        <p className="text-sm sm:text-base text-gray-600 leading-relaxed">Find and participate in exciting hackathons from top platforms</p>
       </div>
 
       {/* Integrated Platforms Section */}

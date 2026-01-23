@@ -43,9 +43,10 @@ interface PortfolioData {
 
 interface BuildPortfolioPageProps {
   embedded?: boolean;
+  toggleSidebar?: () => void;
 }
 
-const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = false }) => {
+const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = false, toggleSidebar }) => {
   const { navigateTo } = useNavigation();
   const { isLoggedIn, userId, userEmail } = useAuth();
   
@@ -696,18 +697,31 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
         </header>
       )}
 
-      <main className={`${embedded ? 'py-8' : 'pt-24 pb-16'} px-6`}>
+      <main className={`${embedded ? 'py-6 sm:py-8' : 'pt-24 pb-16'} px-4 sm:px-6`}>
         <div className="max-w-6xl mx-auto">
+          {/* Mobile Menu Button (only when embedded) */}
+          {embedded && toggleSidebar && (
+            <button
+              onClick={toggleSidebar}
+              className="lg:hidden mb-4 p-2 -ml-2 rounded-lg hover:bg-white/10 transition-colors"
+              aria-label="Toggle sidebar"
+            >
+              <svg className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
+          
           {/* Hero */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 mb-4">
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-violet-500/10 border border-violet-500/20 mb-4">
               <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
-              <span className="text-sm text-violet-400">Smart Portfolio Builder</span>
+              <span className="text-xs sm:text-sm text-violet-400">Smart Portfolio Builder</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold mb-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3">
               Build Your <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Portfolio</span>
             </h1>
-            <p className="text-gray-400 max-w-xl mx-auto">
+            <p className="text-sm sm:text-base text-gray-400 max-w-xl mx-auto px-4">
               Upload your resume, choose a template, preview it live, and deploy instantly.
             </p>
           </div>

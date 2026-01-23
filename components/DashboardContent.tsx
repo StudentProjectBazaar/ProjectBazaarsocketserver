@@ -553,11 +553,11 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                     />
                 );
             case 'hackathons':
-                return <HackathonsPage />;
+                return <HackathonsPage toggleSidebar={toggleSidebar} />;
             case 'post-project':
                 return <PostBidRequestProjectPage onBack={() => setActiveView('dashboard')} />;
             case 'build-portfolio':
-                return <BuildPortfolioPage embedded />;
+                return <BuildPortfolioPage embedded toggleSidebar={toggleSidebar} />;
             case 'build-resume':
                 return <ResumeBuilderPage embedded onBack={() => setActiveView('dashboard')} />;
             case 'career-guidance':
@@ -572,6 +572,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                     <CourseDetailsPage
                         course={selectedCourse}
                         onBack={() => setActiveView(previousView)}
+                        toggleSidebar={toggleSidebar}
                     />
                 );
             case 'analytics':
@@ -627,6 +628,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                             setSelectedSeller(seller);
                             setActiveView('seller-profile');
                         }}
+                        toggleSidebar={toggleSidebar}
                     />
                 );
             case 'seller-profile':
@@ -641,6 +643,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                             setSelectedProject(project);
                             setActiveView('project-details');
                         }}
+                        toggleSidebar={toggleSidebar}
                     />
                 );
             default:
@@ -655,7 +658,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'post-project':
                 return <PostBidRequestProjectPage onBack={() => setActiveView('dashboard')} />;
             case 'build-portfolio':
-                return <BuildPortfolioPage embedded />;
+                return <BuildPortfolioPage embedded toggleSidebar={toggleSidebar} />;
             case 'build-resume':
                 return <ResumeBuilderPage embedded onBack={() => setActiveView('dashboard')} />;
             case 'career-guidance':

@@ -42,6 +42,7 @@ interface SellerProfilePageProps {
   sellerProjects?: BuyerProject[];
   onBack: () => void;
   onViewProjectDetails?: (project: BuyerProject) => void;
+  toggleSidebar?: () => void;
 }
 
 interface ApiUser {
@@ -102,7 +103,7 @@ interface ApiResponse {
   projectsCount: number;
 }
 
-const SellerProfilePage: React.FC<SellerProfilePageProps> = ({ seller, sellerProjects: initialProjects, onBack, onViewProjectDetails }) => {
+const SellerProfilePage: React.FC<SellerProfilePageProps> = ({ seller, sellerProjects: initialProjects, onBack, onViewProjectDetails, toggleSidebar }) => {
   const [sellerData, setSellerData] = useState<Seller>(seller);
   const [projects, setProjects] = useState<BuyerProject[]>(initialProjects || []);
   const [isLoading, setIsLoading] = useState(true);
@@ -203,16 +204,31 @@ const SellerProfilePage: React.FC<SellerProfilePageProps> = ({ seller, sellerPro
   }, [seller.id]);
   return (
     <div className="space-y-6">
-      {/* Back Button */}
-      <button
-        onClick={onBack}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Back to Project
-      </button>
+      {/* Header with Mobile Menu and Back Button */}
+      <div className="flex items-center gap-2">
+        {/* Mobile Menu Button */}
+        {toggleSidebar && (
+          <button
+            onClick={toggleSidebar}
+            className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Toggle sidebar"
+          >
+            <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span className="hidden sm:inline">Back to Project</span>
+          <span className="sm:hidden">Back</span>
+        </button>
+      </div>
 
       {/* Loading State */}
       {isLoading && (

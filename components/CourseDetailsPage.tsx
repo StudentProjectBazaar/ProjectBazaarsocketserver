@@ -14,9 +14,10 @@ interface CourseDetailsPageProps {
     course: Course;
     onBack: () => void;
     onPurchaseSuccess?: () => void;
+    toggleSidebar?: () => void;
 }
 
-const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, onPurchaseSuccess }) => {
+const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, onPurchaseSuccess, toggleSidebar }) => {
     const { userId, userEmail, isLoggedIn } = useAuth();
     const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'instructor'>('overview');
     const [selectedPdf, setSelectedPdf] = useState<{ name: string; url: string } | null>(null);
@@ -181,16 +182,31 @@ const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, o
         <div className="min-h-screen bg-gray-50">
             {/* Header with Back Button */}
             <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="container mx-auto px-6 py-4">
-                    <button
-                        onClick={onBack}
-                        className="flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors mb-4"
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        <span className="font-medium">Back to Courses</span>
-                    </button>
+                <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex items-center gap-2">
+                        {/* Mobile Menu Button */}
+                        {toggleSidebar && (
+                            <button
+                                onClick={toggleSidebar}
+                                className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+                                aria-label="Toggle sidebar"
+                            >
+                                <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                        )}
+                        <button
+                            onClick={onBack}
+                            className="flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                            <span className="font-medium hidden sm:inline">Back to Courses</span>
+                            <span className="font-medium sm:hidden">Back</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
