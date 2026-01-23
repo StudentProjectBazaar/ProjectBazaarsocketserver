@@ -578,7 +578,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'analytics':
                 return <BuyerAnalyticsPage />;
             case 'help-center':
-                return <HelpCenterPage />;
+                return <HelpCenterPage toggleSidebar={toggleSidebar} />;
             case 'settings':
                 return <SettingsPage />;
             case 'project-details':
@@ -678,7 +678,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'analytics':
                 return <SellerAnalyticsPage />;
             case 'help-center':
-                return <HelpCenterPage />;
+                return <HelpCenterPage toggleSidebar={toggleSidebar} />;
             case 'settings':
                 return <SettingsPage />;
             default:

@@ -6,7 +6,11 @@ interface FAQ {
   category: string;
 }
 
-const HelpCenterPage: React.FC = () => {
+interface HelpCenterPageProps {
+  toggleSidebar?: () => void;
+}
+
+const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -83,9 +87,25 @@ const HelpCenterPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Help Center</h1>
-        <p className="text-gray-600">Find answers to common questions and get support</p>
+      <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+        <div className="flex items-center gap-3 mb-2">
+          {/* Mobile Menu Button */}
+          {toggleSidebar && (
+            <button
+              onClick={toggleSidebar}
+              className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Toggle sidebar"
+            >
+              <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Help Center</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Find answers to common questions and get support</p>
+          </div>
+        </div>
       </div>
 
       {/* Search Bar */}
