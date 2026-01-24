@@ -5,6 +5,13 @@ import HackathonsFilters from './HackathonsFilters';
 import HackathonsFeatured from './HackathonsFeatured';
 import Pagination from './Pagination';
 import { fetchHackathons } from '../services/buyerApi';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
+import { Marquee } from './ui/marquee';
 
 interface HackathonsPageProps {
   toggleSidebar?: () => void;
@@ -185,54 +192,79 @@ const HackathonsPage: React.FC<HackathonsPageProps> = ({ toggleSidebar }) => {
               Hackathons integrated from:
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            {platforms.map((platform) => {
-              const hasError = logoErrors[platform.domain];
-              const [imageLoaded, setImageLoaded] = React.useState(false);
-              
-              return (
-                <a
-                  key={platform.domain}
-                  href={`https://${platform.domain}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200 group relative overflow-hidden ${
-                    hasError || !imageLoaded
-                      ? `${platform.color} border-transparent hover:shadow-lg hover:-translate-y-1 text-white`
-                      : 'bg-white border-gray-200 hover:border-blue-400 hover:bg-white hover:shadow-lg hover:-translate-y-1'
-                  }`}
-                  title={`${platform.name} (${platform.domain})`}
-                >
-                  {hasError || !imageLoaded ? (
-                    <span className="text-sm font-bold leading-none z-10">
-                      {platform.fallback || platform.name.charAt(0)}
-                    </span>
-                  ) : null}
-                  <img
-                    src={platform.logo}
-                    alt={`${platform.name} logo`}
-                    className={`w-7 h-7 object-contain transition-opacity duration-200 ${
-                      imageLoaded ? 'opacity-100' : 'opacity-0 absolute'
-                    }`}
-                    onError={() => {
-                      setLogoErrors(prev => ({ ...prev, [platform.domain]: true }));
-                      setImageLoaded(false);
-                    }}
-                    onLoad={() => {
-                      setImageLoaded(true);
-                      setLogoErrors(prev => {
-                        const newState = { ...prev };
-                        delete newState[platform.domain];
-                        return newState;
-                      });
-                    }}
-                    loading="lazy"
-                  />
-                </a>
-              );
-            })}
-          </div>
+          <TooltipProvider>
+            <div className="flex flex-wrap items-center gap-3">
+              {platforms.map((platform) => {
+                const hasError = logoErrors[platform.domain];
+                const [imageLoaded, setImageLoaded] = React.useState(false);
+                
+                return (
+                  <Tooltip key={platform.domain}>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={`https://${platform.domain}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200 group relative overflow-hidden ${
+                          hasError || !imageLoaded
+                            ? `${platform.color} border-transparent hover:shadow-lg hover:-translate-y-1 text-white`
+                            : 'bg-white border-gray-200 hover:border-blue-400 hover:bg-white hover:shadow-lg hover:-translate-y-1'
+                        }`}
+                      >
+                        {hasError || !imageLoaded ? (
+                          <span className="text-sm font-bold leading-none z-10">
+                            {platform.fallback || platform.name.charAt(0)}
+                          </span>
+                        ) : null}
+                        <img
+                          src={platform.logo}
+                          alt={`${platform.name} logo`}
+                          className={`w-7 h-7 object-contain transition-opacity duration-200 ${
+                            imageLoaded ? 'opacity-100' : 'opacity-0 absolute'
+                          }`}
+                          onError={() => {
+                            setLogoErrors(prev => ({ ...prev, [platform.domain]: true }));
+                            setImageLoaded(false);
+                          }}
+                          onLoad={() => {
+                            setImageLoaded(true);
+                            setLogoErrors(prev => {
+                              const newState = { ...prev };
+                              delete newState[platform.domain];
+                              return newState;
+                            });
+                          }}
+                          loading="lazy"
+                        />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="font-medium">{platform.name}</p>
+                      <p className="text-xs text-gray-400">{platform.domain}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
         </div>
+      </div>
+
+      {/* Auto-scrolling Platform Names */}
+      <div className="mb-6 relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-white z-10 pointer-events-none"></div>
+        <Marquee speed={40} pauseOnHover={true} className="mb-0">
+          {['unstop', 'devfolio', 'hackerrank', 'techgig', 'skillenza'].map((platform, idx) => (
+            <div
+              key={idx}
+              className="relative h-full w-fit mx-8 flex items-center justify-start"
+            >
+              <span className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 text-sm font-semibold text-gray-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap">
+                {platform}
+              </span>
+            </div>
+          ))}
+        </Marquee>
       </div>
 
       {/* Search Bar */}
@@ -252,7 +284,7 @@ const HackathonsPage: React.FC<HackathonsPageProps> = ({ toggleSidebar }) => {
             placeholder="Search hackathons by name, platform, organizer, or tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-400 transition-all bg-white shadow-sm hover:shadow-md focus:shadow-lg placeholder:text-gray-400 text-gray-900"
+            className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition-all bg-white shadow-sm hover:shadow-md focus:shadow-lg placeholder:text-gray-400 text-gray-900"
           />
         </div>
       </div>

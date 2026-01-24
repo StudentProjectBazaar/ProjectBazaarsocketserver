@@ -50,7 +50,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
     }}
   >
-    <header className="text-center mb-6">
+    <header id="resume-section-personal" className="text-center mb-6">
       <h1 className="text-2xl font-bold mb-1" style={{ color: themeColor }}>
         {resumeInfo.firstName || 'Your'} {resumeInfo.lastName || 'Name'}
       </h1>
@@ -69,14 +69,14 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
       <hr className="mt-4" style={{ borderColor: themeColor, borderWidth: '1px' }} />
     </header>
     {resumeInfo.summary && (
-      <section className="mb-5">
+      <section id="resume-section-summary" className="mb-5">
         <h2 className="text-sm font-bold uppercase tracking-wider mb-2 text-center" style={{ color: themeColor }}>Professional Summary</h2>
         <hr className="mb-3" style={{ borderColor: themeColor }} />
         <p className="text-sm leading-relaxed text-gray-700">{resumeInfo.summary}</p>
       </section>
     )}
     {resumeInfo.experience.length > 0 && (
-      <section className="mb-5">
+      <section id="resume-section-experience" className="mb-5">
         <h2 className="text-sm font-bold uppercase tracking-wider mb-2 text-center" style={{ color: themeColor }}>Professional Experience</h2>
         <hr className="mb-3" style={{ borderColor: themeColor }} />
         {resumeInfo.experience.map((exp) => (
@@ -94,7 +94,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
       </section>
     )}
     {resumeInfo.education.length > 0 && (
-      <section className="mb-5">
+      <section id="resume-section-education" className="mb-5">
         <h2 className="text-sm font-bold uppercase tracking-wider mb-2 text-center" style={{ color: themeColor }}>Education</h2>
         <hr className="mb-3" style={{ borderColor: themeColor }} />
         {resumeInfo.education.map((edu) => (
@@ -111,14 +111,14 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
       </section>
     )}
     {resumeInfo.skills.length > 0 && (
-      <section className="mb-5">
+      <section id="resume-section-skills" className="mb-5">
         <h2 className="text-sm font-bold uppercase tracking-wider mb-2 text-center" style={{ color: themeColor }}>Skills</h2>
         <hr className="mb-3" style={{ borderColor: themeColor }} />
         <div className="text-xs text-gray-700">{resumeInfo.skills.map(s => s.name).join(' • ')}</div>
       </section>
     )}
     {resumeInfo.projects.length > 0 && (
-      <section>
+      <section id="resume-section-projects">
         <h2 className="text-sm font-bold uppercase tracking-wider mb-2 text-center" style={{ color: themeColor }}>Projects</h2>
         <hr className="mb-3" style={{ borderColor: themeColor }} />
         {resumeInfo.projects.map((project) => (
@@ -138,7 +138,7 @@ export const ClassicTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
 // =============================================================================
 export const ModernTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor, formatDate }) => (
   <div className="bg-white text-gray-900 p-8" style={{ borderLeft: `5px solid ${themeColor}`, fontFamily: "'Inter', sans-serif" }}>
-    <header className="mb-6">
+    <header id="resume-section-personal" className="mb-6">
       <h1 className="text-3xl font-bold" style={{ color: themeColor }}>{resumeInfo.firstName || 'Your'} {resumeInfo.lastName || 'Name'}</h1>
       {resumeInfo.jobTitle && <p className="text-lg font-medium text-gray-600 mt-1">{resumeInfo.jobTitle}</p>}
       <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-600">
@@ -153,20 +153,20 @@ export const ModernTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor
       )}
     </header>
     {resumeInfo.summary && (
-      <section className="mb-6">
+      <section id="resume-section-summary" className="mb-6">
         <h2 className="text-sm font-bold uppercase tracking-widest mb-2" style={{ color: themeColor }}>About Me</h2>
         <p className="text-sm leading-relaxed text-gray-700 pl-4 border-l-2" style={{ borderColor: `${themeColor}40` }}>{resumeInfo.summary}</p>
       </section>
     )}
     {resumeInfo.experience.length > 0 && (
-      <section className="mb-6">
+      <section id="resume-section-experience" className="mb-6">
         <h2 className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: themeColor }}>Experience</h2>
         {resumeInfo.experience.map((exp) => (
           <div key={exp.id} className="mb-4 pl-4 border-l-2" style={{ borderColor: `${themeColor}40` }}>
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-sm" style={{ color: themeColor }}>{exp.companyName}</p>
+                <p className="text-sm" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs font-medium px-2 py-1 rounded" style={{ backgroundColor: `${themeColor}15`, color: themeColor }}>{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
@@ -176,7 +176,7 @@ export const ModernTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor
       </section>
     )}
     {resumeInfo.education.length > 0 && (
-      <section className="mb-6">
+      <section id="resume-section-education" className="mb-6">
         <h2 className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: themeColor }}>Education</h2>
         {resumeInfo.education.map((edu) => (
           <div key={edu.id} className="mb-3 pl-4 border-l-2" style={{ borderColor: `${themeColor}40` }}>
@@ -187,7 +187,7 @@ export const ModernTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor
       </section>
     )}
     {resumeInfo.skills.length > 0 && (
-      <section className="mb-6">
+      <section id="resume-section-skills" className="mb-6">
         <h2 className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: themeColor }}>Skills</h2>
         <div className="flex flex-wrap gap-2">
           {resumeInfo.skills.map((skill) => <span key={skill.id} className="text-xs px-3 py-1 rounded-full" style={{ backgroundColor: `${themeColor}15`, color: themeColor }}>{skill.name}</span>)}
@@ -195,7 +195,7 @@ export const ModernTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor
       </section>
     )}
     {resumeInfo.projects.length > 0 && (
-      <section>
+      <section id="resume-section-projects">
         <h2 className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: themeColor }}>Projects</h2>
         {resumeInfo.projects.map((project) => (
           <div key={project.id} className="mb-3 pl-4 border-l-2" style={{ borderColor: `${themeColor}40` }}>
@@ -214,7 +214,7 @@ export const ModernTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor
 // =============================================================================
 export const ProfessionalTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor, formatDate }) => (
   <div className="bg-white text-gray-900 p-8" style={{ fontFamily: "'Georgia', serif" }}>
-    <header className="border-b-2 pb-4 mb-6" style={{ borderColor: themeColor }}>
+    <header id="resume-section-personal" className="border-b-2 pb-4 mb-6" style={{ borderColor: themeColor }}>
       <h1 className="text-3xl font-normal tracking-wide" style={{ color: themeColor }}>{resumeInfo.firstName || 'Your'} <span className="font-bold">{resumeInfo.lastName || 'Name'}</span></h1>
       {resumeInfo.jobTitle && <p className="text-base text-gray-600 mt-1 italic">{resumeInfo.jobTitle}</p>}
       <div className="flex flex-wrap gap-6 mt-3 text-sm text-gray-600">
@@ -223,13 +223,13 @@ export const ProfessionalTemplate: React.FC<TemplateProps> = ({ resumeInfo, them
       </div>
     </header>
     {resumeInfo.summary && (
-      <section className="mb-6">
+      <section id="resume-section-summary" className="mb-6">
         <h2 className="text-lg font-bold mb-2" style={{ color: themeColor }}>Professional Profile</h2>
         <p className="text-sm leading-relaxed text-gray-700">{resumeInfo.summary}</p>
       </section>
     )}
     {resumeInfo.experience.length > 0 && (
-      <section className="mb-6">
+      <section id="resume-section-experience" className="mb-6">
         <h2 className="text-lg font-bold mb-3" style={{ color: themeColor }}>Professional Experience</h2>
         {resumeInfo.experience.map((exp) => (
           <div key={exp.id} className="mb-4">
@@ -237,14 +237,14 @@ export const ProfessionalTemplate: React.FC<TemplateProps> = ({ resumeInfo, them
               <h3 className="text-base font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500 italic">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-sm italic" style={{ color: themeColor }}>{exp.companyName}</p>
+            <p className="text-sm italic" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-sm text-gray-700 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
       </section>
     )}
     {resumeInfo.education.length > 0 && (
-      <section className="mb-6">
+      <section id="resume-section-education" className="mb-6">
         <h2 className="text-lg font-bold mb-3" style={{ color: themeColor }}>Education</h2>
         {resumeInfo.education.map((edu) => (
           <div key={edu.id} className="mb-3">
@@ -255,13 +255,13 @@ export const ProfessionalTemplate: React.FC<TemplateProps> = ({ resumeInfo, them
       </section>
     )}
     {resumeInfo.skills.length > 0 && (
-      <section className="mb-6">
+      <section id="resume-section-skills" className="mb-6">
         <h2 className="text-lg font-bold mb-2" style={{ color: themeColor }}>Core Competencies</h2>
         <p className="text-sm text-gray-700">{resumeInfo.skills.map(s => s.name).join(' | ')}</p>
       </section>
     )}
     {resumeInfo.projects.length > 0 && (
-      <section>
+      <section id="resume-section-projects">
         <h2 className="text-lg font-bold mb-3" style={{ color: themeColor }}>Key Projects</h2>
         {resumeInfo.projects.map((project) => (
           <div key={project.id} className="mb-3">
@@ -294,7 +294,7 @@ export const MinimalTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatDat
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-semibold text-gray-900">{exp.title}</h3>
-                <p className="text-xs text-gray-500">{exp.companyName}</p>
+                <p className="text-xs text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <p className="text-xs text-gray-400">{formatDate(exp.startDate)} – {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
             </div>
@@ -363,7 +363,7 @@ export const ExecutiveTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatD
               <h3 className="text-base font-bold text-gray-900 uppercase">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-sm text-gray-600 mb-2">{exp.companyName}</p>
+            <p className="text-sm text-gray-600 mb-2">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-sm text-gray-700 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -429,7 +429,7 @@ export const TechTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor, 
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs" style={{ color: themeColor }}>@ {exp.companyName}</p>
+                <p className="text-xs" style={{ color: themeColor }}>@ {exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs text-gray-500 font-mono">{formatDate(exp.startDate)} → {exp.currentlyWorking ? 'now' : formatDate(exp.endDate)}</span>
             </div>
@@ -505,7 +505,7 @@ export const AcademicTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCol
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-sm italic text-gray-600">{exp.companyName}</p>
+                <p className="text-sm italic text-gray-600">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <p className="text-xs text-gray-500">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
             </div>
@@ -573,7 +573,7 @@ export const CreativeTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCol
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}</p>
+                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs text-gray-400">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
@@ -642,7 +642,7 @@ export const ElegantTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
               <h3 className="text-base font-semibold text-gray-800">{exp.title}</h3>
               <span className="text-xs text-gray-400 italic">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-sm text-gray-500 italic">{exp.companyName}</p>
+            <p className="text-sm text-gray-500 italic">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -698,7 +698,7 @@ export const BoldTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor, 
                 <h3 className="text-base font-bold text-gray-900">{exp.title}</h3>
                 <span className="text-xs font-semibold px-2 py-1 rounded" style={{ backgroundColor: `${themeColor}15`, color: themeColor }}>{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
               </div>
-              <p className="text-sm font-semibold" style={{ color: themeColor }}>{exp.companyName}</p>
+              <p className="text-sm font-semibold" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
             </div>
           ))}
@@ -758,7 +758,7 @@ export const CompactTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
                   <h3 className="text-[11px] font-semibold text-gray-900">{exp.title}</h3>
                   <span className="text-[9px] text-gray-400">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
                 </div>
-                <p className="text-[10px] text-gray-500">{exp.companyName}</p>
+                <p className="text-[10px] text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
                 {exp.workSummary && <div className="text-[9px] text-gray-600 mt-1 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
               </div>
             ))}
@@ -829,7 +829,7 @@ export const TimelineTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCol
               <div className="absolute -left-[29px] w-4 h-4 rounded-full border-2 bg-white" style={{ borderColor: themeColor }} />
               <div className="text-xs font-semibold px-2 py-0.5 rounded inline-block mb-1" style={{ backgroundColor: `${themeColor}15`, color: themeColor }}>{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</div>
               <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-              <p className="text-xs text-gray-500">{exp.companyName}</p>
+              <p className="text-xs text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
             </div>
           ))}
@@ -907,7 +907,7 @@ export const SidebarTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">{exp.title}</h3>
-                  <p className="text-xs text-gray-500">{exp.companyName}</p>
+                  <p className="text-xs text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
                 </div>
                 <span className="text-xs text-gray-400">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
               </div>
@@ -974,7 +974,7 @@ export const InfographicTemplate: React.FC<TemplateProps> = ({ resumeInfo, theme
             <div className="flex justify-between items-start mb-2">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}</p>
+                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: `${themeColor}15`, color: themeColor }}>{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
@@ -1029,7 +1029,7 @@ export const CorporateTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatD
               <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-[#1e3a5f] font-medium">{exp.companyName}</p>
+            <p className="text-xs text-[#1e3a5f] font-medium">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1100,7 +1100,7 @@ export const StartupTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}</p>
+                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs text-gray-400">{formatDate(exp.startDate)} → {exp.currentlyWorking ? 'now' : formatDate(exp.endDate)}</span>
             </div>
@@ -1152,7 +1152,7 @@ export const ConsultantTemplate: React.FC<TemplateProps> = ({ resumeInfo, format
               <h3 className="text-base font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} – {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-sm text-gray-600">{exp.companyName}</p>
+            <p className="text-sm text-gray-600">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-sm text-gray-700 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1219,7 +1219,7 @@ export const HealthcareTemplate: React.FC<TemplateProps> = ({ resumeInfo, format
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs text-emerald-600">{exp.companyName}</p>
+                <p className="text-xs text-emerald-600">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
@@ -1266,7 +1266,7 @@ export const FinanceTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatDat
               <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-[#1e3a5f] font-medium">{exp.companyName}</p>
+            <p className="text-xs text-[#1e3a5f] font-medium">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1331,7 +1331,7 @@ export const MarketingTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCo
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs font-medium" style={{ color: themeColor }}>{exp.companyName}</p>
+                <p className="text-xs font-medium" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs text-gray-400">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
@@ -1397,7 +1397,7 @@ export const GradientTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCol
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
                 <span className="text-xs text-gray-500">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
               </div>
-              <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}</p>
+              <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
             </div>
           ))}
@@ -1456,7 +1456,7 @@ export const BoxedTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor,
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
                 <span className="text-xs text-gray-400">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
               </div>
-              <p className="text-xs text-gray-500">{exp.companyName}</p>
+              <p className="text-xs text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               {exp.workSummary && <div className="text-xs text-gray-600 mt-1 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
             </div>
           ))}
@@ -1514,7 +1514,7 @@ export const MetroTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor,
               <h3 className="text-sm font-semibold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-gray-500">{exp.companyName}</p>
+            <p className="text-xs text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1573,7 +1573,7 @@ export const SwissTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatDate 
               <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-400">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-gray-500 uppercase tracking-wider">{exp.companyName}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wider">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1629,7 +1629,7 @@ export const RetroTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatDate 
               <h3 className="text-sm font-bold text-amber-900">{exp.title}</h3>
               <span className="text-xs text-amber-700">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-amber-700 italic">{exp.companyName}</p>
+            <p className="text-xs text-amber-700 italic">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-amber-800 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1689,7 +1689,7 @@ export const ArchitectTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatD
               <h3 className="text-sm font-bold text-blue-900">{i + 1}.0 {exp.title}</h3>
               <span className="text-xs text-blue-600 font-mono">{formatDate(exp.startDate)} → {exp.currentlyWorking ? 'CURRENT' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-blue-700">{exp.companyName}</p>
+            <p className="text-xs text-blue-700">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-blue-800 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1748,7 +1748,7 @@ export const MagazineTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCol
               {resumeInfo.experience.map((exp) => (
                 <div key={exp.id} className="mb-5">
                   <h3 className="text-base font-bold text-gray-900">{exp.title}</h3>
-                  <p className="text-sm text-gray-500 italic">{exp.companyName} • {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
+                  <p className="text-sm text-gray-500 italic">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`} • {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
                   {exp.workSummary && <div className="text-sm text-gray-700 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
                 </div>
               ))}
@@ -1815,7 +1815,7 @@ export const NeonTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor, 
               <h3 className="text-sm font-bold text-gray-100">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}</p>
+            <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-400 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1871,7 +1871,7 @@ export const LegalTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatDate 
               <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-sm text-gray-600 italic">{exp.companyName}</p>
+            <p className="text-sm text-gray-600 italic">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-sm text-gray-700 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1910,7 +1910,7 @@ export const NewspaperTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatD
             {resumeInfo.experience.map((exp) => (
               <div key={exp.id} className="mb-4">
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs text-gray-500 italic">{exp.companyName} | {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
+                <p className="text-xs text-gray-500 italic">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`} | {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
                 {exp.workSummary && <div className="text-xs text-gray-700 mt-1 rich-text-content leading-relaxed" style={{ textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
               </div>
             ))}
