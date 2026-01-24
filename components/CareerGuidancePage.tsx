@@ -682,8 +682,9 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
 }) => {
     // API keys no longer needed - using static data
 
-    // Step 1: Category Selection (Duration fixed at 8 weeks)
+    // Step 1: Category Selection and Week Plan Selection
     const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [selectedWeeks, setSelectedWeeks] = useState<number>(8);
     const [categories, setCategories] = useState<Array<{ id: string; name: string; icon: string }>>([]);
     const [_loadingCategories, setLoadingCategories] = useState(true);
 
@@ -762,19 +763,21 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
             setRoadmapError('Please select a category');
             return;
         }
-        // Always use 8 weeks (fixed program duration)
-        const fixedDuration = 8;
+        if (selectedWeeks < 1 || selectedWeeks > 8) {
+            setRoadmapError('Please select a valid week plan (1-8 weeks)');
+            return;
+        }
 
         const categoryName = categories.find(c => c.id === selectedCategory)?.name || selectedCategory;
         const analysis: CareerAnalysis = {
             careerGoal: categoryName,
-            currentLevel: 'Beginner', // Default, not exposed to user
+            currentLevel: 'Beginner',
             timeCommitment: 10,
             preferredTechStack: [],
         };
         setCareerAnalysis(analysis);
         setRoadmapStep('roadmap');
-        generateRoadmap(analysis, fixedDuration);
+        generateRoadmap(analysis, selectedWeeks);
     };
 
     // Generate static roadmap based on career goal and duration
@@ -1100,25 +1103,6 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                     practicalTasks: template.practicalTasks,
                     miniProject: template.miniProject,
                     resources: resources,
-                });
-            }
-
-            // Add revision week for beginners if duration > 8 weeks
-            if (currentLevel === 'Beginner' && totalWeeks > 8) {
-                const revisionResources: WeekResource[] = [
-                    { type: 'practice', title: 'LeetCode', url: 'https://leetcode.com/' },
-                    { type: 'practice', title: 'HackerRank', url: 'https://www.hackerrank.com/' },
-                    { type: 'practice', title: 'InterviewBit', url: 'https://www.interviewbit.com/' },
-                    { type: 'article', title: 'Resume Building Guide', url: 'https://www.geeksforgeeks.org/resume-building-for-freshers/' },
-                    { type: 'article', title: 'Interview Preparation', url: 'https://www.geeksforgeeks.org/interview-preparation/' },
-                ];
-                generatedWeeks.push({
-                    weekNumber: generatedWeeks.length + 1,
-                    mainTopics: ['Revision & Practice', 'Portfolio Building', 'Interview Preparation'],
-                    subtopics: ['Review All Topics', 'Build Portfolio', 'Practice Problems', 'Mock Interviews', 'Resume Building'],
-                    practicalTasks: ['Review all concepts', 'Complete portfolio projects', 'Solve coding problems', 'Prepare resume'],
-                    miniProject: 'Create a comprehensive portfolio showcasing all your projects',
-                    resources: revisionResources,
                 });
             }
 
@@ -1536,16 +1520,37 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                                 )}
                             </div>
 
-                            {/* Program Info Badge */}
-                            <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-5">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center">
-                                        <span className="text-2xl">🎯</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-gray-900">8-Week Comprehensive Program</h4>
-                                        <p className="text-sm text-gray-600">Industry-aligned curriculum designed for skill mastery</p>
-                                    </div>
+                            {/* Week Plan Selection */}
+                            <div className="space-y-4">
+                                <label className="block text-sm font-semibold text-gray-700">
+                                    Select Program Duration *
+                                    <span className="text-xs font-normal text-gray-500 ml-2">
+                                        (How many weeks of learning do you want?)
+                                    </span>
+                                </label>
+                                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+                                    {[1, 2, 3, 4, 5, 6, 7, 8].map((weekNum) => (
+                                        <button
+                                            key={weekNum}
+                                            onClick={() => setSelectedWeeks(weekNum)}
+                                            className={`py-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 ${selectedWeeks === weekNum
+                                                    ? 'border-orange-500 bg-orange-50 shadow-md scale-105'
+                                                    : 'border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50'
+                                                }`}
+                                        >
+                                            <span className={`text-lg font-bold ${selectedWeeks === weekNum ? 'text-orange-600' : 'text-gray-700'}`}>
+                                                {weekNum}
+                                            </span>
+                                            <span className="text-[10px] uppercase tracking-tighter text-gray-400 font-bold">Week{weekNum > 1 ? 's' : ''}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 flex items-center gap-3">
+                                    <span className="text-xl">🎯</span>
+                                    <p className="text-xs text-orange-800 leading-relaxed">
+                                        You've selected a <span className="font-bold">{selectedWeeks}-week plan</span>.
+                                        We'll fetch the industry-aligned curriculum for this specific duration.
+                                    </p>
                                 </div>
                             </div>
 
