@@ -933,6 +933,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   // Question instructions visibility
   const [showQuestionInstructions, setShowQuestionInstructions] = useState(false);
 
+
   // Maximum warnings before auto-submit
   const MAX_TAB_SWITCHES = 1;
   const MAX_FULLSCREEN_EXITS = 2;
@@ -3821,117 +3822,20 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     );
   };
 
+  /* Improved Assessment Report UI */
   const renderResults = () => {
     if (!testResult) return null;
 
+    const isPassed = testResult.score >= 40;
+    const percentage = Math.round((testResult.score / 100) * 100);
+    const accuracy = Math.round((testResult.solved / testResult.attempted) * 100) || 0;
+
     return (
-      <div className="bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-700 text-white py-16 px-4 relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-1/3 h-full opacity-20">
-            <svg viewBox="0 0 200 200" className="w-full h-full">
-              <rect x="40" y="20" width="120" height="160" rx="8" fill="currentColor" />
-              <rect x="50" y="40" width="60" height="8" rx="2" fill="currentColor" opacity="0.5" />
-              <rect x="50" y="60" width="80" height="4" rx="2" fill="currentColor" opacity="0.3" />
-              <rect x="50" y="70" width="70" height="4" rx="2" fill="currentColor" opacity="0.3" />
-              <path d="M70 100 L85 115 L120 80" stroke="currentColor" strokeWidth="4" fill="none" opacity="0.5" />
-              <path d="M70 130 L85 145 L120 110" stroke="currentColor" strokeWidth="4" fill="none" opacity="0.5" />
-            </svg>
-          </div>
-          <div className="max-w-4xl mx-auto relative z-10">
-            <h1 className="text-4xl font-bold mb-2">
-              Mock Coding Interview Assessment - {testResult.assessmentTitle}
-            </h1>
-            <h2 className="text-2xl text-orange-100">Performance Report</h2>
-          </div>
-        </div>
-
-        <div className="max-w-4xl mx-auto px-4 -mt-8">
-          {/* Score Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-              {/* Score Circle */}
-              <div className="flex flex-col items-center">
-                <div className="relative w-32 h-32">
-                  <svg className="w-32 h-32 transform -rotate-90">
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="currentColor"
-                      strokeWidth="12"
-                      fill="none"
-                      className="text-gray-200 dark:text-gray-700"
-                    />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="currentColor"
-                      strokeWidth="12"
-                      fill="none"
-                      strokeDasharray={`${(testResult.score / 100) * 352} 352`}
-                      className={`${testResult.score >= 60 ? 'text-green-500' : testResult.score >= 40 ? 'text-yellow-500' : 'text-red-500'}`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold text-gray-900 dark:text-white">{testResult.score.toFixed(1)}</span>
-                    <span className="text-gray-500 dark:text-gray-400">/100</span>
-                  </div>
-                </div>
-                <span className="mt-2 font-medium text-gray-900 dark:text-white">SCORE</span>
-              </div>
-
-              {/* Stats */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <ClockIcon />
-                  <span className="text-gray-600 dark:text-gray-400">Duration: {testResult.duration}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <GridIcon />
-                  <span className="text-gray-600 dark:text-gray-400">Total Questions: {testResult.totalQuestions}</span>
-                </div>
-                <div className="flex gap-4">
-                  <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full text-sm">
-                    Attempted: {testResult.attempted}
-                  </span>
-                  <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm">
-                    Solved: {testResult.solved}
-                  </span>
-                </div>
-              </div>
-
-              {/* Start Time */}
-              <div className="text-right">
-                <p className="text-gray-500 dark:text-gray-400">Start Time</p>
-                <p className="font-medium text-gray-900 dark:text-white">{testResult.startTime}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl p-4 mb-8 flex items-center justify-between">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+        {/* Header / Navbar area */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 sticky top-0 z-10">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                🏆
-              </div>
-            </div>
-            <button
-              onClick={handleViewCertificate}
-              className="px-6 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition"
-            >
-              Know more
-            </button>
-          </div>
-
-          {/* Question Stats */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden mb-8">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">QUESTION STATS</h3>
-            </div>
-            <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full text-sm font-medium">
                   S1
