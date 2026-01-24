@@ -260,14 +260,7 @@ interface UserProgress {
   badges: Badge[];
 }
 
-interface StudyResource {
-  id: string;
-  title: string;
-  type: 'video' | 'article' | 'flashcard' | 'practice';
-  topic: string;
-  duration: string;
-  url?: string;
-}
+
 
 // ============================================
 // MOCK DATA - Assessments
@@ -1036,7 +1029,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   const [testMode, setTestMode] = useState<TestMode>('timed');
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('medium');
   const [antiCheatMode, setAntiCheatMode] = useState<boolean>(true);
-  const [showExplanations, setShowExplanations] = useState(false);
+
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
   const [userProgress, setUserProgress] = useState<UserProgress>({
     level: 5,
@@ -4224,7 +4217,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                     setTestResult(null);
                     setAnswers({});
                     setCurrentQuestionIndex(0);
-                    setTimeRemaining(0);
+                    setTimeLeft(0);
                     handleBackToList();
                   }}
                   className="w-full py-3.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all flex items-center justify-center gap-2"
