@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 // ============================================
 // TYPES & INTERFACES
@@ -193,7 +193,9 @@ const CurrencyIcon = () => (
 
 const TRENDING_CAREERS_KEY = 'careerTrendingCareers';
 const PROJECT_IDEAS_KEY = 'careerProjectIdeas';
+const PLACEMENT_PREP_KEY = 'careerPlacementPrep';
 const API_ENDPOINT = 'https://kuxbswn0c9.execute-api.ap-south-2.amazonaws.com/default/Trendingcarrers_ProjectIdeas';
+const PLACEMENT_PREP_API_ENDPOINT = 'https://YOUR_API_GATEWAY_URL.execute-api.ap-south-2.amazonaws.com/default/placement_prep_handler'; // Replace with your API Gateway URL
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -311,10 +313,10 @@ export const defaultTrendingCareers: TrendingCareer[] = [
 ];
 
 // ============================================
-// PLACEMENT PREP DATA
+// PLACEMENT PREP DATA (Default/Fallback)
 // ============================================
 
-const placementTopics: PlacementTopic[] = [
+const defaultPlacementTopics: PlacementTopic[] = [
     {
         title: "Data Structures & Algorithms",
         importance: "Critical",
@@ -2186,108 +2188,747 @@ const TrendingCareersSection: React.FC<TrendingCareersSectionProps> = ({ careers
 // PLACEMENT PREP COMPONENT
 // ============================================
 
-const PlacementPrepSection: React.FC = () => {
-    const [expandedTopic, setExpandedTopic] = useState<string | null>('Data Structures & Algorithms');
+interface PlacementPrepSectionProps {
+    topics: PlacementTopic[];
+}
 
-    const placementTimeline = [
-        { year: "3rd Year", months: "Jan-Jun", task: "Learn DSA fundamentals", color: "blue" },
-        { year: "3rd Year", months: "Jul-Dec", task: "Practice 200+ problems, Start projects", color: "green" },
-        { year: "4th Year", months: "Jan-Apr", task: "System Design, Mock interviews", color: "orange" },
-        { year: "4th Year", months: "May-Aug", task: "Campus placements begin", color: "red" },
+// Progress tracking key
+const PLACEMENT_PROGRESS_KEY = 'placement_prep_progress';
+
+interface PhaseTask {
+    id: string;
+    title: string;
+    description?: string;
+    completed: boolean;
+}
+
+interface PhaseProgress {
+    phaseId: string;
+    tasks: PhaseTask[];
+    resources: { name: string; url: string; type: string }[];
+}
+
+interface PlacementProgress {
+    phases: Record<string, PhaseProgress>;
+    lastUpdated: string;
+}
+
+const PlacementPrepSection: React.FC<PlacementPrepSectionProps> = ({ topics }) => {
+    // Safety check: if topics is undefined or null, use empty array
+    const safeTopics = topics || [];
+    const [expandedPhase, setExpandedPhase] = useState<string | null>(null);
+    const [progress, setProgress] = useState<PlacementProgress>(() => {
+        const stored = localStorage.getItem(PLACEMENT_PROGRESS_KEY);
+        return stored ? JSON.parse(stored) : { phases: {}, lastUpdated: new Date().toISOString() };
+    });
+
+    // Map topics to phases and create tasks
+    const placementPhases = [
+        {
+            id: 'phase-1',
+            year: "3rd Year",
+            months: "Jan-Jun",
+            title: "Learn DSA Fundamentals",
+            description: "Master the basics of Data Structures and Algorithms",
+            colorClass: "from-blue-400 to-blue-600",
+            badgeClass: "bg-blue-100 text-blue-700",
+            icon: "📚",
+            relatedTopics: ["Data Structures & Algorithms"],
+            defaultTasks: [
+                { id: 'task-1-1', title: "Complete basic array and string problems", description: "Solve 50+ problems on arrays and strings" },
+                { id: 'task-1-2', title: "Learn time and space complexity", description: "Understand Big O notation and complexity analysis" },
+                { id: 'task-1-3', title: "Master sorting and searching algorithms", description: "Implement and understand various sorting algorithms" },
+                { id: 'task-1-4', title: "Practice on LeetCode/GeeksforGeeks", description: "Solve at least 100 problems" },
+            ]
+        },
+        {
+            id: 'phase-2',
+            year: "3rd Year",
+            months: "Jul-Dec",
+            title: "Practice & Build Projects",
+            description: "Practice 200+ problems and start building projects",
+            colorClass: "from-green-400 to-green-600",
+            badgeClass: "bg-green-100 text-green-700",
+            icon: "💻",
+            relatedTopics: ["Data Structures & Algorithms"],
+            defaultTasks: [
+                { id: 'task-2-1', title: "Solve 200+ DSA problems", description: "Cover all major topics: arrays, strings, trees, graphs" },
+                { id: 'task-2-2', title: "Build 2-3 portfolio projects", description: "Create projects showcasing your skills" },
+                { id: 'task-2-3', title: "Participate in coding contests", description: "Join contests on CodeChef, HackerRank, etc." },
+                { id: 'task-2-4', title: "Review and optimize solutions", description: "Focus on optimizing time and space complexity" },
+            ]
+        },
+        {
+            id: 'phase-3',
+            year: "4th Year",
+            months: "Jan-Apr",
+            title: "System Design & Mock Interviews",
+            description: "Learn system design and practice mock interviews",
+            colorClass: "from-orange-400 to-orange-600",
+            badgeClass: "bg-orange-100 text-orange-700",
+            icon: "🎯",
+            relatedTopics: ["System Design", "Core CS Subjects", "Communication Skills"],
+            defaultTasks: [
+                { id: 'task-3-1', title: "Learn system design fundamentals", description: "Study scalability, load balancing, databases" },
+                { id: 'task-3-2', title: "Practice mock interviews", description: "Do at least 10 mock interviews" },
+                { id: 'task-3-3', title: "Review core CS subjects", description: "OS, DBMS, Computer Networks basics" },
+                { id: 'task-3-4', title: "Improve communication skills", description: "Practice explaining solutions clearly" },
+            ]
+        },
+        {
+            id: 'phase-4',
+            year: "4th Year",
+            months: "May-Aug",
+            title: "Campus Placements Begin",
+            description: "Final preparation and placement interviews",
+            colorClass: "from-red-400 to-red-600",
+            badgeClass: "bg-red-100 text-red-700",
+            icon: "🚀",
+            relatedTopics: ["Aptitude & Reasoning", "Communication Skills"],
+            defaultTasks: [
+                { id: 'task-4-1', title: "Prepare resume and portfolio", description: "Update resume with projects and achievements" },
+                { id: 'task-4-2', title: "Practice aptitude questions", description: "Solve reasoning and aptitude problems" },
+                { id: 'task-4-3', title: "Attend placement drives", description: "Apply and attend campus placements" },
+                { id: 'task-4-4', title: "Review and revise key concepts", description: "Quick revision of important topics" },
+            ]
+        },
     ];
 
+    // Initialize progress for each phase
+    useEffect(() => {
+        const updatedProgress = { ...progress };
+        let hasChanges = false;
+
+        placementPhases.forEach(phase => {
+            if (!updatedProgress.phases[phase.id]) {
+                hasChanges = true;
+                // Get resources from related topics
+                const phaseResources: { name: string; url: string; type: string }[] = [];
+                phase.relatedTopics.forEach(topicName => {
+                    const topic = safeTopics.find(t => t.title === topicName);
+                    if (topic && topic.resources) {
+                        phaseResources.push(...topic.resources);
+                    }
+                });
+
+                updatedProgress.phases[phase.id] = {
+                    phaseId: phase.id,
+                    tasks: phase.defaultTasks.map(task => ({
+                        ...task,
+                        completed: false
+                    })),
+                    resources: phaseResources
+                };
+            }
+        });
+
+        if (hasChanges) {
+            updatedProgress.lastUpdated = new Date().toISOString();
+            setProgress(updatedProgress);
+            localStorage.setItem(PLACEMENT_PROGRESS_KEY, JSON.stringify(updatedProgress));
+        }
+    }, [safeTopics]);
+
+    // Save progress to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem(PLACEMENT_PROGRESS_KEY, JSON.stringify(progress));
+    }, [progress]);
+
+    // Toggle task completion
+    const toggleTask = (phaseId: string, taskId: string) => {
+        setProgress(prev => {
+            // Create a deep copy to ensure React detects the change
+            const updated = {
+                ...prev,
+                phases: { ...prev.phases },
+                lastUpdated: new Date().toISOString()
+            };
+            
+            if (updated.phases[phaseId]) {
+                updated.phases[phaseId] = {
+                    ...updated.phases[phaseId],
+                    tasks: updated.phases[phaseId].tasks.map(task =>
+                        task.id === taskId ? { ...task, completed: !task.completed } : task
+                    )
+                };
+            }
+            
+            return updated;
+        });
+    };
+
+    // Calculate progress for a phase
+    const getPhaseProgress = (phaseId: string): number => {
+        const phase = progress.phases[phaseId];
+        if (!phase || !phase.tasks || phase.tasks.length === 0) return 0;
+        const completed = phase.tasks.filter(t => t.completed).length;
+        return Math.round((completed / phase.tasks.length) * 100);
+    };
+
+    // Calculate total progress - memoized
+    const totalProgress = useMemo(() => {
+        let totalTasks = 0;
+        let completedTasks = 0;
+        
+        placementPhases.forEach(phase => {
+            const phaseData = progress.phases[phase.id];
+            if (phaseData && phaseData.tasks) {
+                totalTasks += phaseData.tasks.length;
+                completedTasks += phaseData.tasks.filter(t => t.completed).length;
+            }
+        });
+
+        return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    }, [progress]);
+
+    // Get analytics - memoized
+    const analytics = useMemo(() => {
+        const totalTasks = placementPhases.reduce((sum, phase) => {
+            const phaseData = progress.phases[phase.id];
+            return sum + (phaseData && phaseData.tasks ? phaseData.tasks.length : 0);
+        }, 0);
+
+        const completedTasks = placementPhases.reduce((sum, phase) => {
+            const phaseData = progress.phases[phase.id];
+            return sum + (phaseData && phaseData.tasks ? phaseData.tasks.filter(t => t.completed).length : 0);
+        }, 0);
+
+        const phasesCompleted = placementPhases.filter(phase => {
+            const phaseData = progress.phases[phase.id];
+            return phaseData && phaseData.tasks && phaseData.tasks.length > 0 && phaseData.tasks.every(t => t.completed);
+        }).length;
+
+        return {
+            totalTasks,
+            completedTasks,
+            remainingTasks: totalTasks - completedTasks,
+            phasesCompleted,
+            totalPhases: placementPhases.length,
+            completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+        };
+    }, [progress]);
+
+    const getResourceIcon = (type: string) => {
+        const typeLower = type.toLowerCase();
+        if (typeLower.includes('video') || typeLower.includes('youtube')) return '▶️';
+        if (typeLower.includes('practice') || typeLower.includes('leetcode')) return '💪';
+        if (typeLower.includes('github')) return '💻';
+        if (typeLower.includes('roadmap')) return '🗺️';
+        if (typeLower.includes('theory')) return '📖';
+        return '📚';
+    };
+
     return (
-        <div className="space-y-8">
-            {/* Timeline */}
-            <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 text-white">
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    📅 Campus Placement Timeline
-                </h3>
-                <div className="grid md:grid-cols-4 gap-4">
-                    {placementTimeline.map((item, idx) => (
-                        <div key={idx} className="relative">
-                            <div className={`absolute left-0 top-0 w-1 h-full bg-${item.color}-500 rounded-full`}></div>
-                            <div className="pl-4">
-                                <div className="text-xs text-gray-400">{item.year}</div>
-                                <div className="font-semibold text-sm">{item.months}</div>
-                                <div className="text-gray-300 text-sm mt-1">{item.task}</div>
-                            </div>
-                        </div>
-                    ))}
+        <div className="space-y-6">
+            {/* Header Section */}
+            <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 rounded-2xl p-8 text-white shadow-xl">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <PlacementIcon />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-bold">Campus Placement Preparation</h2>
+                        <p className="text-orange-100 text-sm">Your complete guide to ace technical interviews</p>
+                    </div>
                 </div>
             </div>
 
-            {/* DSA Progress Tracker */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">🎯 Preparation Checklist</h3>
-                <div className="space-y-3">
-                    {placementTopics.map((topic, idx) => (
-                        <div key={idx} className="border border-gray-200 rounded-xl overflow-hidden">
-                            <button
-                                onClick={() => setExpandedTopic(expandedTopic === topic.title ? null : topic.title)}
-                                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <span className={`w-3 h-3 rounded-full ${
-                                        topic.importance === 'Critical' ? 'bg-red-500' :
-                                        topic.importance === 'Important' ? 'bg-orange-500' : 'bg-blue-500'
-                                    }`}></span>
-                                    <span className="font-semibold text-gray-900">{topic.title}</span>
-                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                        topic.importance === 'Critical' ? 'bg-red-100 text-red-700' :
-                                        topic.importance === 'Important' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
-                                    }`}>
-                                        {topic.importance}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm text-gray-500">{topic.timeNeeded}</span>
-                                    <svg className={`w-5 h-5 transition-transform ${expandedTopic === topic.title ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            </button>
+            {/* Progress Widget - Circular Design */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-gray-900">Progress</h3>
+                    <button className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                        <span className="text-xs text-gray-600 font-semibold">i</span>
+                    </button>
+                </div>
+                
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
+                    {/* Circular Progress Indicator */}
+                    <div className="relative flex-shrink-0">
+                        <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
+                            {/* Background Circle */}
+                            <circle
+                                cx="50"
+                                cy="50"
+                                r="45"
+                                fill="none"
+                                stroke="#e5e7eb"
+                                strokeWidth="8"
+                            />
                             
-                            {expandedTopic === topic.title && (
-                                <div className="p-4 bg-gray-50 border-t border-gray-200">
-                                    <p className="text-sm font-semibold text-gray-500 mb-3">Recommended Resources:</p>
-                                    <div className="grid sm:grid-cols-2 gap-2">
-                                        {topic.resources.map((resource, i) => (
-                                            <a
-                                                key={i}
-                                                href={resource.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg hover:border-orange-300 hover:shadow-sm transition-all"
+                            {/* Overall Progress Ring */}
+                            <circle
+                                cx="50"
+                                cy="50"
+                                r="45"
+                                fill="none"
+                                stroke="#f97316"
+                                strokeWidth="8"
+                                strokeLinecap="round"
+                                strokeDasharray={`${2 * Math.PI * 45}`}
+                                strokeDashoffset={`${2 * Math.PI * 45 * (1 - totalProgress / 100)}`}
+                                className="transition-all duration-500 ease-out"
+                            />
+                        </svg>
+                        
+                        {/* Center Text */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <div className="text-3xl font-bold text-gray-900">{analytics.completedTasks}</div>
+                            <div className="w-12 border-t border-gray-300 my-1"></div>
+                            <div className="text-lg text-gray-600">{analytics.totalTasks}</div>
+                        </div>
+                    </div>
+                    
+                    {/* Progress Breakdown */}
+                    <div className="flex-1 w-full md:w-auto">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                            {placementPhases.map((phase) => {
+                                const phaseData = progress.phases[phase.id];
+                                const completed = phaseData && phaseData.tasks ? phaseData.tasks.filter(t => t.completed).length : 0;
+                                const total = phaseData && phaseData.tasks ? phaseData.tasks.length : 0;
+                                
+                                const colorMap: Record<string, { dot: string, name: string }> = {
+                                    'phase-1': { dot: 'bg-blue-500', name: 'Phase 1' },
+                                    'phase-2': { dot: 'bg-green-500', name: 'Phase 2' },
+                                    'phase-3': { dot: 'bg-orange-500', name: 'Phase 3' },
+                                    'phase-4': { dot: 'bg-red-500', name: 'Phase 4' },
+                                };
+                                
+                                const colors = colorMap[phase.id] || { dot: 'bg-gray-500', name: 'Phase' };
+                                
+                                return (
+                                    <div key={phase.id} className="flex items-center gap-3">
+                                        <div className={`w-3 h-3 rounded-full ${colors.dot} flex-shrink-0`}></div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-sm font-medium text-gray-900 truncate">{colors.name}</span>
+                                                <span className="text-sm text-gray-600 whitespace-nowrap">{completed}/{total}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Timeline Section with Expandable Phases */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span className="text-xl">📅</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Preparation Timeline</h3>
+                </div>
+                <div className="relative">
+                    {/* Timeline Line */}
+                    <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 via-green-500 via-orange-500 to-red-500 hidden md:block"></div>
+                    
+                    <div className="space-y-4">
+                        {placementPhases.map((phase, idx) => {
+                            const phaseData = progress.phases[phase.id];
+                            const phaseProgress = getPhaseProgress(phase.id);
+                            const isExpanded = expandedPhase === phase.id;
+                            
+                            return (
+                                <div key={phase.id} className="relative">
+                                    {/* Phase Card */}
+                                    <div className={`relative flex items-start gap-4 transition-all duration-300 ${isExpanded ? 'mb-4' : ''}`}>
+                                        {/* Timeline Dot */}
+                                        <div className={`relative z-10 w-16 h-16 rounded-full bg-gradient-to-br ${phase.colorClass} flex items-center justify-center text-2xl shadow-lg flex-shrink-0 cursor-pointer hover:scale-110 transition-transform`}>
+                                            {phase.icon}
+                                        </div>
+                                        
+                                        {/* Content Card */}
+                                        <div className={`flex-1 bg-gradient-to-br from-gray-50 to-white border-2 rounded-xl transition-all duration-300 ${
+                                            isExpanded ? 'border-orange-300 shadow-lg' : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                                        }`}>
+                                            <button
+                                                onClick={() => setExpandedPhase(isExpanded ? null : phase.id)}
+                                                className="w-full text-left p-5"
                                             >
-                                                <BookIcon />
-                                                <div>
-                                                    <div className="font-medium text-gray-900 text-sm">{resource.name}</div>
-                                                    <div className="text-xs text-gray-500">{resource.type}</div>
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{phase.year}</span>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${phase.badgeClass}`}>
+                                                                Phase {idx + 1}
+                                                            </span>
+                                                        </div>
+                                                        <h4 className="text-lg font-bold text-gray-900 mb-1">{phase.months}</h4>
+                                                        <h5 className="text-base font-semibold text-gray-800 mb-1">{phase.title}</h5>
+                                                        <p className="text-gray-600 text-sm leading-relaxed">{phase.description}</p>
+                                                    </div>
+                                                    
+                                                    {/* Circular Progress & Expand Icon */}
+                                                    <div className="ml-4 flex flex-col items-end gap-3">
+                                                        {/* Small Circular Progress */}
+                                                        <div className="relative w-16 h-16 flex-shrink-0">
+                                                            <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 100 100">
+                                                                <circle
+                                                                    cx="50"
+                                                                    cy="50"
+                                                                    r="40"
+                                                                    fill="none"
+                                                                    stroke="#e5e7eb"
+                                                                    strokeWidth="6"
+                                                                />
+                                                                <circle
+                                                                    cx="50"
+                                                                    cy="50"
+                                                                    r="40"
+                                                                    fill="none"
+                                                                    stroke={
+                                                                        phaseProgress === 100 ? '#10b981' :
+                                                                        phaseProgress >= 50 ? '#f59e0b' : '#3b82f6'
+                                                                    }
+                                                                    strokeWidth="6"
+                                                                    strokeLinecap="round"
+                                                                    strokeDasharray={`${2 * Math.PI * 40}`}
+                                                                    strokeDashoffset={`${2 * Math.PI * 40 * (1 - phaseProgress / 100)}`}
+                                                                    className="transition-all duration-500 ease-out"
+                                                                />
+                                                            </svg>
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <div className="text-center">
+                                                                    <div className="text-sm font-bold text-gray-900">{phaseProgress}%</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <svg 
+                                                            className={`w-6 h-6 text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
+                                                            fill="none" 
+                                                            viewBox="0 0 24 24" 
+                                                            stroke="currentColor"
+                                                        >
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
                                                 </div>
-                                            </a>
-                                        ))}
+                                            </button>
+                                            
+                                            {/* Expanded Content */}
+                                            {isExpanded && phaseData && (
+                                                <div className="px-5 pb-5 pb-5 border-t border-gray-200 mt-4 pt-5">
+                                                    {/* Tasks Section */}
+                                                    <div className="mb-6">
+                                                        <div className="flex items-center gap-2 mb-4">
+                                                            <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                                            </svg>
+                                                            <h6 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                                                Tasks ({phaseData.tasks.filter(t => t.completed).length}/{phaseData.tasks.length})
+                                                            </h6>
+                                                        </div>
+                                                        
+                                                        {/* Tasks Table */}
+                                                        <div className="overflow-x-auto">
+                                                            <table className="w-full">
+                                                                <thead>
+                                                                    <tr className="border-b border-gray-200">
+                                                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Problem</th>
+                                                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Platform</th>
+                                                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Links</th>
+                                                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Content Type</th>
+                                                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Practice</th>
+                                                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Note</th>
+                                                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Revision</th>
+                                                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Difficulty</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-gray-100">
+                                                                    {phaseData.tasks.map((task) => (
+                                                                        <tr 
+                                                                            key={task.id}
+                                                                            className={`hover:bg-gray-50 transition-colors ${
+                                                                                task.completed ? 'bg-green-50/30' : ''
+                                                                            }`}
+                                                                        >
+                                                                            {/* Status Checkbox */}
+                                                                            <td className="py-3 px-4">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="cursor-pointer flex items-center justify-center w-full h-full"
+                                                                                    onClick={(e) => {
+                                                                                        e.preventDefault();
+                                                                                        e.stopPropagation();
+                                                                                        toggleTask(phase.id, task.id);
+                                                                                    }}
+                                                                                    aria-label={task.completed ? `Mark ${task.title} as incomplete` : `Mark ${task.title} as complete`}
+                                                                                >
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={task.completed || false}
+                                                                                        onChange={(e) => {
+                                                                                            e.preventDefault();
+                                                                                            e.stopPropagation();
+                                                                                            toggleTask(phase.id, task.id);
+                                                                                        }}
+                                                                                        className="sr-only"
+                                                                                        tabIndex={-1}
+                                                                                        readOnly
+                                                                                    />
+                                                                                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                                                                                        task.completed 
+                                                                                            ? 'bg-orange-500 border-orange-500' 
+                                                                                            : 'border-gray-300 bg-white hover:border-orange-400'
+                                                                                    }`}>
+                                                                                        {task.completed && (
+                                                                                            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                                                            </svg>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </button>
+                                                                            </td>
+                                                                            
+                                                                            {/* Problem Name */}
+                                                                            <td className="py-3 px-4">
+                                                                                <div className="flex flex-col">
+                                                                                    <span className={`font-medium text-sm ${
+                                                                                        task.completed ? 'text-gray-500 line-through' : 'text-gray-900'
+                                                                                    }`}>
+                                                                                        {task.title}
+                                                                                    </span>
+                                                                                    {task.description && (
+                                                                                        <span className="text-xs text-gray-500 mt-0.5">{task.description}</span>
+                                                                                    )}
+                                                                                </div>
+                                                                            </td>
+                                                                            
+                                                                            {/* URLs - Grouped by Domain */}
+                                                                            <td className="py-3 px-4">
+                                                                                {phaseData.resources && phaseData.resources.length > 0 ? (
+                                                                                    (() => {
+                                                                                        // Group resources by domain
+                                                                                        const domainMap = new Map<string, { url: string; name: string }[]>();
+                                                                                        phaseData.resources.forEach(resource => {
+                                                                                            const domain = resource.url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+                                                                                            if (!domainMap.has(domain)) {
+                                                                                                domainMap.set(domain, []);
+                                                                                            }
+                                                                                            domainMap.get(domain)!.push({ url: resource.url, name: resource.name });
+                                                                                        });
+                                                                                        
+                                                                                        return (
+                                                                                            <div className="flex flex-col gap-2">
+                                                                                                {Array.from(domainMap.entries()).map(([domain, resources]) => (
+                                                                                                    <a
+                                                                                                        key={domain}
+                                                                                                        href={resources[0].url}
+                                                                                                        target="_blank"
+                                                                                                        rel="noopener noreferrer"
+                                                                                                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                                                                                                        title={domain}
+                                                                                                    >
+                                                                                                        {domain}
+                                                                                                    </a>
+                                                                                                ))}
+                                                                                            </div>
+                                                                                        );
+                                                                                    })()
+                                                                                ) : (
+                                                                                    <span className="text-gray-400 text-sm">---</span>
+                                                                                )}
+                                                                            </td>
+                                                                            
+                                                                            {/* Resources - External Link Icons */}
+                                                                            <td className="py-3 px-4">
+                                                                                {phaseData.resources && phaseData.resources.length > 0 ? (
+                                                                                    (() => {
+                                                                                        // Group resources by domain to show multiple links per domain
+                                                                                        const domainMap = new Map<string, { url: string; name: string }[]>();
+                                                                                        phaseData.resources.forEach(resource => {
+                                                                                            const domain = resource.url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+                                                                                            if (!domainMap.has(domain)) {
+                                                                                                domainMap.set(domain, []);
+                                                                                            }
+                                                                                            domainMap.get(domain)!.push({ url: resource.url, name: resource.name });
+                                                                                        });
+                                                                                        
+                                                                                        return (
+                                                                                            <div className="flex flex-col gap-2">
+                                                                                                {Array.from(domainMap.entries()).map(([domain, resources]) => (
+                                                                                                    <div key={domain} className="flex items-center gap-1 flex-wrap">
+                                                                                                        {resources.map((resource, idx) => (
+                                                                                                            <a
+                                                                                                                key={idx}
+                                                                                                                href={resource.url}
+                                                                                                                target="_blank"
+                                                                                                                rel="noopener noreferrer"
+                                                                                                                className="w-5 h-5 bg-orange-500 hover:bg-orange-600 rounded flex items-center justify-center transition-colors"
+                                                                                                                title={resource.name}
+                                                                                                            >
+                                                                                                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                                                                </svg>
+                                                                                                            </a>
+                                                                                                        ))}
+                                                                                                    </div>
+                                                                                                ))}
+                                                                                            </div>
+                                                                                        );
+                                                                                    })()
+                                                                                ) : (
+                                                                                    <span className="text-gray-400 text-sm">---</span>
+                                                                                )}
+                                                                            </td>
+                                                                            
+                                                                            {/* Type - Resource Type Icons */}
+                                                                            <td className="py-3 px-4">
+                                                                                {phaseData.resources && phaseData.resources.length > 0 ? (
+                                                                                    (() => {
+                                                                                        // Group resources by domain to show types per domain
+                                                                                        const domainMap = new Map<string, { url: string; name: string; type: string }[]>();
+                                                                                        phaseData.resources.forEach(resource => {
+                                                                                            const domain = resource.url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+                                                                                            if (!domainMap.has(domain)) {
+                                                                                                domainMap.set(domain, []);
+                                                                                            }
+                                                                                            domainMap.get(domain)!.push({ url: resource.url, name: resource.name, type: resource.type });
+                                                                                        });
+                                                                                        
+                                                                                        return (
+                                                                                            <div className="flex flex-col gap-2">
+                                                                                                {Array.from(domainMap.entries()).map(([domain, resources]) => (
+                                                                                                    <div key={domain} className="flex items-center gap-1 flex-wrap">
+                                                                                                        {resources.map((resource, idx) => {
+                                                                                                            const typeLower = resource.type.toLowerCase();
+                                                                                                            const isVideo = typeLower.includes('video') || typeLower.includes('youtube');
+                                                                                                            const isPractice = typeLower.includes('practice') || typeLower.includes('leetcode');
+                                                                                                            const isRoadmap = typeLower.includes('roadmap');
+                                                                                                            
+                                                                                                            return (
+                                                                                                                <div key={idx} className="flex items-center">
+                                                                                                                    {isVideo ? (
+                                                                                                                        <div className="text-red-500" title="Video">
+                                                                                                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                                                                                                <path d="M8 5v14l11-7z"/>
+                                                                                                                            </svg>
+                                                                                                                        </div>
+                                                                                                                    ) : isPractice ? (
+                                                                                                                        <div className="text-orange-500" title="Practice">
+                                                                                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                                                                                            </svg>
+                                                                                                                        </div>
+                                                                                                                    ) : isRoadmap ? (
+                                                                                                                        <div className="text-blue-500" title="Roadmap">
+                                                                                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                                                                                                            </svg>
+                                                                                                                        </div>
+                                                                                                                    ) : (
+                                                                                                                        <div className="text-gray-600" title="Document">
+                                                                                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                                                                            </svg>
+                                                                                                                        </div>
+                                                                                                                    )}
+                                                                                                                </div>
+                                                                                                            );
+                                                                                                        })}
+                                                                                                    </div>
+                                                                                                ))}
+                                                                                            </div>
+                                                                                        );
+                                                                                    })()
+                                                                                ) : (
+                                                                                    <span className="text-gray-400 text-sm">---</span>
+                                                                                )}
+                                                                            </td>
+                                                                            
+                                                                            {/* Practice */}
+                                                                            <td className="py-3 px-4">
+                                                                                <span className="text-gray-400 text-sm">---</span>
+                                                                            </td>
+                                                                            
+                                                                            {/* Note */}
+                                                                            <td className="py-3 px-4">
+                                                                                <button className="w-6 h-6 rounded-full border border-gray-300 hover:border-gray-400 hover:bg-gray-50 flex items-center justify-center transition-colors">
+                                                                                    <svg className="w-3.5 h-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                                                    </svg>
+                                                                                </button>
+                                                                            </td>
+                                                                            
+                                                                            {/* Revision */}
+                                                                            <td className="py-3 px-4">
+                                                                                <button className="text-gray-400 hover:text-yellow-500 transition-colors">
+                                                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                                                                    </svg>
+                                                                                </button>
+                                                                            </td>
+                                                                            
+                                                                            {/* Difficulty */}
+                                                                            <td className="py-3 px-4">
+                                                                                <span className="inline-block bg-green-500 text-white text-xs font-medium px-2.5 py-1 rounded">
+                                                                                    Easy
+                                                                                </span>
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
-            {/* Quick Links */}
+            {/* Quick Action Cards - Enhanced */}
             <div className="grid md:grid-cols-3 gap-4">
-                <a href="https://leetcode.com" target="_blank" rel="noopener noreferrer" 
-                   className="p-4 bg-gradient-to-br from-yellow-400 to-yellow-500 text-gray-900 rounded-xl font-semibold text-center hover:shadow-lg transition-all">
-                    🏆 LeetCode - Practice DSA
+                <a 
+                    href="https://leetcode.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="group relative overflow-hidden bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 rounded-2xl p-6 text-gray-900 font-semibold hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                >
+                    <div className="relative z-10">
+                        <div className="text-3xl mb-2">🏆</div>
+                        <div className="font-bold text-lg mb-1">LeetCode</div>
+                        <div className="text-sm text-yellow-900/80">Practice DSA Problems</div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </a>
-                <a href="https://www.pramp.com" target="_blank" rel="noopener noreferrer"
-                   className="p-4 bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl font-semibold text-center hover:shadow-lg transition-all">
-                    🎤 Pramp - Mock Interviews
+                
+                <a 
+                    href="https://www.pramp.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="group relative overflow-hidden bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-2xl p-6 text-white font-semibold hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                >
+                    <div className="relative z-10">
+                        <div className="text-3xl mb-2">🎤</div>
+                        <div className="font-bold text-lg mb-1">Pramp</div>
+                        <div className="text-sm text-green-100">Mock Interviews</div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </a>
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer"
-                   className="p-4 bg-gradient-to-br from-gray-700 to-gray-900 text-white rounded-xl font-semibold text-center hover:shadow-lg transition-all">
-                    💻 GitHub - Build Projects
+                
+                <a 
+                    href="https://github.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="group relative overflow-hidden bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 rounded-2xl p-6 text-white font-semibold hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                >
+                    <div className="relative z-10">
+                        <div className="text-3xl mb-2">💻</div>
+                        <div className="font-bold text-lg mb-1">GitHub</div>
+                        <div className="text-sm text-gray-300">Build Projects</div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </a>
             </div>
         </div>
@@ -2461,6 +3102,7 @@ interface CareerGuidancePageProps {
 const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }) => {
     const [trendingCareersData, setTrendingCareersData] = useState<TrendingCareer[]>(defaultTrendingCareers);
     const [projectIdeasData, setProjectIdeasData] = useState<ProjectIdea[]>(defaultProjectIdeas);
+    const [placementTopicsData, setPlacementTopicsData] = useState<PlacementTopic[]>(defaultPlacementTopics);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [activeTab, setActiveTab] = useState<CareerTab>('trending');
     const [recommendStep, setRecommendStep] = useState<RecommendStep>(0);
@@ -2544,11 +3186,56 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
                         setProjectIdeasData(mappedProjects);
                     }
                 }
+
+                // Fetch placement prep topics
+                try {
+                    // Only fetch if API endpoint is configured (not placeholder)
+                    if (PLACEMENT_PREP_API_ENDPOINT && !PLACEMENT_PREP_API_ENDPOINT.includes('YOUR_API_GATEWAY_URL')) {
+                        const placementResponse = await fetch(PLACEMENT_PREP_API_ENDPOINT, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                action: 'list',
+                            }),
+                        });
+
+                        if (placementResponse.ok) {
+                            const placementData = await placementResponse.json();
+                            if (placementData.success && Array.isArray(placementData.topics)) {
+                                // Map API response to PlacementTopic interface (ignore id, createdAt, updatedAt)
+                                const mappedTopics: PlacementTopic[] = placementData.topics.map((item: any) => ({
+                                    title: item.title || '',
+                                    importance: item.importance || 'Important',
+                                    timeNeeded: item.timeNeeded || '',
+                                    resources: Array.isArray(item.resources) ? item.resources.map((r: any) => ({
+                                        name: r.name || '',
+                                        url: r.url || '',
+                                        type: r.type || '',
+                                    })) : [],
+                                }));
+                                if (mappedTopics.length > 0) {
+                                    setPlacementTopicsData(mappedTopics);
+                                }
+                            }
+                        }
+                    } else {
+                        // Use default data if API not configured
+                        console.log('Placement prep API not configured, using default data');
+                        setPlacementTopicsData(defaultPlacementTopics);
+                    }
+                } catch (placementError) {
+                    console.error('Failed to fetch placement prep data:', placementError);
+                    // Fallback to default data
+                    setPlacementTopicsData(defaultPlacementTopics);
+                }
             } catch (error) {
                 console.error('Failed to fetch career guidance data from API:', error);
                 // Fallback to localStorage or default data
                 setTrendingCareersData(loadFromStorage<TrendingCareer>(TRENDING_CAREERS_KEY, defaultTrendingCareers));
                 setProjectIdeasData(loadFromStorage<ProjectIdea>(PROJECT_IDEAS_KEY, defaultProjectIdeas));
+                setPlacementTopicsData(loadFromStorage<PlacementTopic>(PLACEMENT_PREP_KEY, defaultPlacementTopics));
             } finally {
                 setIsLoadingData(false);
             }
@@ -2789,7 +3476,22 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
                 {/* Placement Prep Tab */}
                 {activeTab === 'placement' && (
                     <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
-                        <PlacementPrepSection />
+                        {isLoadingData ? (
+                            <div className="flex items-center justify-center py-12">
+                                <div className="text-center">
+                                    <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
+                                    <p className="text-sm text-gray-600">Loading placement preparation data...</p>
+                                </div>
+                            </div>
+                        ) : placementTopicsData.length === 0 ? (
+                            <div className="text-center py-12">
+                                <div className="text-6xl mb-4">📚</div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">No Placement Topics Available</h3>
+                                <p className="text-gray-600">Placement preparation topics will appear here once they are added by the admin.</p>
+                            </div>
+                        ) : (
+                            <PlacementPrepSection topics={placementTopicsData} />
+                        )}
                     </div>
                 )}
 

@@ -13,6 +13,7 @@ export type AdminView =
     | 'mock-assessments'
     | 'career-guidance'
     | 'roadmap-management'
+    | 'placement-prep'
     | 'user-profile'
     | 'admin-project-details'
     | 'admin-report-details';
