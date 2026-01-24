@@ -20,7 +20,7 @@ const PersonalDetailForm: React.FC<PersonalDetailFormProps> = ({ onEnableNext })
         return value.trim().length > 0;
       }
       const fieldValue = resumeInfo[field as keyof typeof resumeInfo];
-      return fieldValue?.toString().trim().length > 0;
+      return fieldValue != null && fieldValue.toString().trim().length > 0;
     });
     onEnableNext(isFormValid);
   };
@@ -81,8 +81,8 @@ const PersonalDetailForm: React.FC<PersonalDetailFormProps> = ({ onEnableNext })
   useEffect(() => {
     const requiredFields = ['firstName', 'lastName', 'jobTitle', 'phone', 'email'];
     const isFormValid = requiredFields.every(field => {
-      const value = resumeInfo[field as keyof typeof resumeInfo]?.toString().trim();
-      return value && value.length > 0;
+      const fieldValue = resumeInfo[field as keyof typeof resumeInfo];
+      return fieldValue != null && fieldValue.toString().trim().length > 0;
     });
     onEnableNext(isFormValid);
   }, [resumeInfo.firstName, resumeInfo.lastName, resumeInfo.jobTitle, resumeInfo.phone, resumeInfo.email, onEnableNext]);
