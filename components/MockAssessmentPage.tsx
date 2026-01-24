@@ -567,63 +567,67 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     }
   }, []);
 
-  const [testHistory, setTestHistory] = useState<TestResult[]>([
-    {
-      assessmentId: 'react',
-      assessmentTitle: 'React',
-      score: 13,
-      totalQuestions: 15,
-      attempted: 15,
-      solved: 13,
-      duration: '24 mins',
-      startTime: '2026-01-15T10:30:00',
-      questionResults: []
-    },
-    {
-      assessmentId: 'java',
-      assessmentTitle: 'Java',
-      score: 12,
-      totalQuestions: 15,
-      attempted: 15,
-      solved: 12,
-      duration: '28 mins',
-      startTime: '2026-01-12T14:15:00',
-      questionResults: []
-    },
-    {
-      assessmentId: 'python',
-      assessmentTitle: 'Python',
-      score: 14,
-      totalQuestions: 15,
-      attempted: 15,
-      solved: 14,
-      duration: '22 mins',
-      startTime: '2026-01-10T09:00:00',
-      questionResults: []
-    },
-    {
-      assessmentId: 'sql',
-      assessmentTitle: 'SQL',
-      score: 8,
-      totalQuestions: 15,
-      attempted: 14,
-      solved: 8,
-      duration: '30 mins',
-      startTime: '2026-01-08T16:45:00',
-      questionResults: []
-    },
-    {
-      assessmentId: 'javascript',
-      assessmentTitle: 'JavaScript',
-      score: 11,
-      totalQuestions: 15,
-      attempted: 15,
-      solved: 11,
-      duration: '26 mins',
-      startTime: '2026-01-05T11:20:00',
-      questionResults: []
-    },
-  ]);
+  const [testHistory, setTestHistory] = useState<TestResult[]>([]);
+
+  // Fetch test history
+  const fetchTestHistory = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const output = await fetch(MOCK_ASSESSMENTS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'get_test_history',
+          userId: 'user123' // TODO: Replace with actual user ID
+        })
+      });
+
+      if (!output.ok) throw new Error('Failed to fetch history');
+
+      const data = await output.json();
+      console.log('History API Response:', data);
+
+      let history: any[] = [];
+      if (data.success === true && data.data) {
+        history = data.data.testHistory || [];
+      } else if (data.status === 'success' && data.data) {
+        history = data.data.testHistory || [];
+      } else if (data.body) {
+        try {
+          const parsed = JSON.parse(data.body);
+          history = parsed.data?.testHistory || [];
+        } catch (e) { console.error(e); }
+      }
+
+      // Map to TestResult interface if needed, or assume backend matches
+      // Ideally we should validate/map fields here
+      const mappedHistory: TestResult[] = history.map((item: any) => ({
+        assessmentId: item.assessmentId,
+        assessmentTitle: item.assessmentTitle || item.assessmentId,
+        score: item.score,
+        totalQuestions: item.totalQuestions,
+        attempted: item.attempted,
+        solved: item.solved,
+        duration: item.duration || '0 mins',
+        startTime: item.startTime,
+        questionResults: [] // Not always needed for list view
+      }));
+
+      setTestHistory(mappedHistory);
+    } catch (err) {
+      console.error('Error fetching history:', err);
+      // setError('Failed to load history'); // Optional: show error in UI
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch history when view changes to 'history'
+  useEffect(() => {
+    if (view === 'history' || activeTab === 'history') {
+      fetchTestHistory();
+    }
+  }, [view, activeTab, fetchTestHistory]);
 
   // New feature states
   const [testMode, setTestMode] = useState<TestMode>('timed');
