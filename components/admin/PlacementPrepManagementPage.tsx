@@ -387,10 +387,10 @@ const PlacementPrepManagementPage: React.FC = () => {
             setSaving(true);
             setError(null);
             setSuccess(null);
-            
+
             // Save to localStorage (can be replaced with API)
             localStorage.setItem('admin_placement_phases', JSON.stringify(phases));
-            
+
             setSuccess(`Successfully saved ${phases.length} phases!`);
             setTimeout(() => setSuccess(null), 5000);
         } catch (err: any) {
@@ -429,11 +429,7 @@ const PlacementPrepManagementPage: React.FC = () => {
     }, []);
 
     // ================= FORM HANDLERS =================
-<<<<<<< HEAD
     // Note: handleAddTopic is handled inline in the form
-
-=======
->>>>>>> fe9ad6dec27062fde7439e3ad22364420bb33dbb
     const handleEditTopic = (index: number) => {
         setEditingTopicIndex(index);
         setTopicForm({ ...topics[index] });
@@ -479,13 +475,13 @@ const PlacementPrepManagementPage: React.FC = () => {
 
         const updatedTopics = [...topics];
         const resources = [...updatedTopics[topicIndex].resources];
-        
+
         if (resourceIndex !== null) {
             resources[resourceIndex] = { ...resourceForm };
         } else {
             resources.push({ ...resourceForm });
         }
-        
+
         updatedTopics[topicIndex].resources = resources;
         setTopics(updatedTopics);
         setEditingResourceIndex(null);
@@ -573,7 +569,7 @@ const PlacementPrepManagementPage: React.FC = () => {
             const task = phase.tasks.find(t => t.id === taskId);
             if (task) {
                 setEditingTaskId(taskId);
-                setTaskForm({ 
+                setTaskForm({
                     ...task,
                     helpfulLinks: task.helpfulLinks || []
                 });
@@ -752,21 +748,19 @@ const PlacementPrepManagementPage: React.FC = () => {
             <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
                 <button
                     onClick={() => setActiveTab('phases')}
-                    className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${
-                        activeTab === 'phases'
+                    className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${activeTab === 'phases'
                             ? 'bg-white text-orange-600 shadow-sm'
                             : 'text-gray-600 hover:text-gray-900'
-                    }`}
+                        }`}
                 >
                     📅 Phases & Tasks
                 </button>
                 <button
                     onClick={() => setActiveTab('topics')}
-                    className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${
-                        activeTab === 'topics'
+                    className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${activeTab === 'topics'
                             ? 'bg-white text-orange-600 shadow-sm'
                             : 'text-gray-600 hover:text-gray-900'
-                    }`}
+                        }`}
                 >
                     📚 Topics & Resources
                 </button>
@@ -916,12 +910,12 @@ const PlacementPrepManagementPage: React.FC = () => {
                         </div>
                         <div className="relative">
                             <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 via-green-500 via-orange-500 to-red-500 hidden md:block"></div>
-                            
+
                             <div className="space-y-4">
                                 {phases.map((phase, idx) => {
                                     const isExpanded = expandedPhase === phase.id;
                                     const isEditing = editingPhaseId === phase.id;
-                                    
+
                                     return (
                                         <div key={phase.id} className="relative">
                                             <div className={`relative flex items-start gap-4 transition-all duration-300 ${isExpanded ? 'mb-4' : ''}`}>
@@ -929,11 +923,10 @@ const PlacementPrepManagementPage: React.FC = () => {
                                                 <div className={`relative z-10 w-16 h-16 rounded-full bg-gradient-to-br ${phase.colorClass} flex items-center justify-center text-2xl shadow-lg flex-shrink-0`}>
                                                     {phase.icon}
                                                 </div>
-                                                
+
                                                 {/* Content Card */}
-                                                <div className={`flex-1 bg-gradient-to-br from-gray-50 to-white border-2 rounded-xl transition-all duration-300 ${
-                                                    isExpanded ? 'border-orange-300 shadow-lg' : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                                                }`}>
+                                                <div className={`flex-1 bg-gradient-to-br from-gray-50 to-white border-2 rounded-xl transition-all duration-300 ${isExpanded ? 'border-orange-300 shadow-lg' : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                                                    }`}>
                                                     <div className="p-5">
                                                         <div className="flex items-center justify-between mb-3">
                                                             <div className="flex-1">
@@ -995,213 +988,213 @@ const PlacementPrepManagementPage: React.FC = () => {
                                                             {expandedPhase === phase.id && !isEditing && (
                                                                 <div className="mb-4">
                                                                     {(editingTaskId === null || phase.tasks.some(t => t.id === editingTaskId)) && (
-                                                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-                                                                    <h6 className="text-sm font-semibold mb-3">
-                                                                        {editingTaskId ? 'Edit Task' : 'Add New Task'}
-                                                                    </h6>
-                                                                    <div className="grid grid-cols-2 gap-3 mb-3">
-                                                                        <div className="col-span-2">
-                                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Title *</label>
-                                                                            <input
-                                                                                type="text"
-                                                                                value={taskForm.title}
-                                                                                onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-                                                                                placeholder="Task title"
-                                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
-                                                                            />
-                                                                        </div>
-                                                                        <div className="col-span-2">
-                                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                                                                            <textarea
-                                                                                value={taskForm.description || ''}
-                                                                                onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-                                                                                placeholder="Task description"
-                                                                                rows={2}
-                                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
-                                                                            />
-                                                                        </div>
-                                                                        <div>
-                                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Difficulty</label>
-                                                                            <select
-                                                                                value={taskForm.difficulty || 'Easy'}
-                                                                                onChange={(e) => setTaskForm({ ...taskForm, difficulty: e.target.value as any })}
-                                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
-                                                                            >
-                                                                                <option value="Easy">Easy</option>
-                                                                                <option value="Medium">Medium</option>
-                                                                                <option value="Hard">Hard</option>
-                                                                            </select>
-                                                                        </div>
-                                                                        <div>
-                                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Practice Link</label>
-                                                                            <input
-                                                                                type="url"
-                                                                                value={taskForm.practiceLink || ''}
-                                                                                onChange={(e) => setTaskForm({ ...taskForm, practiceLink: e.target.value })}
-                                                                                placeholder="https://..."
-                                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
-                                                                            />
-                                                                        </div>
-                                                                        <div className="col-span-2">
-                                                                            <label className="block text-xs font-medium text-gray-700 mb-1">Note</label>
-                                                                            <input
-                                                                                type="text"
-                                                                                value={taskForm.note || ''}
-                                                                                onChange={(e) => setTaskForm({ ...taskForm, note: e.target.value })}
-                                                                                placeholder="Additional notes"
-                                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
-                                                                            />
-                                                                        </div>
-                                                                        <div className="col-span-2 flex items-center gap-2">
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                checked={taskForm.needsRevision || false}
-                                                                                onChange={(e) => setTaskForm({ ...taskForm, needsRevision: e.target.checked })}
-                                                                                className="w-4 h-4 text-orange-500 rounded"
-                                                                            />
-                                                                            <label className="text-xs text-gray-700">Needs Revision</label>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* Helpful Links Section */}
-                                                                    <div className="col-span-2 border-t border-gray-200 pt-3 mt-3">
-                                                                        <div className="flex items-center justify-between mb-2">
-                                                                            <label className="block text-xs font-medium text-gray-700">Helpful Links</label>
-                                                                            {editingTaskLinkIndex === null && !isAddingTaskLink && (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={handleAddTaskLink}
-                                                                                    className="px-2 py-1 text-xs text-orange-600 hover:bg-orange-50 rounded"
-                                                                                >
-                                                                                    + Add Link
-                                                                                </button>
-                                                                            )}
-                                                                        </div>
-
-                                                                        {/* Add/Edit Link Form */}
-                                                                        {(editingTaskLinkIndex !== null || isAddingTaskLink) && (
-                                                                            <div className="bg-white border border-gray-200 rounded p-3 mb-2">
-                                                                                <div className="grid grid-cols-3 gap-2 mb-2">
-                                                                                    <div>
-                                                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
-                                                                                        <input
-                                                                                            type="text"
-                                                                                            value={taskLinkForm.name}
-                                                                                            onChange={(e) => setTaskLinkForm({ ...taskLinkForm, name: e.target.value })}
-                                                                                            placeholder="e.g., LeetCode"
-                                                                                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
-                                                                                        />
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <label className="block text-xs font-medium text-gray-700 mb-1">URL *</label>
-                                                                                        <input
-                                                                                            type="url"
-                                                                                            value={taskLinkForm.url}
-                                                                                            onChange={(e) => setTaskLinkForm({ ...taskLinkForm, url: e.target.value })}
-                                                                                            placeholder="https://..."
-                                                                                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
-                                                                                        />
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
-                                                                                        <input
-                                                                                            type="text"
-                                                                                            value={taskLinkForm.type}
-                                                                                            onChange={(e) => setTaskLinkForm({ ...taskLinkForm, type: e.target.value })}
-                                                                                            placeholder="e.g., Practice"
-                                                                                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
-                                                                                        />
-                                                                                    </div>
+                                                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                                                                            <h6 className="text-sm font-semibold mb-3">
+                                                                                {editingTaskId ? 'Edit Task' : 'Add New Task'}
+                                                                            </h6>
+                                                                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                                                                <div className="col-span-2">
+                                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Title *</label>
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        value={taskForm.title}
+                                                                                        onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                                                                                        placeholder="Task title"
+                                                                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
+                                                                                    />
                                                                                 </div>
-                                                                                <div className="flex gap-2">
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={handleSaveTaskLink}
-                                                                                        className="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600"
+                                                                                <div className="col-span-2">
+                                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                                                                                    <textarea
+                                                                                        value={taskForm.description || ''}
+                                                                                        onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                                                                                        placeholder="Task description"
+                                                                                        rows={2}
+                                                                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
+                                                                                    />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Difficulty</label>
+                                                                                    <select
+                                                                                        value={taskForm.difficulty || 'Easy'}
+                                                                                        onChange={(e) => setTaskForm({ ...taskForm, difficulty: e.target.value as any })}
+                                                                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
                                                                                     >
-                                                                                        {editingTaskLinkIndex !== null ? 'Update' : 'Add'}
-                                                                                    </button>
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() => {
-                                                                                            setEditingTaskLinkIndex(null);
-                                                                                            setIsAddingTaskLink(false);
-                                                                                            setTaskLinkForm(createEmptyResource());
-                                                                                        }}
-                                                                                        className="px-3 py-1 text-xs border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
-                                                                                    >
-                                                                                        Cancel
-                                                                                    </button>
+                                                                                        <option value="Easy">Easy</option>
+                                                                                        <option value="Medium">Medium</option>
+                                                                                        <option value="Hard">Hard</option>
+                                                                                    </select>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Practice Link</label>
+                                                                                    <input
+                                                                                        type="url"
+                                                                                        value={taskForm.practiceLink || ''}
+                                                                                        onChange={(e) => setTaskForm({ ...taskForm, practiceLink: e.target.value })}
+                                                                                        placeholder="https://..."
+                                                                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="col-span-2">
+                                                                                    <label className="block text-xs font-medium text-gray-700 mb-1">Note</label>
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        value={taskForm.note || ''}
+                                                                                        onChange={(e) => setTaskForm({ ...taskForm, note: e.target.value })}
+                                                                                        placeholder="Additional notes"
+                                                                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="col-span-2 flex items-center gap-2">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={taskForm.needsRevision || false}
+                                                                                        onChange={(e) => setTaskForm({ ...taskForm, needsRevision: e.target.checked })}
+                                                                                        className="w-4 h-4 text-orange-500 rounded"
+                                                                                    />
+                                                                                    <label className="text-xs text-gray-700">Needs Revision</label>
                                                                                 </div>
                                                                             </div>
-                                                                        )}
 
-                                                                        {/* Helpful Links List */}
-                                                                        <div className="space-y-1">
-                                                                            {taskForm.helpfulLinks && taskForm.helpfulLinks.length > 0 ? (
-                                                                                taskForm.helpfulLinks.map((link, linkIndex) => (
-                                                                                    <div key={linkIndex} className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs">
-                                                                                        <div className="flex-1">
-                                                                                            <div className="flex items-center gap-2">
-                                                                                                <span className="font-medium text-gray-900">{link.name}</span>
-                                                                                                {link.type && (
-                                                                                                    <span className="text-gray-500">({link.type})</span>
-                                                                                                )}
+                                                                            {/* Helpful Links Section */}
+                                                                            <div className="col-span-2 border-t border-gray-200 pt-3 mt-3">
+                                                                                <div className="flex items-center justify-between mb-2">
+                                                                                    <label className="block text-xs font-medium text-gray-700">Helpful Links</label>
+                                                                                    {editingTaskLinkIndex === null && !isAddingTaskLink && (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={handleAddTaskLink}
+                                                                                            className="px-2 py-1 text-xs text-orange-600 hover:bg-orange-50 rounded"
+                                                                                        >
+                                                                                            + Add Link
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                {/* Add/Edit Link Form */}
+                                                                                {(editingTaskLinkIndex !== null || isAddingTaskLink) && (
+                                                                                    <div className="bg-white border border-gray-200 rounded p-3 mb-2">
+                                                                                        <div className="grid grid-cols-3 gap-2 mb-2">
+                                                                                            <div>
+                                                                                                <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+                                                                                                <input
+                                                                                                    type="text"
+                                                                                                    value={taskLinkForm.name}
+                                                                                                    onChange={(e) => setTaskLinkForm({ ...taskLinkForm, name: e.target.value })}
+                                                                                                    placeholder="e.g., LeetCode"
+                                                                                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
+                                                                                                />
                                                                                             </div>
-                                                                                            <a
-                                                                                                href={link.url}
-                                                                                                target="_blank"
-                                                                                                rel="noopener noreferrer"
-                                                                                                className="text-gray-500 hover:text-orange-600 break-all"
-                                                                                            >
-                                                                                                {link.url}
-                                                                                            </a>
+                                                                                            <div>
+                                                                                                <label className="block text-xs font-medium text-gray-700 mb-1">URL *</label>
+                                                                                                <input
+                                                                                                    type="url"
+                                                                                                    value={taskLinkForm.url}
+                                                                                                    onChange={(e) => setTaskLinkForm({ ...taskLinkForm, url: e.target.value })}
+                                                                                                    placeholder="https://..."
+                                                                                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
+                                                                                                />
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                                                                                                <input
+                                                                                                    type="text"
+                                                                                                    value={taskLinkForm.type}
+                                                                                                    onChange={(e) => setTaskLinkForm({ ...taskLinkForm, type: e.target.value })}
+                                                                                                    placeholder="e.g., Practice"
+                                                                                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
+                                                                                                />
+                                                                                            </div>
                                                                                         </div>
-                                                                                        <div className="flex gap-1 ml-2">
+                                                                                        <div className="flex gap-2">
                                                                                             <button
                                                                                                 type="button"
-                                                                                                onClick={() => handleEditTaskLink(linkIndex)}
-                                                                                                className="px-2 py-1 text-xs text-orange-600 hover:bg-orange-50 rounded"
+                                                                                                onClick={handleSaveTaskLink}
+                                                                                                className="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600"
                                                                                             >
-                                                                                                Edit
+                                                                                                {editingTaskLinkIndex !== null ? 'Update' : 'Add'}
                                                                                             </button>
                                                                                             <button
                                                                                                 type="button"
-                                                                                                onClick={() => handleDeleteTaskLink(linkIndex)}
-                                                                                                className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                                                                                                onClick={() => {
+                                                                                                    setEditingTaskLinkIndex(null);
+                                                                                                    setIsAddingTaskLink(false);
+                                                                                                    setTaskLinkForm(createEmptyResource());
+                                                                                                }}
+                                                                                                className="px-3 py-1 text-xs border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
                                                                                             >
-                                                                                                Delete
+                                                                                                Cancel
                                                                                             </button>
                                                                                         </div>
                                                                                     </div>
-                                                                                ))
-                                                                            ) : (
-                                                                                <p className="text-xs text-gray-400 text-center py-2">No helpful links added yet</p>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
+                                                                                )}
 
-                                                                    <div className="flex gap-2">
-                                                                        <button
-                                                                            onClick={() => handleSaveTask(phase.id)}
-                                                                            className="px-4 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
-                                                                        >
-                                                                            {editingTaskId ? 'Update Task' : 'Add Task'}
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                setEditingTaskId(null);
-                                                                                setIsAddingTaskLink(false);
-                                                                                setEditingTaskLinkIndex(null);
-                                                                                setTaskLinkForm(createEmptyResource());
-                                                                                setTaskForm(createEmptyTask());
-                                                                            }}
-                                                                            className="px-4 py-1 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
-                                                                        >
-                                                                            Cancel
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
+                                                                                {/* Helpful Links List */}
+                                                                                <div className="space-y-1">
+                                                                                    {taskForm.helpfulLinks && taskForm.helpfulLinks.length > 0 ? (
+                                                                                        taskForm.helpfulLinks.map((link, linkIndex) => (
+                                                                                            <div key={linkIndex} className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs">
+                                                                                                <div className="flex-1">
+                                                                                                    <div className="flex items-center gap-2">
+                                                                                                        <span className="font-medium text-gray-900">{link.name}</span>
+                                                                                                        {link.type && (
+                                                                                                            <span className="text-gray-500">({link.type})</span>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                    <a
+                                                                                                        href={link.url}
+                                                                                                        target="_blank"
+                                                                                                        rel="noopener noreferrer"
+                                                                                                        className="text-gray-500 hover:text-orange-600 break-all"
+                                                                                                    >
+                                                                                                        {link.url}
+                                                                                                    </a>
+                                                                                                </div>
+                                                                                                <div className="flex gap-1 ml-2">
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        onClick={() => handleEditTaskLink(linkIndex)}
+                                                                                                        className="px-2 py-1 text-xs text-orange-600 hover:bg-orange-50 rounded"
+                                                                                                    >
+                                                                                                        Edit
+                                                                                                    </button>
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        onClick={() => handleDeleteTaskLink(linkIndex)}
+                                                                                                        className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                                                                                                    >
+                                                                                                        Delete
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        ))
+                                                                                    ) : (
+                                                                                        <p className="text-xs text-gray-400 text-center py-2">No helpful links added yet</p>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div className="flex gap-2">
+                                                                                <button
+                                                                                    onClick={() => handleSaveTask(phase.id)}
+                                                                                    className="px-4 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+                                                                                >
+                                                                                    {editingTaskId ? 'Update Task' : 'Add Task'}
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        setEditingTaskId(null);
+                                                                                        setIsAddingTaskLink(false);
+                                                                                        setEditingTaskLinkIndex(null);
+                                                                                        setTaskLinkForm(createEmptyResource());
+                                                                                        setTaskForm(createEmptyTask());
+                                                                                    }}
+                                                                                    className="px-4 py-1 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+                                                                                >
+                                                                                    Cancel
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             )}
@@ -1252,7 +1245,7 @@ const PlacementPrepManagementPage: React.FC = () => {
                                                                                             const isPractice = typeLower.includes('practice') || typeLower.includes('leetcode');
                                                                                             const isRoadmap = typeLower.includes('roadmap');
                                                                                             const domain = link.url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
-                                                                                            
+
                                                                                             return (
                                                                                                 <a
                                                                                                     key={idx}
@@ -1322,77 +1315,10 @@ const PlacementPrepManagementPage: React.FC = () => {
                 <div className="space-y-6">
                     {/* Add Topic Form */}
                     {editingTopicIndex === null && (
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        {editingTopicIndex !== null ? 'Edit Topic' : 'Add New Topic'}
-                    </h3>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Topic Title *
-                            </label>
-                            <input
-                                type="text"
-                                value={topicForm.title}
-                                onChange={(e) => setTopicForm({ ...topicForm, title: e.target.value })}
-                                placeholder="e.g., Data Structures & Algorithms"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Importance *
-                                </label>
-                                <select
-                                    value={topicForm.importance}
-                                    onChange={(e) => setTopicForm({ ...topicForm, importance: e.target.value as any })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                >
-                                    <option value="Critical">Critical</option>
-                                    <option value="Important">Important</option>
-                                    <option value="Good to Know">Good to Know</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Time Needed
-                                </label>
-                                <input
-                                    type="text"
-                                    value={topicForm.timeNeeded}
-                                    onChange={(e) => setTopicForm({ ...topicForm, timeNeeded: e.target.value })}
-                                    placeholder="e.g., 3-4 months"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={handleSaveTopic}
-                                className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium"
-                            >
-                                {editingTopicIndex !== null ? 'Update Topic' : 'Add Topic'}
-                            </button>
-                            {editingTopicIndex !== null && (
-                                <button
-                                    onClick={handleCancelEdit}
-                                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                                >
-                                    Cancel
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Topics List */}
-            <div className="space-y-4">
-                {topics.map((topic, topicIndex) => (
-                    <div key={topicIndex} className="bg-white border border-gray-200 rounded-lg p-6">
-                        {editingTopicIndex === topicIndex ? (
-                            // Edit Topic Form
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                {editingTopicIndex !== null ? 'Edit Topic' : 'Add New Topic'}
+                            </h3>
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1402,6 +1328,7 @@ const PlacementPrepManagementPage: React.FC = () => {
                                         type="text"
                                         value={topicForm.title}
                                         onChange={(e) => setTopicForm({ ...topicForm, title: e.target.value })}
+                                        placeholder="e.g., Data Structures & Algorithms"
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     />
                                 </div>
@@ -1428,6 +1355,7 @@ const PlacementPrepManagementPage: React.FC = () => {
                                             type="text"
                                             value={topicForm.timeNeeded}
                                             onChange={(e) => setTopicForm({ ...topicForm, timeNeeded: e.target.value })}
+                                            placeholder="e.g., 3-4 months"
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                         />
                                     </div>
@@ -1437,189 +1365,253 @@ const PlacementPrepManagementPage: React.FC = () => {
                                         onClick={handleSaveTopic}
                                         className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium"
                                     >
-                                        Save Changes
+                                        {editingTopicIndex !== null ? 'Update Topic' : 'Add Topic'}
                                     </button>
-                                    <button
-                                        onClick={handleCancelEdit}
-                                        className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                                    >
-                                        Cancel
-                                    </button>
+                                    {editingTopicIndex !== null && (
+                                        <button
+                                            onClick={handleCancelEdit}
+                                            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                                        >
+                                            Cancel
+                                        </button>
+                                    )}
                                 </div>
                             </div>
-                        ) : (
-                            // Topic Display
-                            <>
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <h3 className="text-lg font-semibold text-gray-900">{topic.title}</h3>
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                topic.importance === 'Critical' ? 'bg-red-100 text-red-700' :
-                                                topic.importance === 'Important' ? 'bg-orange-100 text-orange-700' :
-                                                'bg-blue-100 text-blue-700'
-                                            }`}>
-                                                {topic.importance}
-                                            </span>
-                                            {topic.timeNeeded && (
-                                                <span className="text-sm text-gray-500">⏱️ {topic.timeNeeded}</span>
-                                            )}
+                        </div>
+                    )}
+
+                    {/* Topics List */}
+                    <div className="space-y-4">
+                        {topics.map((topic, topicIndex) => (
+                            <div key={topicIndex} className="bg-white border border-gray-200 rounded-lg p-6">
+                                {editingTopicIndex === topicIndex ? (
+                                    // Edit Topic Form
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Topic Title *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={topicForm.title}
+                                                onChange={(e) => setTopicForm({ ...topicForm, title: e.target.value })}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Importance *
+                                                </label>
+                                                <select
+                                                    value={topicForm.importance}
+                                                    onChange={(e) => setTopicForm({ ...topicForm, importance: e.target.value as any })}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                >
+                                                    <option value="Critical">Critical</option>
+                                                    <option value="Important">Important</option>
+                                                    <option value="Good to Know">Good to Know</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Time Needed
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={topicForm.timeNeeded}
+                                                    onChange={(e) => setTopicForm({ ...topicForm, timeNeeded: e.target.value })}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={handleSaveTopic}
+                                                className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium"
+                                            >
+                                                Save Changes
+                                            </button>
+                                            <button
+                                                onClick={handleCancelEdit}
+                                                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                                            >
+                                                Cancel
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleEditTopic(topicIndex)}
-                                            className="px-3 py-1 text-sm text-orange-600 hover:bg-orange-50 rounded"
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => topic.id ? deleteTopic(topic.id) : handleDeleteTopic(topicIndex)}
-                                            className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Resources Section */}
-                                <div className="border-t border-gray-200 pt-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h4 className="text-sm font-semibold text-gray-700">Resources</h4>
-                                        {editingResourceIndex !== topicIndex && (
-                                            <button
-                                                onClick={() => handleAddResource(topicIndex)}
-                                                className="px-3 py-1 text-sm text-orange-600 hover:bg-orange-50 rounded"
-                                            >
-                                                + Add Resource
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* Add/Edit Resource Form */}
-                                    {editingResourceIndex === topicIndex && (
-                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
-                                            <div className="grid grid-cols-3 gap-3 mb-3">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                        Resource Name *
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={resourceForm.name}
-                                                        onChange={(e) => setResourceForm({ ...resourceForm, name: e.target.value })}
-                                                        placeholder="e.g., LeetCode"
-                                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                        URL *
-                                                    </label>
-                                                    <input
-                                                        type="url"
-                                                        value={resourceForm.url}
-                                                        onChange={(e) => setResourceForm({ ...resourceForm, url: e.target.value })}
-                                                        placeholder="https://..."
-                                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                        Type
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={resourceForm.type}
-                                                        onChange={(e) => setResourceForm({ ...resourceForm, type: e.target.value })}
-                                                        placeholder="e.g., Practice, Video"
-                                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                                    />
+                                ) : (
+                                    // Topic Display
+                                    <>
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <h3 className="text-lg font-semibold text-gray-900">{topic.title}</h3>
+                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${topic.importance === 'Critical' ? 'bg-red-100 text-red-700' :
+                                                            topic.importance === 'Important' ? 'bg-orange-100 text-orange-700' :
+                                                                'bg-blue-100 text-blue-700'
+                                                        }`}>
+                                                        {topic.importance}
+                                                    </span>
+                                                    {topic.timeNeeded && (
+                                                        <span className="text-sm text-gray-500">⏱️ {topic.timeNeeded}</span>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
                                                 <button
-                                                    onClick={() => {
-                                                        const resourceIndex = topic.resources.findIndex(
-                                                            (r) => r.name === resourceForm.name && r.url === resourceForm.url
-                                                        );
-                                                        handleSaveResource(topicIndex, resourceIndex >= 0 ? resourceIndex : null);
-                                                    }}
-                                                    className="px-4 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+                                                    onClick={() => handleEditTopic(topicIndex)}
+                                                    className="px-3 py-1 text-sm text-orange-600 hover:bg-orange-50 rounded"
                                                 >
-                                                    Save Resource
+                                                    Edit
                                                 </button>
                                                 <button
-                                                    onClick={() => {
-                                                        setEditingResourceIndex(null);
-                                                        setResourceForm(createEmptyResource());
-                                                    }}
-                                                    className="px-4 py-1 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+                                                    onClick={() => topic.id ? deleteTopic(topic.id) : handleDeleteTopic(topicIndex)}
+                                                    className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
                                                 >
-                                                    Cancel
+                                                    Delete
                                                 </button>
                                             </div>
                                         </div>
-                                    )}
 
-                                    {/* Resources List */}
-                                    <div className="space-y-2">
-                                        {topic.resources.map((resource, resourceIndex) => (
-                                            <div key={resourceIndex} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <a
-                                                            href={resource.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="font-medium text-gray-900 hover:text-orange-600"
-                                                        >
-                                                            {resource.name}
-                                                        </a>
-                                                        {resource.type && (
-                                                            <span className="text-xs text-gray-500">({resource.type})</span>
-                                                        )}
-                                                    </div>
-                                                    <a
-                                                        href={resource.url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-xs text-gray-500 hover:text-orange-600 break-all"
-                                                    >
-                                                        {resource.url}
-                                                    </a>
-                                                </div>
-                                                <div className="flex gap-2">
+                                        {/* Resources Section */}
+                                        <div className="border-t border-gray-200 pt-4">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="text-sm font-semibold text-gray-700">Resources</h4>
+                                                {editingResourceIndex !== topicIndex && (
                                                     <button
-                                                        onClick={() => handleEditResource(topicIndex, resourceIndex)}
-                                                        className="px-2 py-1 text-xs text-orange-600 hover:bg-orange-50 rounded"
+                                                        onClick={() => handleAddResource(topicIndex)}
+                                                        className="px-3 py-1 text-sm text-orange-600 hover:bg-orange-50 rounded"
                                                     >
-                                                        Edit
+                                                        + Add Resource
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDeleteResource(topicIndex, resourceIndex)}
-                                                        className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
+                                                )}
                                             </div>
-                                        ))}
-                                        {topic.resources.length === 0 && (
-                                            <p className="text-sm text-gray-500 text-center py-4">No resources added yet</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </>
+
+                                            {/* Add/Edit Resource Form */}
+                                            {editingResourceIndex === topicIndex && (
+                                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+                                                    <div className="grid grid-cols-3 gap-3 mb-3">
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                Resource Name *
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={resourceForm.name}
+                                                                onChange={(e) => setResourceForm({ ...resourceForm, name: e.target.value })}
+                                                                placeholder="e.g., LeetCode"
+                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                URL *
+                                                            </label>
+                                                            <input
+                                                                type="url"
+                                                                value={resourceForm.url}
+                                                                onChange={(e) => setResourceForm({ ...resourceForm, url: e.target.value })}
+                                                                placeholder="https://..."
+                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                Type
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={resourceForm.type}
+                                                                onChange={(e) => setResourceForm({ ...resourceForm, type: e.target.value })}
+                                                                placeholder="e.g., Practice, Video"
+                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                const resourceIndex = topic.resources.findIndex(
+                                                                    (r) => r.name === resourceForm.name && r.url === resourceForm.url
+                                                                );
+                                                                handleSaveResource(topicIndex, resourceIndex >= 0 ? resourceIndex : null);
+                                                            }}
+                                                            className="px-4 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+                                                        >
+                                                            Save Resource
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingResourceIndex(null);
+                                                                setResourceForm(createEmptyResource());
+                                                            }}
+                                                            className="px-4 py-1 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Resources List */}
+                                            <div className="space-y-2">
+                                                {topic.resources.map((resource, resourceIndex) => (
+                                                    <div key={resourceIndex} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <a
+                                                                    href={resource.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="font-medium text-gray-900 hover:text-orange-600"
+                                                                >
+                                                                    {resource.name}
+                                                                </a>
+                                                                {resource.type && (
+                                                                    <span className="text-xs text-gray-500">({resource.type})</span>
+                                                                )}
+                                                            </div>
+                                                            <a
+                                                                href={resource.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-xs text-gray-500 hover:text-orange-600 break-all"
+                                                            >
+                                                                {resource.url}
+                                                            </a>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => handleEditResource(topicIndex, resourceIndex)}
+                                                                className="px-2 py-1 text-xs text-orange-600 hover:bg-orange-50 rounded"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteResource(topicIndex, resourceIndex)}
+                                                                className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {topic.resources.length === 0 && (
+                                                    <p className="text-sm text-gray-500 text-center py-4">No resources added yet</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                        {topics.length === 0 && (
+                            <div className="text-center py-12 bg-white border border-gray-200 rounded-lg">
+                                <p className="text-gray-500">No topics added yet. Click "Add New Topic" to get started.</p>
+                            </div>
                         )}
                     </div>
-                ))}
-                {topics.length === 0 && (
-                    <div className="text-center py-12 bg-white border border-gray-200 rounded-lg">
-                        <p className="text-gray-500">No topics added yet. Click "Add New Topic" to get started.</p>
-                    </div>
-                )}
-            </div>
                 </div>
             )}
         </div>
