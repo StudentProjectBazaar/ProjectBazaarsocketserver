@@ -1386,21 +1386,147 @@ const SellerDashboard: React.FC = () => {
                         </div>
                     ) : uploadedProjects.length > 0 ? (
                         <>
-                            {/* Status Filter */}
-                            <div className="flex items-center gap-3 mb-4">
-                                <label className="text-sm font-medium text-gray-700">Filter by status:</label>
-                                <select
-                                    value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                >
-                                    <option value="all">All Projects ({uploadedProjects.length})</option>
-                                    <option value="Draft">Drafts ({stats.draftProjects})</option>
-                                    <option value="In Review">In Review ({stats.inReviewProjects})</option>
-                                    <option value="Approved">Approved ({stats.activatedProjects})</option>
-                                    <option value="Rejected">Rejected ({stats.rejectedProjects})</option>
-                                    <option value="Disabled">Disabled ({stats.disabledProjects})</option>
-                                </select>
+                            {/* Status Filter - Improved UI */}
+                            <div className="mb-6">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                    </svg>
+                                    <label className="text-sm font-semibold text-gray-700">Filter by Status</label>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {/* All Projects Filter */}
+                                    <button
+                                        onClick={() => setStatusFilter('all')}
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                                            statusFilter === 'all'
+                                                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md hover:from-orange-600 hover:to-orange-700'
+                                                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-orange-300 hover:bg-orange-50'
+                                        }`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                        </svg>
+                                        <span>All</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                            statusFilter === 'all'
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {uploadedProjects.length}
+                                        </span>
+                                    </button>
+
+                                    {/* Draft Filter */}
+                                    <button
+                                        onClick={() => setStatusFilter('Draft')}
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                                            statusFilter === 'Draft'
+                                                ? 'bg-gray-700 text-white shadow-md hover:bg-gray-800'
+                                                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <span>Drafts</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                            statusFilter === 'Draft'
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {stats.draftProjects}
+                                        </span>
+                                    </button>
+
+                                    {/* In Review Filter */}
+                                    <button
+                                        onClick={() => setStatusFilter('In Review')}
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                                            statusFilter === 'In Review'
+                                                ? 'bg-orange-500 text-white shadow-md hover:bg-orange-600'
+                                                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-orange-300 hover:bg-orange-50'
+                                        }`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>In Review</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                            statusFilter === 'In Review'
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {stats.inReviewProjects}
+                                        </span>
+                                    </button>
+
+                                    {/* Approved Filter */}
+                                    <button
+                                        onClick={() => setStatusFilter('Approved')}
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                                            statusFilter === 'Approved'
+                                                ? 'bg-green-500 text-white shadow-md hover:bg-green-600'
+                                                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-green-300 hover:bg-green-50'
+                                        }`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Approved</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                            statusFilter === 'Approved'
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {stats.activatedProjects}
+                                        </span>
+                                    </button>
+
+                                    {/* Rejected Filter */}
+                                    <button
+                                        onClick={() => setStatusFilter('Rejected')}
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                                            statusFilter === 'Rejected'
+                                                ? 'bg-red-500 text-white shadow-md hover:bg-red-600'
+                                                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-red-300 hover:bg-red-50'
+                                        }`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Rejected</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                            statusFilter === 'Rejected'
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {stats.rejectedProjects}
+                                        </span>
+                                    </button>
+
+                                    {/* Disabled Filter */}
+                                    <button
+                                        onClick={() => setStatusFilter('Disabled')}
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                                            statusFilter === 'Disabled'
+                                                ? 'bg-gray-500 text-white shadow-md hover:bg-gray-600'
+                                                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                        </svg>
+                                        <span>Disabled</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                            statusFilter === 'Disabled'
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {stats.disabledProjects}
+                                        </span>
+                                    </button>
+                                </div>
                             </div>
                             
                             {/* Filtered Projects */}
