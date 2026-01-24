@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ProjectDashboardCard from './ProjectDashboardCard';
 import { useNavigation, usePremium, useAuth } from '../App';
 import { fetchProjectDetails, ProjectDetails } from '../services/buyerApi';
@@ -135,6 +135,7 @@ const SellerDashboard: React.FC = () => {
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [showPremiumModal, setShowPremiumModal] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'Draft' | 'In Review' | 'Approved' | 'Rejected' | 'Disabled'>('all');
     const [isDragging, setIsDragging] = useState(false);
     const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null);
     const [, setDragOverIndex] = useState<number | null>(null);
@@ -243,7 +244,9 @@ const SellerDashboard: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState(false);
+    const [isDraftSave, setIsDraftSave] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<string>('');
+    const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
 
     // Upload single image to S3 and return the URL
     const uploadImageToS3 = async (file: File, index: number): Promise<string> => {
@@ -315,6 +318,8 @@ const SellerDashboard: React.FC = () => {
         activatedProjects: 0,
         rejectedProjects: 0,
         disabledProjects: 0,
+        draftProjects: 0,
+        inReviewProjects: 0,
         totalProjectsSold: 0,
         totalRevenue: 0
     });
@@ -327,7 +332,10 @@ const SellerDashboard: React.FC = () => {
         const projectStatus = apiProject.status?.toLowerCase();
         
         // Priority: adminApprovalStatus > status
-        if (approvalStatus === 'approved' || (approvalStatus === undefined && projectStatus === 'active')) {
+        // Explicitly check for draft status first
+        if (projectStatus === 'draft') {
+            status = 'Draft';
+        } else if (approvalStatus === 'approved' || (approvalStatus === undefined && projectStatus === 'active')) {
             status = 'Approved';
         } else if (approvalStatus === 'rejected') {
             status = 'Rejected';
@@ -473,6 +481,8 @@ const SellerDashboard: React.FC = () => {
                 let activatedCount = 0;
                 let rejectedCount = 0;
                 let disabledCount = 0;
+                let draftCount = 0;
+                let inReviewCount = 0;
                 let totalSold = 0;
                 let totalRev = 0;
                 
@@ -484,6 +494,10 @@ const SellerDashboard: React.FC = () => {
                         rejectedCount++;
                     } else if (project.status === 'Disabled') {
                         disabledCount++;
+                    } else if (project.status === 'Draft') {
+                        draftCount++;
+                    } else if (project.status === 'In Review') {
+                        inReviewCount++;
                     }
                     
                     // Calculate sales and revenue
@@ -496,6 +510,8 @@ const SellerDashboard: React.FC = () => {
                     activatedProjects: activatedCount,
                     rejectedProjects: rejectedCount,
                     disabledProjects: disabledCount,
+                    draftProjects: draftCount,
+                    inReviewProjects: inReviewCount,
                     totalProjectsSold: totalSold,
                     totalRevenue: totalRev
                 });
@@ -506,6 +522,8 @@ const SellerDashboard: React.FC = () => {
                     activatedProjects: 0,
                     rejectedProjects: 0,
                     disabledProjects: 0,
+                    draftProjects: 0,
+                    inReviewProjects: 0,
                     totalProjectsSold: 0,
                     totalRevenue: 0
                 });
@@ -569,6 +587,21 @@ const SellerDashboard: React.FC = () => {
     }, [userId]);
 
     const MAX_IMAGES = 5;
+    const MIN_IMAGES = 2;
+    
+    // Validation function to check if all required fields are filled
+    const isFormValid = useMemo(() => {
+        const hasTitle = formData.title.trim() !== '';
+        const hasCategory = formData.category.trim() !== '';
+        const hasDescription = formData.description.trim() !== '';
+        const hasTags = tags.length >= 1;
+        const hasPrice = formData.price.trim() !== '' && !isNaN(parseFloat(formData.price)) && parseFloat(formData.price) > 0;
+        const hasYoutubeUrl = formData.youtubeVideoUrl.trim() !== '';
+        const hasGithubUrl = formData.githubUrl.trim() !== '' && githubValidated;
+        const hasValidImages = imageFiles.length >= MIN_IMAGES && imageFiles.length <= MAX_IMAGES;
+        
+        return hasTitle && hasCategory && hasDescription && hasTags && hasPrice && hasYoutubeUrl && hasGithubUrl && hasValidImages;
+    }, [formData, tags, githubValidated, imageFiles.length]);
 
     const addImages = (files: FileList | File[]) => {
         const fileArray = Array.from(files);
@@ -787,10 +820,130 @@ const SellerDashboard: React.FC = () => {
         setGithubValidationError(null);
     };
 
+    const handleSaveDraft = async () => {
+        setSubmitError(null);
+        setSubmitSuccess(false);
+        setIsDraftSave(true);
+
+        if (!userId || !userEmail) {
+            setSubmitError('You must be logged in to save a project');
+            return;
+        }
+
+        // Allow unlimited uploads if user has profile image or is premium
+        if (!isPremium && !userProfileImage && uploadedProjects.length >= MAX_FREE_PROJECTS) {
+            setShowPremiumModal(true);
+            return;
+        }
+
+        // For drafts, only title is required
+        if (!formData.title.trim()) {
+            setSubmitError('Please enter a project title to save as draft');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setUploadProgress('Saving draft...');
+
+        try {
+            // Upload images if any are provided (optional for drafts)
+            // Start with existing image URLs (from draft) that are already uploaded
+            const imageUrls: string[] = imagePreviews.filter(url => url.startsWith('http')); // Keep existing URLs
+            
+            if (imageFiles.length > 0) {
+                setUploadProgress(`Uploading ${imageFiles.length} image(s) to cloud...`);
+                for (let i = 0; i < imageFiles.length; i++) {
+                    try {
+                        const imageUrl = await uploadImageToS3(imageFiles[i], i);
+                        imageUrls.push(imageUrl);
+                    } catch (uploadError) {
+                        console.error(`Failed to upload image ${i + 1}:`, uploadError);
+                        // For drafts, continue even if image upload fails
+                    }
+                }
+            }
+
+            setUploadProgress('Saving draft...');
+
+            // Prepare request body for draft
+            const requestBody: any = {
+                sellerId: userId,
+                sellerEmail: userEmail,
+                isDraft: true,
+                title: formData.title.trim(),
+                category: formData.category.trim() || undefined,
+                description: formData.description.trim() || undefined,
+                tags: tags.length > 0 ? tags.join(', ') : undefined,
+                price: formData.price.trim() ? parseFloat(formData.price) : undefined,
+                originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
+                githubUrl: formData.githubUrl.trim() || undefined,
+                youtubeVideoUrl: formData.youtubeVideoUrl.trim() || undefined,
+                thumbnailUrl: imageUrls[0] || undefined,
+                imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+                pptUrl: resourceUrls.ppt.trim() || undefined,
+                documentationUrl: resourceUrls.documentation.trim() || undefined,
+                executionVideoUrl: resourceUrls.executionVideo.trim() || undefined,
+                researchPaperUrl: resourceUrls.researchPaper.trim() || undefined,
+                customResources: customResources.filter(r => r.label.trim() && r.url.trim()).map(r => ({
+                    label: r.label.trim(),
+                    url: r.url.trim()
+                }))
+            };
+
+            // If editing existing draft, include projectId
+            if (editingProjectId) {
+                requestBody.projectId = editingProjectId;
+            }
+
+            // Remove undefined/empty values
+            Object.keys(requestBody).forEach(key => {
+                const value = requestBody[key as keyof typeof requestBody];
+                if (value === undefined || (Array.isArray(value) && value.length === 0)) {
+                    delete requestBody[key as keyof typeof requestBody];
+                }
+            });
+
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setSubmitSuccess(true);
+                // Don't reset form for drafts - user might want to continue editing
+                // Refresh projects list to show the draft
+                await fetchProjects();
+                
+                // Show success message
+                setTimeout(() => {
+                    setSubmitSuccess(false);
+                }, 3000);
+            } else {
+                setSubmitError(data.error?.message || 'Failed to save draft. Please try again.');
+            }
+        } catch (error) {
+            console.error('Draft save error:', error);
+            if (error instanceof Error) {
+                setSubmitError(error.message);
+            } else {
+                setSubmitError('Network error. Please check your connection and try again.');
+            }
+        } finally {
+            setIsSubmitting(false);
+            setUploadProgress('');
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitError(null);
         setSubmitSuccess(false);
+        setIsDraftSave(false);
 
         if (!userId || !userEmail) {
             setSubmitError('You must be logged in to upload a project');
@@ -861,25 +1014,29 @@ const SellerDashboard: React.FC = () => {
 
         try {
             // 1. Upload all images to S3 first
-            setUploadProgress(`Uploading ${imageFiles.length} image(s) to cloud...`);
-            const imageUrls: string[] = [];
+            // Start with existing image URLs (from draft) that are already uploaded
+            const imageUrls: string[] = imagePreviews.filter(url => url.startsWith('http')); // Keep existing URLs
             
-            for (let i = 0; i < imageFiles.length; i++) {
-                try {
-                    const imageUrl = await uploadImageToS3(imageFiles[i], i);
-                    imageUrls.push(imageUrl);
-                } catch (uploadError) {
-                    console.error(`Failed to upload image ${i + 1}:`, uploadError);
-                    throw new Error(`Failed to upload image ${i + 1}. Please try again.`);
+            if (imageFiles.length > 0) {
+                setUploadProgress(`Uploading ${imageFiles.length} image(s) to cloud...`);
+                for (let i = 0; i < imageFiles.length; i++) {
+                    try {
+                        const imageUrl = await uploadImageToS3(imageFiles[i], i);
+                        imageUrls.push(imageUrl);
+                    } catch (uploadError) {
+                        console.error(`Failed to upload image ${i + 1}:`, uploadError);
+                        throw new Error(`Failed to upload image ${i + 1}. Please try again.`);
+                    }
                 }
             }
 
             setUploadProgress('Submitting project...');
 
             // 2. Prepare request body with S3 image URLs
-            const requestBody = {
+            const requestBody: any = {
                 sellerId: userId,
                 sellerEmail: userEmail,
+                isDraft: false, // Explicitly set to false for submission
                 title: formData.title.trim(),
                 category: formData.category.trim(),
                 description: formData.description.trim(),
@@ -903,6 +1060,11 @@ const SellerDashboard: React.FC = () => {
                 }))
             };
 
+            // If editing existing draft, include projectId
+            if (editingProjectId) {
+                requestBody.projectId = editingProjectId;
+            }
+
             // Remove undefined/empty values
             Object.keys(requestBody).forEach(key => {
                 const value = requestBody[key as keyof typeof requestBody];
@@ -924,31 +1086,7 @@ const SellerDashboard: React.FC = () => {
             if (data.success) {
                 setSubmitSuccess(true);
                 // Reset form
-                setFormData({
-                    title: '',
-                    category: '',
-                    description: '',
-                    price: '',
-                    originalPrice: '',
-                    youtubeVideoUrl: '',
-                    githubUrl: ''
-                });
-                setTags([]);
-                setTagInput('');
-                setSelectedResources([]);
-                setResourceUrls({
-                    ppt: '',
-                    documentation: '',
-                    executionVideo: '',
-                    researchPaper: ''
-                });
-                setCustomResources([]);
-                setGithubValidated(false);
-                setGithubValidationError(null);
-                // Revoke object URLs to prevent memory leaks
-                imagePreviews.forEach(url => URL.revokeObjectURL(url));
-                setImageFiles([]);
-                setImagePreviews([]);
+                resetForm();
                 
                 // Refresh projects list to get the latest from API
                 await fetchProjects();
@@ -974,12 +1112,156 @@ const SellerDashboard: React.FC = () => {
         }
     };
 
+    const resetForm = () => {
+        setFormData({
+            title: '',
+            category: '',
+            description: '',
+            price: '',
+            originalPrice: '',
+            youtubeVideoUrl: '',
+            githubUrl: ''
+        });
+        setTags([]);
+        setTagInput('');
+        setSelectedResources([]);
+        setResourceUrls({
+            ppt: '',
+            documentation: '',
+            executionVideo: '',
+            researchPaper: ''
+        });
+        setCustomResources([]);
+        setGithubValidated(false);
+        setGithubValidationError(null);
+        // Revoke object URLs to prevent memory leaks
+        imagePreviews.forEach(url => URL.revokeObjectURL(url));
+        setImageFiles([]);
+        setImagePreviews([]);
+        setSubmitError(null);
+        setSubmitSuccess(false);
+        setEditingProjectId(null);
+    };
+
     const handleUploadClick = () => {
         // Allow unlimited uploads if user has profile image or is premium
         if (!isPremium && !userProfileImage && uploadedProjects.length >= MAX_FREE_PROJECTS) {
             setShowPremiumModal(true);
         } else {
+            // Reset form when starting new upload
+            resetForm();
             setShowUploadForm(true);
+        }
+    };
+
+    const loadDraftProject = async (projectId: string) => {
+        try {
+            setIsLoadingProjects(true);
+            // Fetch full project details
+            const projectDetails = await fetchProjectDetails(projectId);
+            
+            if (!projectDetails) {
+                setSubmitError('Failed to load draft project');
+                return;
+            }
+
+            // Type assertion to access additional fields that may exist in API response
+            const projectData = projectDetails as any;
+
+            // Check if it's a draft
+            if (projectData.status?.toLowerCase() !== 'draft') {
+                setSubmitError('Only draft projects can be edited');
+                return;
+            }
+
+            // Set editing project ID
+            setEditingProjectId(projectId);
+
+            // Load form data
+            setFormData({
+                title: projectData.title || '',
+                category: projectData.category || '',
+                description: projectData.description || '',
+                price: projectData.price?.toString() || '',
+                originalPrice: projectData.originalPrice?.toString() || '',
+                youtubeVideoUrl: projectData.youtubeVideoUrl || '',
+                githubUrl: projectData.githubUrl || ''
+            });
+
+            // Load tags
+            if (projectData.tags) {
+                const tagsArray = Array.isArray(projectData.tags) 
+                    ? projectData.tags 
+                    : (typeof projectData.tags === 'string' 
+                        ? projectData.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+                        : []);
+                setTags(tagsArray);
+            }
+
+            // Load resource URLs
+            if (projectData.resources) {
+                const resources = projectData.resources;
+                const selected: ResourceType[] = [];
+                const urls: Record<ResourceType, string> = {
+                    ppt: '',
+                    documentation: '',
+                    executionVideo: '',
+                    researchPaper: ''
+                };
+
+                if (resources.pptUrl) {
+                    selected.push('ppt');
+                    urls.ppt = resources.pptUrl;
+                }
+                if (resources.documentationUrl) {
+                    selected.push('documentation');
+                    urls.documentation = resources.documentationUrl;
+                }
+                if (resources.executionVideoUrl) {
+                    selected.push('executionVideo');
+                    urls.executionVideo = resources.executionVideoUrl;
+                }
+                if (resources.researchPaperUrl) {
+                    selected.push('researchPaper');
+                    urls.researchPaper = resources.researchPaperUrl;
+                }
+
+                setSelectedResources(selected);
+                setResourceUrls(urls);
+
+                // Load custom resources
+                if (resources.customResources && Array.isArray(resources.customResources)) {
+                    setCustomResources(resources.customResources.map((r: any, index: number) => ({
+                        id: `custom-${Date.now()}-${index}`,
+                        label: r.label || '',
+                        url: r.url || ''
+                    })));
+                }
+            }
+
+            // Load images
+            if (projectData.images && Array.isArray(projectData.images) && projectData.images.length > 0) {
+                // For existing images, we'll use the URLs directly as previews
+                // Note: We can't convert URLs back to File objects, so we'll just show them as previews
+                setImagePreviews(projectData.images);
+                // Set imageFiles as empty since we can't recreate File objects from URLs
+                setImageFiles([]);
+            }
+
+            // If GitHub URL exists, validate it
+            if (projectData.githubUrl) {
+                setGithubValidated(true);
+                setGithubValidationError(null);
+            }
+
+            // Show upload form
+            setShowUploadForm(true);
+            setSubmitError(null);
+        } catch (error) {
+            console.error('Error loading draft project:', error);
+            setSubmitError('Failed to load draft project. Please try again.');
+        } finally {
+            setIsLoadingProjects(false);
         }
     };
 
@@ -1104,29 +1386,73 @@ const SellerDashboard: React.FC = () => {
                         </div>
                     ) : uploadedProjects.length > 0 ? (
                         <>
-                            {/* Grid View */}
-                            {viewMode === 'grid' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {uploadedProjects.map((project) => (
-                                        <ProjectDashboardCard
-                                            key={project.id}
-                                            name={project.name}
-                                            domain={project.domain}
-                                            description={project.description}
-                                            logo={project.logo}
-                                            tags={project.tags}
-                                            status={project.status}
-                                            sales={project.sales}
-                                            price={project.price}
-                                            category={project.category}
-                                            adminComment={project.adminComment}
-                                            adminAction={project.adminAction}
-                                        />
+                            {/* Status Filter */}
+                            <div className="flex items-center gap-3 mb-4">
+                                <label className="text-sm font-medium text-gray-700">Filter by status:</label>
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                >
+                                    <option value="all">All Projects ({uploadedProjects.length})</option>
+                                    <option value="Draft">Drafts ({stats.draftProjects})</option>
+                                    <option value="In Review">In Review ({stats.inReviewProjects})</option>
+                                    <option value="Approved">Approved ({stats.activatedProjects})</option>
+                                    <option value="Rejected">Rejected ({stats.rejectedProjects})</option>
+                                    <option value="Disabled">Disabled ({stats.disabledProjects})</option>
+                                </select>
+                            </div>
+                            
+                            {/* Filtered Projects */}
+                            {(() => {
+                                const filteredProjects = statusFilter === 'all' 
+                                    ? uploadedProjects 
+                                    : uploadedProjects.filter(p => p.status === statusFilter);
+                                
+                                if (filteredProjects.length === 0) {
+                                    return (
+                                        <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
+                                            <p className="text-gray-500 text-lg font-medium">
+                                                No {statusFilter === 'all' ? '' : statusFilter.toLowerCase()} projects found.
+                                            </p>
+                                        </div>
+                                    );
+                                }
+                                
+                                return (
+                                    <>
+                                        {/* Grid View */}
+                                        {viewMode === 'grid' && (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                {filteredProjects.map((project) => (
+                                                    <div
+                                                        key={project.id}
+                                                        onClick={() => {
+                                                            if (project.status === 'Draft') {
+                                                                loadDraftProject(project.id);
+                                                            }
+                                                        }}
+                                                        className={project.status === 'Draft' ? 'cursor-pointer' : ''}
+                                                    >
+                                                        <ProjectDashboardCard
+                                                            name={project.name}
+                                                            domain={project.domain}
+                                                            description={project.description}
+                                                            logo={project.logo}
+                                                            tags={project.tags}
+                                                            status={project.status}
+                                                            sales={project.sales}
+                                                            price={project.price}
+                                                            category={project.category}
+                                                            adminComment={project.adminComment}
+                                                            adminAction={project.adminAction}
+                                                        />
+                                                    </div>
                                     ))}
                                 </div>
                             )}
 
-                            {/* Table View */}
+                                        {/* Table View */}
                             {viewMode === 'table' && (
                                 <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                                     <div className="overflow-x-auto">
@@ -1151,8 +1477,31 @@ const SellerDashboard: React.FC = () => {
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
-                                                {uploadedProjects.map((project) => (
-                                                    <tr key={project.id} className="hover:bg-gray-50 transition-colors">
+                                                {(() => {
+                                                    const filteredProjects = statusFilter === 'all' 
+                                                        ? uploadedProjects 
+                                                        : uploadedProjects.filter(p => p.status === statusFilter);
+                                                    
+                                                    if (filteredProjects.length === 0) {
+                                                        return (
+                                                            <tr>
+                                                                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                                                    No {statusFilter === 'all' ? '' : statusFilter.toLowerCase()} projects found.
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    }
+                                                    
+                                                    return filteredProjects.map((project) => (
+                                                        <tr 
+                                                            key={project.id} 
+                                                            className={`hover:bg-gray-50 transition-colors ${project.status === 'Draft' ? 'cursor-pointer' : ''}`}
+                                                            onClick={() => {
+                                                                if (project.status === 'Draft') {
+                                                                    loadDraftProject(project.id);
+                                                                }
+                                                            }}
+                                                        >
                                                         <td className="px-6 py-4 whitespace-nowrap">
                                                             <p className="text-sm font-medium text-gray-900">{project.name}</p>
                                                             <p className="text-sm text-gray-500">{project.category}</p>
@@ -1211,12 +1560,16 @@ const SellerDashboard: React.FC = () => {
                                                             </div>
                                                         </td>
                                                     </tr>
-                                                ))}
+                                                    ));
+                                                })()}
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
                             )}
+                                        </>
+                                    );
+                                })()}
                         </>
                     ) : (
                         <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
@@ -1234,13 +1587,14 @@ const SellerDashboard: React.FC = () => {
             {showUploadForm && (
                 <form className="space-y-8" onSubmit={handleSubmit}>
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">Upload New Project</h2>
+                        <h2 className="text-2xl font-bold text-gray-900">
+                            {editingProjectId ? 'Edit Draft Project' : 'Upload New Project'}
+                        </h2>
                         <button
                             type="button"
                             onClick={() => {
+                                resetForm();
                                 setShowUploadForm(false);
-                                setSubmitError(null);
-                                setSubmitSuccess(false);
                             }}
                             className="text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                         >
@@ -1260,7 +1614,9 @@ const SellerDashboard: React.FC = () => {
                     {/* Success Message */}
                     {submitSuccess && (
                         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                            <p className="text-sm text-green-600">Project uploaded successfully! Submitting for review...</p>
+                            <p className="text-sm text-green-600">
+                                {isDraftSave ? 'Draft saved successfully! You can continue editing or submit for review when ready.' : 'Project uploaded successfully! Submitting for review...'}
+                            </p>
                         </div>
                     )}
 
@@ -1706,14 +2062,15 @@ const SellerDashboard: React.FC = () => {
                         </button>
                         <button 
                             type="button" 
-                            disabled={isSubmitting}
+                            onClick={handleSaveDraft}
+                            disabled={isSubmitting || !formData.title.trim()}
                             className="bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Save as Draft
                         </button>
                         <button 
                             type="submit" 
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !isFormValid}
                             className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-2.5 px-6 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[180px] justify-center"
                         >
                             {isSubmitting ? (
