@@ -166,7 +166,7 @@ export const ModernTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-sm" style={{ color: themeColor }}>{exp.companyName}</p>
+                <p className="text-sm" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs font-medium px-2 py-1 rounded" style={{ backgroundColor: `${themeColor}15`, color: themeColor }}>{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
@@ -237,7 +237,7 @@ export const ProfessionalTemplate: React.FC<TemplateProps> = ({ resumeInfo, them
               <h3 className="text-base font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500 italic">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-sm italic" style={{ color: themeColor }}>{exp.companyName}</p>
+            <p className="text-sm italic" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-sm text-gray-700 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -294,7 +294,7 @@ export const MinimalTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatDat
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-semibold text-gray-900">{exp.title}</h3>
-                <p className="text-xs text-gray-500">{exp.companyName}</p>
+                <p className="text-xs text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <p className="text-xs text-gray-400">{formatDate(exp.startDate)} – {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
             </div>
@@ -363,7 +363,7 @@ export const ExecutiveTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatD
               <h3 className="text-base font-bold text-gray-900 uppercase">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-sm text-gray-600 mb-2">{exp.companyName}</p>
+            <p className="text-sm text-gray-600 mb-2">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-sm text-gray-700 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -429,7 +429,7 @@ export const TechTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor, 
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs" style={{ color: themeColor }}>@ {exp.companyName}</p>
+                <p className="text-xs" style={{ color: themeColor }}>@ {exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs text-gray-500 font-mono">{formatDate(exp.startDate)} → {exp.currentlyWorking ? 'now' : formatDate(exp.endDate)}</span>
             </div>
@@ -505,7 +505,7 @@ export const AcademicTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCol
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-sm italic text-gray-600">{exp.companyName}</p>
+                <p className="text-sm italic text-gray-600">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <p className="text-xs text-gray-500">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
             </div>
@@ -573,7 +573,7 @@ export const CreativeTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCol
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}</p>
+                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs text-gray-400">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
@@ -642,7 +642,7 @@ export const ElegantTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
               <h3 className="text-base font-semibold text-gray-800">{exp.title}</h3>
               <span className="text-xs text-gray-400 italic">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-sm text-gray-500 italic">{exp.companyName}</p>
+            <p className="text-sm text-gray-500 italic">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -698,7 +698,7 @@ export const BoldTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor, 
                 <h3 className="text-base font-bold text-gray-900">{exp.title}</h3>
                 <span className="text-xs font-semibold px-2 py-1 rounded" style={{ backgroundColor: `${themeColor}15`, color: themeColor }}>{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
               </div>
-              <p className="text-sm font-semibold" style={{ color: themeColor }}>{exp.companyName}</p>
+              <p className="text-sm font-semibold" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
             </div>
           ))}
@@ -758,7 +758,7 @@ export const CompactTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
                   <h3 className="text-[11px] font-semibold text-gray-900">{exp.title}</h3>
                   <span className="text-[9px] text-gray-400">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
                 </div>
-                <p className="text-[10px] text-gray-500">{exp.companyName}</p>
+                <p className="text-[10px] text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
                 {exp.workSummary && <div className="text-[9px] text-gray-600 mt-1 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
               </div>
             ))}
@@ -829,7 +829,7 @@ export const TimelineTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCol
               <div className="absolute -left-[29px] w-4 h-4 rounded-full border-2 bg-white" style={{ borderColor: themeColor }} />
               <div className="text-xs font-semibold px-2 py-0.5 rounded inline-block mb-1" style={{ backgroundColor: `${themeColor}15`, color: themeColor }}>{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</div>
               <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-              <p className="text-xs text-gray-500">{exp.companyName}</p>
+              <p className="text-xs text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
             </div>
           ))}
@@ -907,7 +907,7 @@ export const SidebarTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">{exp.title}</h3>
-                  <p className="text-xs text-gray-500">{exp.companyName}</p>
+                  <p className="text-xs text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
                 </div>
                 <span className="text-xs text-gray-400">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
               </div>
@@ -974,7 +974,7 @@ export const InfographicTemplate: React.FC<TemplateProps> = ({ resumeInfo, theme
             <div className="flex justify-between items-start mb-2">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}</p>
+                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: `${themeColor}15`, color: themeColor }}>{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
@@ -1029,7 +1029,7 @@ export const CorporateTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatD
               <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-[#1e3a5f] font-medium">{exp.companyName}</p>
+            <p className="text-xs text-[#1e3a5f] font-medium">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1100,7 +1100,7 @@ export const StartupTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColo
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}</p>
+                <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs text-gray-400">{formatDate(exp.startDate)} → {exp.currentlyWorking ? 'now' : formatDate(exp.endDate)}</span>
             </div>
@@ -1152,7 +1152,7 @@ export const ConsultantTemplate: React.FC<TemplateProps> = ({ resumeInfo, format
               <h3 className="text-base font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} – {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-sm text-gray-600">{exp.companyName}</p>
+            <p className="text-sm text-gray-600">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-sm text-gray-700 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1219,7 +1219,7 @@ export const HealthcareTemplate: React.FC<TemplateProps> = ({ resumeInfo, format
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs text-emerald-600">{exp.companyName}</p>
+                <p className="text-xs text-emerald-600">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
@@ -1266,7 +1266,7 @@ export const FinanceTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatDat
               <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-[#1e3a5f] font-medium">{exp.companyName}</p>
+            <p className="text-xs text-[#1e3a5f] font-medium">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1331,7 +1331,7 @@ export const MarketingTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCo
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs font-medium" style={{ color: themeColor }}>{exp.companyName}</p>
+                <p className="text-xs font-medium" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               </div>
               <span className="text-xs text-gray-400">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
@@ -1397,7 +1397,7 @@ export const GradientTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCol
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
                 <span className="text-xs text-gray-500">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
               </div>
-              <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}</p>
+              <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
             </div>
           ))}
@@ -1456,7 +1456,7 @@ export const BoxedTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor,
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
                 <span className="text-xs text-gray-400">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
               </div>
-              <p className="text-xs text-gray-500">{exp.companyName}</p>
+              <p className="text-xs text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
               {exp.workSummary && <div className="text-xs text-gray-600 mt-1 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
             </div>
           ))}
@@ -1514,7 +1514,7 @@ export const MetroTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor,
               <h3 className="text-sm font-semibold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-gray-500">{exp.companyName}</p>
+            <p className="text-xs text-gray-500">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1573,7 +1573,7 @@ export const SwissTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatDate 
               <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-400">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-gray-500 uppercase tracking-wider">{exp.companyName}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wider">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-600 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1629,7 +1629,7 @@ export const RetroTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatDate 
               <h3 className="text-sm font-bold text-amber-900">{exp.title}</h3>
               <span className="text-xs text-amber-700">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-amber-700 italic">{exp.companyName}</p>
+            <p className="text-xs text-amber-700 italic">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-amber-800 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1689,7 +1689,7 @@ export const ArchitectTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatD
               <h3 className="text-sm font-bold text-blue-900">{i + 1}.0 {exp.title}</h3>
               <span className="text-xs text-blue-600 font-mono">{formatDate(exp.startDate)} → {exp.currentlyWorking ? 'CURRENT' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs text-blue-700">{exp.companyName}</p>
+            <p className="text-xs text-blue-700">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-blue-800 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1748,7 +1748,7 @@ export const MagazineTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeCol
               {resumeInfo.experience.map((exp) => (
                 <div key={exp.id} className="mb-5">
                   <h3 className="text-base font-bold text-gray-900">{exp.title}</h3>
-                  <p className="text-sm text-gray-500 italic">{exp.companyName} • {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
+                  <p className="text-sm text-gray-500 italic">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`} • {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
                   {exp.workSummary && <div className="text-sm text-gray-700 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
                 </div>
               ))}
@@ -1815,7 +1815,7 @@ export const NeonTemplate: React.FC<TemplateProps> = ({ resumeInfo, themeColor, 
               <h3 className="text-sm font-bold text-gray-100">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}</p>
+            <p className="text-xs" style={{ color: themeColor }}>{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-xs text-gray-400 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1871,7 +1871,7 @@ export const LegalTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatDate 
               <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
               <span className="text-xs text-gray-500">{formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</span>
             </div>
-            <p className="text-sm text-gray-600 italic">{exp.companyName}</p>
+            <p className="text-sm text-gray-600 italic">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`}</p>
             {exp.workSummary && <div className="text-sm text-gray-700 mt-2 rich-text-content" dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
           </div>
         ))}
@@ -1910,7 +1910,7 @@ export const NewspaperTemplate: React.FC<TemplateProps> = ({ resumeInfo, formatD
             {resumeInfo.experience.map((exp) => (
               <div key={exp.id} className="mb-4">
                 <h3 className="text-sm font-bold text-gray-900">{exp.title}</h3>
-                <p className="text-xs text-gray-500 italic">{exp.companyName} | {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
+                <p className="text-xs text-gray-500 italic">{exp.companyName}{exp.city && `, ${exp.city}`}{exp.state && `, ${exp.state}`} | {formatDate(exp.startDate)} - {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}</p>
                 {exp.workSummary && <div className="text-xs text-gray-700 mt-1 rich-text-content leading-relaxed" style={{ textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: exp.workSummary }} />}
               </div>
             ))}
