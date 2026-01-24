@@ -1116,6 +1116,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   };
 
   const handleAnswerSelect = (optionIndex: number) => {
+    console.log(`[Answer Select] Question ${currentQuestionIndex}, Selected Option: ${optionIndex}`);
     setAnswers((prev) => ({ ...prev, [currentQuestionIndex]: optionIndex }));
   };
 
@@ -1182,12 +1183,18 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
         };
       }
       // For MCQ questions
+      const userAnswer = answers[index] ?? -1;
+      const correctAnswer = (q as Question).correctAnswer;
+      const isCorrect = userAnswer === correctAnswer;
+
+      console.log(`[Question ${index}] User: ${userAnswer}, Correct: ${correctAnswer}, Match: ${isCorrect}`);
+
       return {
         questionId: q.id,
         topic: q.topic,
-        isCorrect: answers[index] === (q as Question).correctAnswer,
-        userAnswer: answers[index] ?? -1,
-        correctAnswer: (q as Question).correctAnswer,
+        isCorrect,
+        userAnswer,
+        correctAnswer,
       };
     });
 
@@ -3949,34 +3956,56 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                                   </p>
                                 </div>
                               ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {(question as Question).options.map((opt, optIdx) => (
-                                    <div
-                                      key={optIdx}
-                                      className={`px-4 py-3 rounded-xl text-sm flex items-center gap-2 ${optIdx === (question as Question).correctAnswer
-                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border-2 border-emerald-300 dark:border-emerald-700'
-                                        : optIdx === result.userAnswer && !result.isCorrect
-                                          ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-2 border-red-300 dark:border-red-700'
-                                          : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600'
-                                        }`}
-                                    >
-                                      <span className="w-6 h-6 rounded-full bg-current/10 flex items-center justify-center text-xs font-bold">
-                                        {String.fromCharCode(65 + optIdx)}
-                                      </span>
-                                      <span className="flex-1">{opt}</span>
-                                      {optIdx === (question as Question).correctAnswer && (
-                                        <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                        </svg>
-                                      )}
-                                      {optIdx === result.userAnswer && !result.isCorrect && (
-                                        <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                        </svg>
-                                      )}
+                                <>
+                                  {/* Answer Summary */}
+                                  {!result.isCorrect && (
+                                    <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700/50 rounded-lg space-y-2">
+                                      <div className="flex items-center gap-2 text-sm">
+                                        <span className="font-semibold text-gray-700 dark:text-gray-300">Your Answer:</span>
+                                        <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded font-medium">
+                                          {result.userAnswer !== -1 ? String.fromCharCode(65 + result.userAnswer) : 'Not Answered'}
+                                          {result.userAnswer !== -1 && ` - ${(question as Question).options[result.userAnswer]}`}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2 text-sm">
+                                        <span className="font-semibold text-gray-700 dark:text-gray-300">Correct Answer:</span>
+                                        <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded font-medium">
+                                          {String.fromCharCode(65 + (question as Question).correctAnswer)} - {(question as Question).options[(question as Question).correctAnswer]}
+                                        </span>
+                                      </div>
                                     </div>
-                                  ))}
-                                </div>
+                                  )}
+
+                                  {/* Options Grid */}
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {(question as Question).options.map((opt, optIdx) => (
+                                      <div
+                                        key={optIdx}
+                                        className={`px-4 py-3 rounded-xl text-sm flex items-center gap-2 ${optIdx === (question as Question).correctAnswer
+                                          ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border-2 border-emerald-300 dark:border-emerald-700'
+                                          : optIdx === result.userAnswer && !result.isCorrect
+                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-2 border-red-300 dark:border-red-700'
+                                            : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600'
+                                          }`}
+                                      >
+                                        <span className="w-6 h-6 rounded-full bg-current/10 flex items-center justify-center text-xs font-bold">
+                                          {String.fromCharCode(65 + optIdx)}
+                                        </span>
+                                        <span className="flex-1">{opt}</span>
+                                        {optIdx === (question as Question).correctAnswer && (
+                                          <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                          </svg>
+                                        )}
+                                        {optIdx === result.userAnswer && !result.isCorrect && (
+                                          <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                          </svg>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </>
                               )}
 
                               {question.explanation && (
