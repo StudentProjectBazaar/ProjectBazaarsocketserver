@@ -19,7 +19,8 @@ const PersonalDetailForm: React.FC<PersonalDetailFormProps> = ({ onEnableNext })
       if (field === name) {
         return value.trim().length > 0;
       }
-      return resumeInfo[field as keyof typeof resumeInfo]?.toString().trim().length > 0;
+      const fieldValue = resumeInfo[field as keyof typeof resumeInfo];
+      return fieldValue?.toString().trim().length > 0;
     });
     onEnableNext(isFormValid);
   };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useResumeInfo, Project } from '../../context/ResumeInfoContext';
 
 const ProjectsForm: React.FC = () => {

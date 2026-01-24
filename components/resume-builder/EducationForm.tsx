@@ -5,12 +5,6 @@ const EducationForm: React.FC = () => {
   const { resumeInfo, updateResumeField } = useResumeInfo();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Get current date in YYYY-MM format
-  const getCurrentMonth = () => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  };
-
   // Get max date (1 year in future) in YYYY-MM format
   const getMaxDate = () => {
     const now = new Date();

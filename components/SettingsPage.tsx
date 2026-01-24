@@ -358,7 +358,7 @@ const SettingsPage: React.FC = () => {
                             // Clean URL and ensure we're on settings page
                             const settingsPath = window.location.pathname.split('?')[0];
                             if (!settingsPath.includes('settings')) {
-                                navigateTo('settings');
+                                navigateTo('dashboard');
                             } else {
                                 window.history.replaceState({}, document.title, settingsPath);
                             }
