@@ -25,6 +25,9 @@
     --popover-foreground: hsl(222.2, 47.4%, 11.2%);
     
     --radius: 0.5rem;
+    
+    --sky-400: #38bdf8;
+    --sky-500: #0ea5e9;
   }
 
   .dark {
@@ -49,6 +52,9 @@
     --popover-foreground: hsl(210, 40%, 98%);
     
     --radius: 0.5rem;
+    
+    --sky-400: #38bdf8;
+    --sky-500: #0ea5e9;
   }
 
  body {

@@ -1,5 +1,11 @@
 import React, { useState, useRef } from 'react';
 import ShareMenu from './ShareMenu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
 
 export interface Hackathon {
   id: string;
@@ -193,17 +199,27 @@ const HackathonCard: React.FC<HackathonCardProps> = ({ hackathon, onClick }) => 
 
         {/* Right Side - Logo/Image */}
         <div className="flex-shrink-0 flex items-start">
-          <div className="w-28 h-28 rounded-lg overflow-hidden bg-white border-2 border-gray-200 flex items-center justify-center shadow-sm">
-            <img 
-              src={imageUrl} 
-              alt={name} 
-              className="w-full h-full object-cover" 
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=2070&auto=format&fit=crop';
-              }}
-            />
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-28 h-28 rounded-lg overflow-hidden bg-white border-2 border-gray-200 flex items-center justify-center shadow-sm cursor-pointer">
+                  <img 
+                    src={imageUrl} 
+                    alt={name} 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=2070&auto=format&fit=crop';
+                    }}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="font-medium">{name}</p>
+                <p className="text-xs text-gray-400">{platform}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 

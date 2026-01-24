@@ -58,6 +58,8 @@ export default {
       animation: {
         ripple: "ripple 2s ease calc(var(--i, 0) * 0.2s) infinite",
         orbit: "orbit calc(var(--duration) * 1s) linear infinite",
+        marquee: "marquee var(--duration, 30s) linear infinite",
+        "marquee-reverse": "marquee-reverse var(--duration, 30s) linear infinite",
       },
       keyframes: {
         ripple: {
@@ -73,6 +75,12 @@ export default {
             transform:
               "rotate(360deg) translateY(calc(var(--radius) * 1px)) rotate(-360deg)",
           },
+        },
+        marquee: {
+          to: { transform: "translateX(-50%)" }
+        },
+        "marquee-reverse": {
+          to: { transform: "translateX(50%)" }
         }
       },
     },
