@@ -119,6 +119,7 @@ const API_ENDPOINT = 'https://qh71ruloa8.execute-api.ap-south-2.amazonaws.com/de
 const GET_PROJECTS_ENDPOINT = 'https://qosmi6luq0.execute-api.ap-south-2.amazonaws.com/default/Get_All_Projects_for_Seller';
 const GET_USER_ENDPOINT = 'https://6omszxa58g.execute-api.ap-south-2.amazonaws.com/default/Get_user_Details_by_his_Id';
 const GET_REPORTS_ENDPOINT = 'https://0en59tzhoa.execute-api.ap-south-2.amazonaws.com/default/Get_ReportDetails_by_sellerid_buyerId_ReportId';
+const ADMIN_APPROVAL_ENDPOINT = 'https://wt58x2f09d.execute-api.ap-south-2.amazonaws.com/default/Admin_approved_or_rejected';
 const MAX_IMAGE_SIZE_MB = 10;
 
 type ViewMode = 'grid' | 'table';
@@ -1265,7 +1266,58 @@ const SellerDashboard: React.FC = () => {
         }
     };
 
+    // Handle project status toggle (Active/Disabled)
+    const handleToggleProjectStatus = async (projectId: string, isActive: boolean) => {
+        try {
+            const response = await fetch(ADMIN_APPROVAL_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    projectId: projectId,
+                    adminApprovalStatus: isActive ? 'approved' : 'disabled'
+                })
+            });
 
+            if (!response.ok) {
+                throw new Error(`Failed to update project status: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update local state immediately for better UX
+                setUploadedProjects(prevProjects => 
+                    prevProjects.map(p => {
+                        if (p.id === projectId) {
+                            return {
+                                ...p,
+                                status: isActive ? 'Approved' : 'Disabled' as const
+                            };
+                        }
+                        return p;
+                    })
+                );
+                
+                // Refresh projects list to ensure data consistency with backend
+                setTimeout(() => {
+                    fetchProjects();
+                }, 500);
+            } else {
+                const errorMessage = data.error?.message || data.message || 'Failed to update project status';
+                setSubmitError(errorMessage);
+                setTimeout(() => setSubmitError(null), 5000);
+                throw new Error(errorMessage);
+            }
+        } catch (error) {
+            console.error('Error updating project status:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Failed to update project status. Please try again.';
+            setSubmitError(errorMessage);
+            setTimeout(() => setSubmitError(null), 5000);
+            throw error; // Re-throw to let the component handle it
+        }
+    };
 
     return (
         <div className="mt-8 space-y-8">
@@ -1365,6 +1417,26 @@ const SellerDashboard: React.FC = () => {
                             </button>
                         </div>
                     </div>
+
+                    {/* Error Message (shown when form is closed) */}
+                    {submitError && !showUploadForm && (
+                        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p className="text-sm text-red-600">{submitError}</p>
+                            </div>
+                            <button
+                                onClick={() => setSubmitError(null)}
+                                className="text-red-600 hover:text-red-800"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
 
                     {isLoadingProjects ? (
                         <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
@@ -1572,6 +1644,8 @@ const SellerDashboard: React.FC = () => {
                                                             category={project.category}
                                                             adminComment={project.adminComment}
                                                             adminAction={project.adminAction}
+                                                            projectId={project.id}
+                                                            onToggleStatus={handleToggleProjectStatus}
                                                         />
                                                     </div>
                                     ))}
