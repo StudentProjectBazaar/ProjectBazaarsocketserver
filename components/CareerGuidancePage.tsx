@@ -1655,9 +1655,9 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     // Render based on current step
     if (roadmapStep === 'analysis') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
-                <div>
-                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 -mt-8 -mb-8 p-8 w-full">
+                <div className="w-full">
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 max-w-7xl mx-auto">
                         <div className="text-center mb-8">
                             <h2 className="text-3xl font-bold text-gray-900 mb-3">Select Your Career Path</h2>
                             <p className="text-gray-600">Choose a category and set your learning duration to generate a personalized roadmap</p>
@@ -1832,8 +1832,8 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
         const allWeeksCompleted = roadmapData.weeks.every(w => w.isCompleted && w.quizCompleted);
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
-                <div>
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 -mt-8 -mb-8 p-8 w-full">
+                <div className="w-full max-w-7xl mx-auto">
                     {roadmapError && (
                         <div className="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
                             {roadmapError}
@@ -2296,8 +2296,8 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     // Step 3: Progress Tracking (Weekly Quiz)
     if (roadmapStep === 'progress' && weeklyQuiz) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
-                <div>
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 -mt-8 -mb-8 p-8 w-full">
+                <div className="w-full max-w-5xl mx-auto">
                     {/* Back to Roadmap Button */}
                     <button
                         onClick={() => {
@@ -2404,153 +2404,289 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     if (roadmapStep === 'completed-view' && completedCourseDetails) {
         const courseDetails = completedCourseDetails;
         
+        // Calculate analytics
+        const totalWeeks = courseDetails.weeksDetails?.length || 0;
+        const avgScore = courseDetails.finalScore || 100;
+        const totalTopics = courseDetails.weeksDetails?.reduce((acc: number, w: any) => acc + (w.mainTopics?.length || 0), 0) || 0;
+        const totalQuestions = courseDetails.weeksDetails?.reduce((acc: number, w: any) => acc + (w.quiz?.length || 0), 0) || 0;
+        
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 -m-6 p-8">
-                <div className="max-w-5xl mx-auto">
-                    {/* Back Button */}
-                    <button
-                        onClick={() => {
-                            setRoadmapStep('analysis');
-                            setCompletedCourseDetails(null);
-                        }}
-                        className="mb-4 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        <span className="font-medium">Back to Roadmap Selection</span>
-                    </button>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 -m-6 -mt-8 -mb-8 p-0">
+                {/* Full Width Container - No max-width constraint */}
+                <div className="w-full">
+                    {/* Hero Header with Back Button */}
+                    <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-8 py-6 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-black/10"></div>
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+                        
+                        <div className="relative z-10">
+                            <button
+                                onClick={() => {
+                                    setRoadmapStep('analysis');
+                                    setCompletedCourseDetails(null);
+                                }}
+                                className="mb-4 flex items-center gap-2 px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all backdrop-blur-sm"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                <span className="font-semibold">Back to Selection</span>
+                            </button>
 
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-8 text-white mb-6 shadow-xl">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className="text-5xl">🎓</span>
-                                    <h1 className="text-4xl font-black">{courseDetails.categoryName}</h1>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
+                                            <span className="text-4xl">🎓</span>
+                                        </div>
+                                        <div>
+                                            <h1 className="text-4xl font-black text-white">{courseDetails.categoryName}</h1>
+                                            <p className="text-white/80 text-lg mt-1">{courseDetails.duration}-Week Program • Completed ✓</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="text-purple-100 text-lg">{courseDetails.duration}-Week Program • Completed</p>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-6xl font-black">{courseDetails.finalScore || 100}%</div>
-                                <div className="text-purple-200">Final Score</div>
+                                <div className="text-right">
+                                    <div className="inline-block bg-white/20 backdrop-blur-md rounded-3xl px-8 py-6 border-4 border-white/30">
+                                        <div className="text-7xl font-black text-white drop-shadow-lg">{avgScore}%</div>
+                                        <div className="text-white/90 text-lg font-semibold mt-1">Overall Score</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Certificate Card (if exists) */}
-                    {courseDetails.certificate && (
-                        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center">
-                                        <span className="text-3xl">🏆</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-gray-900">Certificate Earned</h3>
-                                        <p className="text-gray-600">Verification Code: <span className="font-mono font-bold">{courseDetails.certificate.verificationCode}</span></p>
+                    {/* Analytics Dashboard */}
+                    <div className="px-8 py-8 bg-white">
+                        {/* Key Metrics Grid */}
+                        <div className="grid grid-cols-4 gap-6 mb-8">
+                            {/* Total Weeks */}
+                            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border-2 border-blue-100 hover:shadow-lg transition-all">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        setCertificate({
-                                            name: courseDetails.certificate.userName,
-                                            career: courseDetails.certificate.categoryName,
-                                            score: courseDetails.certificate.score,
-                                            date: courseDetails.certificate.issuedDate,
-                                            certificateId: courseDetails.certificate.certificateId,
-                                            verificationCode: courseDetails.certificate.verificationCode
-                                        });
-                                        setRoadmapStep('evaluation');
-                                    }}
-                                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-                                >
-                                    View Certificate
-                                </button>
+                                <div className="text-4xl font-black text-gray-900 mb-1">{totalWeeks}</div>
+                                <div className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Weeks Completed</div>
+                            </div>
+
+                            {/* Total Topics */}
+                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-100 hover:shadow-lg transition-all">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div className="text-4xl font-black text-gray-900 mb-1">{totalTopics}</div>
+                                <div className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Topics Mastered</div>
+                            </div>
+
+                            {/* Total Questions */}
+                            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-100 hover:shadow-lg transition-all">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div className="text-4xl font-black text-gray-900 mb-1">{totalQuestions}</div>
+                                <div className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Questions Solved</div>
+                            </div>
+
+                            {/* Accuracy */}
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-100 hover:shadow-lg transition-all">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div className="text-4xl font-black text-green-600 mb-1">{avgScore}%</div>
+                                <div className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Avg Accuracy</div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Weeks Summary */}
-                    <div className="space-y-4">
-                        {courseDetails.weeksDetails && courseDetails.weeksDetails.map((week: any, idx: number) => (
-                            <div key={idx} className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-                                {/* Week Header */}
-                                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 flex items-center justify-between border-b">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-lg">
-                                            {week.weekNumber}
+                        {/* Certificate Showcase */}
+                        {courseDetails.certificate && (
+                            <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 rounded-3xl p-8 mb-8 border-2 border-amber-200 relative overflow-hidden">
+                                {/* Decorative elements */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-300/20 rounded-full -translate-y-16 translate-x-16"></div>
+                                <div className="absolute bottom-0 left-0 w-40 h-40 bg-orange-300/20 rounded-full translate-y-20 -translate-x-20"></div>
+                                
+                                <div className="relative z-10 flex items-center justify-between">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-24 h-24 bg-gradient-to-br from-yellow-400 via-amber-400 to-orange-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-orange-500/30 animate-pulse">
+                                            <span className="text-5xl">🏆</span>
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-bold text-gray-900">Week {week.weekNumber}</h3>
-                                            <p className="text-sm text-gray-600">
-                                                {week.completedAt ? new Date(week.completedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Completed'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-3xl font-black text-green-600">{week.quizScore || 100}%</div>
-                                        <div className="text-sm text-gray-500">Quiz Score</div>
-                                    </div>
-                                </div>
-
-                                {/* Week Content */}
-                                <div className="p-6">
-                                    {/* Topics */}
-                                    <div className="mb-6">
-                                        <h4 className="text-sm font-bold text-gray-700 mb-3">📚 Topics Covered</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {week.mainTopics?.map((topic: string, i: number) => (
-                                                <span key={i} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
-                                                    {topic}
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h3 className="text-3xl font-black text-gray-900">Certificate Earned!</h3>
+                                                <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full uppercase tracking-wider">Verified</span>
+                                            </div>
+                                            <p className="text-gray-700 text-lg mb-1">Issued on <span className="font-bold">{courseDetails.certificate.issuedDate}</span></p>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-sm text-gray-600">Verification Code:</span>
+                                                <span className="px-4 py-2 bg-white/80 backdrop-blur-sm border-2 border-amber-300 rounded-lg font-mono font-bold text-gray-900 shadow-sm">
+                                                    {courseDetails.certificate.verificationCode}
                                                 </span>
-                                            ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setCertificate({
+                                                name: courseDetails.certificate.userName,
+                                                career: courseDetails.certificate.categoryName,
+                                                score: courseDetails.certificate.score,
+                                                date: courseDetails.certificate.issuedDate,
+                                                certificateId: courseDetails.certificate.certificateId,
+                                                verificationCode: courseDetails.certificate.verificationCode
+                                            });
+                                            setRoadmapStep('evaluation');
+                                        }}
+                                        className="px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/40 hover:-translate-y-1 transition-all flex items-center gap-3"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        View Certificate
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Weekly Breakdown Section Title */}
+                        <div className="mb-6">
+                            <h2 className="text-3xl font-black text-gray-900 mb-2">📅 Weekly Progress Breakdown</h2>
+                            <p className="text-gray-600">Detailed view of your week-by-week performance and achievements</p>
+                        </div>
+
+                        {/* Weeks Grid */}
+                        <div className="grid grid-cols-1 gap-6">
+                            {courseDetails.weeksDetails && courseDetails.weeksDetails.map((week: any, idx: number) => (
+                                <div key={idx} className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden hover:shadow-xl hover:border-indigo-200 transition-all">
+                                    {/* Week Header with Gradient */}
+                                    <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-8 py-5 relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-black/5"></div>
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+                                        
+                                        <div className="relative z-10 flex items-center justify-between">
+                                            <div className="flex items-center gap-5">
+                                                <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white font-black text-2xl border-2 border-white/30">
+                                                    {week.weekNumber}
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-2xl font-black text-white mb-1">Week {week.weekNumber}</h3>
+                                                    <p className="text-white/80 text-sm font-medium">
+                                                        {week.completedAt ? new Date(week.completedAt).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }) : 'Completed'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="inline-block bg-white/20 backdrop-blur-md rounded-2xl px-6 py-3 border-2 border-white/30">
+                                                    <div className="text-4xl font-black text-white drop-shadow-lg">{week.quizScore || 100}%</div>
+                                                    <div className="text-white/90 text-sm font-semibold">Quiz Score</div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Mini Project */}
-                                    {week.miniProject && (
-                                        <div className="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
-                                            <h4 className="text-sm font-bold text-amber-800 mb-2 flex items-center gap-2">
-                                                <span>💼</span> Project Completed
+                                    {/* Week Content */}
+                                    <div className="p-8">
+                                        {/* Topics Grid */}
+                                        <div className="mb-8">
+                                            <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                <span className="w-8 h-8 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center">
+                                                    📚
+                                                </span>
+                                                Topics Mastered ({week.mainTopics?.length || 0})
                                             </h4>
-                                            <p className="text-sm text-amber-700">{week.miniProject}</p>
-                                        </div>
-                                    )}
-
-                                    {/* Quiz Questions & Answers */}
-                                    {week.quiz && week.quiz.length > 0 && (
-                                        <div>
-                                            <h4 className="text-sm font-bold text-gray-700 mb-4">✅ Quiz Questions & Correct Answers</h4>
-                                            <div className="space-y-4">
-                                                {week.quiz.map((q: any, qIdx: number) => (
-                                                    <div key={qIdx} className="p-4 bg-gray-50 rounded-xl">
-                                                        <p className="font-semibold text-gray-900 mb-3">{qIdx + 1}. {q.question}</p>
-                                                        <div className="space-y-2">
-                                                            {q.options.map((opt: string, oIdx: number) => (
-                                                                <div
-                                                                    key={oIdx}
-                                                                    className={`px-4 py-2 rounded-lg ${
-                                                                        oIdx === q.correctAnswer
-                                                                            ? 'bg-green-100 border-2 border-green-500 text-green-800 font-medium'
-                                                                            : 'bg-white border border-gray-200 text-gray-600'
-                                                                    }`}
-                                                                >
-                                                                    {opt}
-                                                                    {oIdx === q.correctAnswer && (
-                                                                        <span className="ml-2 text-green-600">✓ Correct Answer</span>
-                                                                    )}
-                                                                </div>
-                                                            ))}
-                                                        </div>
+                                            <div className="grid grid-cols-3 gap-3">
+                                                {week.mainTopics?.map((topic: string, i: number) => (
+                                                    <div key={i} className="px-4 py-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100 text-blue-800 rounded-xl text-sm font-semibold hover:shadow-md transition-all">
+                                                        {topic}
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
-                                    )}
+
+                                        {/* Mini Project */}
+                                        {week.miniProject && (
+                                            <div className="mb-8 p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-24 h-24 bg-orange-300/20 rounded-full -translate-y-12 translate-x-12"></div>
+                                                <div className="relative z-10">
+                                                    <h4 className="text-lg font-bold text-amber-900 mb-3 flex items-center gap-3">
+                                                        <span className="text-2xl">💼</span>
+                                                        <span>Project Completed</span>
+                                                    </h4>
+                                                    <p className="text-amber-800 font-medium leading-relaxed">{week.miniProject}</p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Quiz Questions & Answers */}
+                                        {week.quiz && week.quiz.length > 0 && (
+                                            <div>
+                                                <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                    <span className="w-8 h-8 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg flex items-center justify-center">
+                                                        ✅
+                                                    </span>
+                                                    Quiz Questions & Answers ({week.quiz.length} Questions)
+                                                </h4>
+                                                <div className="space-y-6">
+                                                    {week.quiz.map((q: any, qIdx: number) => (
+                                                        <div key={qIdx} className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-200 hover:border-indigo-200 transition-all">
+                                                            <div className="flex gap-4 mb-4">
+                                                                <span className="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">
+                                                                    {qIdx + 1}
+                                                                </span>
+                                                                <p className="font-bold text-gray-900 text-lg flex-1">{q.question}</p>
+                                                            </div>
+                                                            <div className="space-y-3 ml-12">
+                                                                {q.options.map((opt: string, oIdx: number) => (
+                                                                    <div
+                                                                        key={oIdx}
+                                                                        className={`px-5 py-3 rounded-xl transition-all ${
+                                                                            oIdx === q.correctAnswer
+                                                                                ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-3 border-green-500 shadow-md'
+                                                                                : 'bg-white border-2 border-gray-200'
+                                                                        }`}
+                                                                    >
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className={`font-medium ${
+                                                                                oIdx === q.correctAnswer ? 'text-green-900' : 'text-gray-700'
+                                                                            }`}>
+                                                                                {opt}
+                                                                            </span>
+                                                                            {oIdx === q.correctAnswer && (
+                                                                                <span className="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-full text-sm font-bold">
+                                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                                                    </svg>
+                                                                                    Correct
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2560,8 +2696,8 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     // Step 4: Certificate Display (No Final Exam - Certificate after completing all weeks)
     if (roadmapStep === 'evaluation' && certificate) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50 -m-6 p-8">
-                <div className="max-w-4xl mx-auto">
+            <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50 -m-6 -mt-8 -mb-8 p-8 w-full">
+                <div className="w-full max-w-6xl mx-auto">
                     {/* Success Header */}
                     <div className="text-center mb-8">
                         <div className="relative inline-block mb-6">
