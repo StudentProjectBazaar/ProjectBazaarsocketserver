@@ -264,6 +264,7 @@ interface LeaderboardEntry {
   testsCompleted: number;
   avgScore: number;
   badges: number;
+  profilePicture?: string;
 }
 
 interface DailyChallenge {
@@ -762,7 +763,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [_leaderboardLoading, setLeaderboardLoading] = useState<boolean>(false);
+  const [leaderboardLoading, setLeaderboardLoading] = useState<boolean>(false);
 
   const fetchLeaderboard = useCallback(async () => {
     setLeaderboardLoading(true);
