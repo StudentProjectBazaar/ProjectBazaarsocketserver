@@ -37,7 +37,7 @@ def decimal_default(obj):
 # USER PROGRESS MANAGEMENT
 # ============================================
 
-def get_user_progress(user_id: str, category_id: str = None) -> Dict[str, Any]:
+def get_user_progress(user_id: str, category_id: str = None, duration: int = None) -> Dict[str, Any]:
     """Get user's roadmap progress for a specific category or all categories"""
     try:
         table = dynamodb.Table(USER_PROGRESS_TABLE)
@@ -51,6 +51,36 @@ def get_user_progress(user_id: str, category_id: str = None) -> Dict[str, Any]:
                 }
             )
             progress = db_response.get('Item', None)
+            
+            if progress and duration:
+                # Extract progress for specific duration
+                durations_data = progress.get('durations', {})
+                duration_progress = durations_data.get(str(duration))
+                
+                if duration_progress:
+                    # Return progress with backward compatibility structure
+                    return response(200, {
+                        'success': True,
+                        'progress': {
+                            'userId': progress.get('userId'),
+                            'userName': progress.get('userName'),
+                            'categoryId': progress.get('categoryId'),
+                            'categoryName': progress.get('categoryName'),
+                            'duration': duration,
+                            'weeksProgress': duration_progress.get('weeksProgress', []),
+                            'overallProgress': duration_progress.get('overallProgress', 0),
+                            'isRoadmapCompleted': duration_progress.get('isRoadmapCompleted', False),
+                            'certificateId': duration_progress.get('certificateId'),
+                            'updatedAt': duration_progress.get('updatedAt'),
+                            'createdAt': progress.get('createdAt')
+                        }
+                    })
+                else:
+                    return response(200, {
+                        'success': True,
+                        'progress': None
+                    })
+            
             return response(200, {
                 'success': True,
                 'progress': progress
@@ -73,9 +103,10 @@ def get_user_progress(user_id: str, category_id: str = None) -> Dict[str, Any]:
         })
 
 def save_user_progress(body: Dict[str, Any]) -> Dict[str, Any]:
-    """Save or update user's roadmap progress"""
+    """Save or update user's roadmap progress - supports multiple durations per category"""
     try:
         user_id = body.get('userId')
+        user_name = body.get('userName', '')
         category_id = body.get('categoryId')
         category_name = body.get('categoryName', '')
         duration = body.get('duration', 8)
@@ -91,31 +122,47 @@ def save_user_progress(body: Dict[str, Any]) -> Dict[str, Any]:
         
         # Check if progress exists
         existing = table.get_item(Key={'userId': user_id, 'categoryId': category_id})
+        existing_item = existing.get('Item', {})
         
         now = datetime.utcnow().isoformat()
         
-        item = {
-            'userId': user_id,
-            'categoryId': category_id,
-            'categoryName': category_name,
-            'duration': duration,
-            'weeksProgress': weeks_progress,
-            'updatedAt': now,
-            'createdAt': existing.get('Item', {}).get('createdAt', now)
-        }
+        # Get existing durations data or create new
+        durations_data = existing_item.get('durations', {})
         
-        # Calculate overall progress
+        # Calculate overall progress for this specific duration
         total_weeks = len(weeks_progress)
         completed_weeks = sum(1 for w in weeks_progress if w.get('isCompleted') and w.get('quizCompleted'))
-        item['overallProgress'] = round((completed_weeks / total_weeks) * 100) if total_weeks > 0 else 0
-        item['isRoadmapCompleted'] = completed_weeks == total_weeks
+        overall_progress = round((completed_weeks / total_weeks) * 100) if total_weeks > 0 else 0
+        is_completed = completed_weeks == total_weeks
+        
+        # Update progress for this specific duration
+        durations_data[str(duration)] = {
+            'duration': duration,
+            'weeksProgress': weeks_progress,
+            'overallProgress': overall_progress,
+            'isRoadmapCompleted': is_completed,
+            'updatedAt': now,
+            'startedAt': durations_data.get(str(duration), {}).get('startedAt', now)
+        }
+        
+        # Create/update main item
+        item = {
+            'userId': user_id,
+            'userName': user_name or existing_item.get('userName', ''),
+            'categoryId': category_id,
+            'categoryName': category_name,
+            'durations': durations_data,  # Nested structure for each duration
+            'updatedAt': now,
+            'createdAt': existing_item.get('createdAt', now)
+        }
         
         table.put_item(Item=item)
         
         return response(200, {
             'success': True,
             'message': 'Progress saved successfully',
-            'progress': item
+            'progress': item,
+            'currentDuration': durations_data[str(duration)]
         })
     except Exception as e:
         return response(500, {
@@ -124,11 +171,13 @@ def save_user_progress(body: Dict[str, Any]) -> Dict[str, Any]:
         })
 
 def mark_week_completed(body: Dict[str, Any]) -> Dict[str, Any]:
-    """Mark a week as completed (for weeks without quiz)"""
+    """Mark a week as completed (for weeks without quiz) - supports multiple durations"""
     try:
         user_id = body.get('userId')
+        user_name = body.get('userName', '')
         category_id = body.get('categoryId')
         week_number = body.get('weekNumber')
+        duration = body.get('duration', 8)
         
         if not all([user_id, category_id, week_number]):
             return response(400, {
@@ -148,8 +197,23 @@ def mark_week_completed(body: Dict[str, Any]) -> Dict[str, Any]:
                 'error': 'Progress not found. Start the roadmap first.'
             })
         
-        # Update the specific week
-        weeks_progress = progress.get('weeksProgress', [])
+        # Update userName if provided and not already set
+        if user_name and not progress.get('userName'):
+            progress['userName'] = user_name
+        
+        # Get durations data
+        durations_data = progress.get('durations', {})
+        duration_key = str(duration)
+        
+        if duration_key not in durations_data:
+            durations_data[duration_key] = {
+                'duration': duration,
+                'weeksProgress': [],
+                'startedAt': datetime.utcnow().isoformat()
+            }
+        
+        # Update the specific week for this duration
+        weeks_progress = durations_data[duration_key].get('weeksProgress', [])
         week_found = False
         
         for week in weeks_progress:
@@ -169,22 +233,27 @@ def mark_week_completed(body: Dict[str, Any]) -> Dict[str, Any]:
                 'completedAt': datetime.utcnow().isoformat()
             })
         
-        # Save updated progress
-        progress['weeksProgress'] = weeks_progress
-        progress['updatedAt'] = datetime.utcnow().isoformat()
+        # Save updated progress for this duration
+        durations_data[duration_key]['weeksProgress'] = weeks_progress
+        durations_data[duration_key]['updatedAt'] = datetime.utcnow().isoformat()
         
-        # Recalculate overall progress
+        # Recalculate overall progress for this duration
         total_weeks = len(weeks_progress)
         completed_weeks = sum(1 for w in weeks_progress if w.get('isCompleted') and w.get('quizCompleted'))
-        progress['overallProgress'] = round((completed_weeks / total_weeks) * 100) if total_weeks > 0 else 0
-        progress['isRoadmapCompleted'] = completed_weeks == total_weeks
+        durations_data[duration_key]['overallProgress'] = round((completed_weeks / total_weeks) * 100) if total_weeks > 0 else 0
+        durations_data[duration_key]['isRoadmapCompleted'] = completed_weeks == total_weeks
+        
+        # Update main progress item
+        progress['durations'] = durations_data
+        progress['updatedAt'] = datetime.utcnow().isoformat()
         
         table.put_item(Item=progress)
         
         return response(200, {
             'success': True,
-            'message': f'Week {week_number} marked as completed',
-            'progress': progress
+            'message': f'Week {week_number} marked as completed for {duration}-week program',
+            'progress': progress,
+            'currentDuration': durations_data[duration_key]
         })
     except Exception as e:
         return response(500, {
@@ -200,6 +269,7 @@ def validate_quiz(body: Dict[str, Any]) -> Dict[str, Any]:
     """Validate quiz answers against correct answers from roadmap data"""
     try:
         user_id = body.get('userId')
+        user_name = body.get('userName', '')
         category_id = body.get('categoryId')
         week_number = body.get('weekNumber')
         user_answers = body.get('userAnswers', [])  # [{ questionIndex, selectedAnswer }]
@@ -289,18 +359,41 @@ def validate_quiz(body: Dict[str, Any]) -> Dict[str, Any]:
             f"You scored {score}%. Review the topics and try again. You need 70% to pass."
         )
         
-        # Update user progress if passed
+        # Update user progress if passed - supports multiple durations
         if passed:
             progress_table = dynamodb.Table(USER_PROGRESS_TABLE)
             db_response = progress_table.get_item(Key={'userId': user_id, 'categoryId': category_id})
-            progress = db_response.get('Item', {
-                'userId': user_id,
-                'categoryId': category_id,
-                'weeksProgress': [],
-                'createdAt': datetime.utcnow().isoformat()
-            })
+            existing_progress = db_response.get('Item', {})
             
-            weeks_progress = progress.get('weeksProgress', [])
+            now = datetime.utcnow().isoformat()
+            
+            if not existing_progress:
+                # Create new progress entry
+                existing_progress = {
+                    'userId': user_id,
+                    'userName': user_name,
+                    'categoryId': category_id,
+                    'durations': {},
+                    'createdAt': now
+                }
+            
+            # Update userName if provided and not already set
+            if user_name and not existing_progress.get('userName'):
+                existing_progress['userName'] = user_name
+            
+            # Get durations data
+            durations_data = existing_progress.get('durations', {})
+            duration_key = str(duration)
+            
+            if duration_key not in durations_data:
+                durations_data[duration_key] = {
+                    'duration': duration,
+                    'weeksProgress': [],
+                    'startedAt': now
+                }
+            
+            # Update the specific week for this duration
+            weeks_progress = durations_data[duration_key].get('weeksProgress', [])
             week_found = False
             
             for week in weeks_progress:
@@ -308,7 +401,7 @@ def validate_quiz(body: Dict[str, Any]) -> Dict[str, Any]:
                     week['isCompleted'] = True
                     week['quizCompleted'] = True
                     week['quizScore'] = score
-                    week['completedAt'] = datetime.utcnow().isoformat()
+                    week['completedAt'] = now
                     week_found = True
                     break
             
@@ -318,18 +411,24 @@ def validate_quiz(body: Dict[str, Any]) -> Dict[str, Any]:
                     'isCompleted': True,
                     'quizCompleted': True,
                     'quizScore': score,
-                    'completedAt': datetime.utcnow().isoformat()
+                    'completedAt': now
                 })
             
-            progress['weeksProgress'] = weeks_progress
-            progress['updatedAt'] = datetime.utcnow().isoformat()
+            # Update duration progress
+            durations_data[duration_key]['weeksProgress'] = weeks_progress
+            durations_data[duration_key]['updatedAt'] = now
             
-            # Recalculate overall progress
+            # Recalculate overall progress for this duration
             total_weeks = len(weeks_progress)
             completed_weeks = sum(1 for w in weeks_progress if w.get('isCompleted') and w.get('quizCompleted'))
-            progress['overallProgress'] = round((completed_weeks / total_weeks) * 100) if total_weeks > 0 else 0
+            durations_data[duration_key]['overallProgress'] = round((completed_weeks / total_weeks) * 100) if total_weeks > 0 else 0
+            durations_data[duration_key]['isRoadmapCompleted'] = completed_weeks == total_weeks
             
-            progress_table.put_item(Item=progress)
+            # Update main progress
+            existing_progress['durations'] = durations_data
+            existing_progress['updatedAt'] = now
+            
+            progress_table.put_item(Item=existing_progress)
         
         return response(200, {
             'success': True,
@@ -422,7 +521,7 @@ def validate_final_exam(body: Dict[str, Any]) -> Dict[str, Any]:
 # ============================================
 
 def generate_certificate(body: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate and save certificate with comprehensive details"""
+    """Generate and save certificate with comprehensive details - unique per category+duration"""
     try:
         user_id = body.get('userId')
         user_name = body.get('userName', 'Student')
@@ -442,8 +541,11 @@ def generate_certificate(body: Dict[str, Any]) -> Dict[str, Any]:
         db_response = progress_table.get_item(Key={'userId': user_id, 'categoryId': category_id})
         progress = db_response.get('Item', {})
         
-        # Calculate stats from progress
-        weeks_progress = progress.get('weeksProgress', [])
+        # Get duration-specific progress
+        durations_data = progress.get('durations', {})
+        duration_progress = durations_data.get(str(duration), {})
+        weeks_progress = duration_progress.get('weeksProgress', [])
+        
         total_weeks = len(weeks_progress) if weeks_progress else duration
         completed_weeks = sum(1 for w in weeks_progress if w.get('quizCompleted'))
         
@@ -463,11 +565,11 @@ def generate_certificate(body: Dict[str, Any]) -> Dict[str, Any]:
             'userName': user_name,
             'categoryId': category_id,
             'categoryName': category_name,
+            'duration': duration,  # Include duration to make certificate unique
             'score': avg_score,
             'accuracy': accuracy,
             'totalWeeks': total_weeks,
             'completedWeeks': completed_weeks,
-            'duration': duration,
             'issuedAt': now.isoformat(),
             'issuedDate': now.strftime('%B %d, %Y'),
             'verificationCode': f'CG-{certificate_id[:8].upper()}',
@@ -478,18 +580,21 @@ def generate_certificate(body: Dict[str, Any]) -> Dict[str, Any]:
         table = dynamodb.Table(CERTIFICATES_TABLE)
         table.put_item(Item=certificate)
         
-        # Also update user progress
-        if progress:
-            progress['certificateId'] = certificate_id
-            progress['certificateIssuedAt'] = now.isoformat()
-            progress['isRoadmapCompleted'] = True
-            progress['finalScore'] = avg_score
+        # Also update user progress for this specific duration
+        if progress and str(duration) in durations_data:
+            durations_data[str(duration)]['certificateId'] = certificate_id
+            durations_data[str(duration)]['certificateIssuedAt'] = now.isoformat()
+            durations_data[str(duration)]['isRoadmapCompleted'] = True
+            durations_data[str(duration)]['finalScore'] = avg_score
+            durations_data[str(duration)]['updatedAt'] = now.isoformat()
+            
+            progress['durations'] = durations_data
             progress['updatedAt'] = now.isoformat()
             progress_table.put_item(Item=progress)
         
         return {
             'success': True,
-            'message': 'Certificate generated successfully',
+            'message': f'Certificate generated successfully for {duration}-week {category_name} program',
             'certificate': certificate
         }
     except Exception as e:
@@ -655,9 +760,10 @@ def lambda_handler(event, context):
         if action == 'get_progress':
             user_id = body.get('userId')
             category_id = body.get('categoryId')
+            duration = body.get('duration')
             if not user_id:
                 return response(400, {'success': False, 'error': 'userId is required'})
-            return get_user_progress(user_id, category_id)
+            return get_user_progress(user_id, category_id, duration)
         
         elif action == 'save_progress':
             return save_user_progress(body)

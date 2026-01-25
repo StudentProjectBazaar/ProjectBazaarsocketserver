@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PlacementPrepSection, { PlacementPhase } from './PlacementPrepSection';
+import { useAuth } from '../App';
 
 // ============================================
 // TYPES & INTERFACES
@@ -682,6 +683,9 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     roadmapError,
     setRoadmapError,
 }) => {
+    // Get user info from auth context
+    const { userId: authUserId, userEmail } = useAuth();
+    
     // API keys no longer needed - using static data
 
     // Step 1: Category Selection and Week Plan Selection
@@ -694,20 +698,54 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     const ROADMAP_API_ENDPOINT = 'https://07wee2lkxj.execute-api.ap-south-2.amazonaws.com/default/Roadmaps_get_post_put';
     const PROGRESS_API_ENDPOINT = 'https://hpof5ndnol.execute-api.ap-south-2.amazonaws.com/default/carrier_guidance_progess_handler';
 
-    // Get user info from localStorage
+    // Get user info - prioritize auth context, then localStorage
     const getUserInfo = () => {
+        // First priority: Use auth context (most reliable)
+        if (authUserId && authUserId !== 'anonymous') {
+            try {
+                const userDataStr = localStorage.getItem('userData');
+                if (userDataStr) {
+                    const userData = JSON.parse(userDataStr);
+                    return {
+                        userId: authUserId,
+                        userName: userData.fullName || userData.name || userEmail?.split('@')[0] || 'Student'
+                    };
+                }
+            } catch (e) {
+                // If localStorage parse fails, still use auth context
+            }
+            return {
+                userId: authUserId,
+                userName: userEmail?.split('@')[0] || 'Student'
+            };
+        }
+        
+        // Fallback: Try localStorage userData
         try {
+            const userDataStr = localStorage.getItem('userData');
+            if (userDataStr) {
+                const userData = JSON.parse(userDataStr);
+                return {
+                    userId: userData.userId || userData.email,
+                    userName: userData.fullName || userData.name || userData.email?.split('@')[0] || 'Student'
+                };
+            }
+            
+            // Last resort: 'user' key
             const userStr = localStorage.getItem('user');
             if (userStr) {
                 const user = JSON.parse(userStr);
                 return {
-                    userId: user.userId || user.id || user.email || 'anonymous',
-                    userName: user.name || user.userName || 'Student'
+                    userId: user.userId || user.id || user.email,
+                    userName: user.fullName || user.name || user.userName || 'Student'
                 };
             }
         } catch (e) {
             console.error('Error getting user info:', e);
         }
+        
+        // If absolutely nothing found, return anonymous (this should rarely happen for logged-in users)
+        console.warn('No user data found - using anonymous. Please ensure user is logged in.');
         return { userId: 'anonymous', userName: 'Student' };
     };
 
@@ -742,7 +780,8 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                 body: JSON.stringify({
                     action: 'get_progress',
                     userId: userId,
-                    categoryId: selectedCategory
+                    categoryId: selectedCategory,
+                    duration: selectedWeeks
                 })
             });
 
@@ -1225,7 +1264,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
 
             const roadmap = await getRoadmapFromAPI(selectedCategory, totalWeeks, categories);
             
-            // Load existing user progress from backend
+            // Load existing user progress from backend for this specific duration
             const { userId } = getUserInfo();
             try {
                 const progressResponse = await fetch(PROGRESS_API_ENDPOINT, {
@@ -1234,7 +1273,8 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                     body: JSON.stringify({
                         action: 'get_progress',
                         userId: userId,
-                        categoryId: selectedCategory
+                        categoryId: selectedCategory,
+                        duration: totalWeeks
                     })
                 });
                 
@@ -1280,7 +1320,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
 
     // Initialize user progress when starting a new roadmap
     const initializeProgress = async (roadmap: RoadmapData) => {
-        const { userId } = getUserInfo();
+        const { userId, userName } = getUserInfo();
         const categoryName = categories.find(c => c.id === selectedCategory)?.name || selectedCategory;
 
         try {
@@ -1290,6 +1330,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                 body: JSON.stringify({
                     action: 'save_progress',
                     userId: userId,
+                    userName: userName,
                     categoryId: selectedCategory,
                     categoryName: categoryName,
                     duration: selectedWeeks,
@@ -1346,7 +1387,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
         setIsValidatingQuiz(true);
         setQuizValidationResult(null);
 
-        const { userId } = getUserInfo();
+        const { userId, userName } = getUserInfo();
 
         try {
             // Prepare user answers for backend validation
@@ -1362,6 +1403,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                 body: JSON.stringify({
                     action: 'validate_quiz',
                     userId: userId,
+                    userName: userName,
                     categoryId: selectedCategory,
                     weekNumber: weeklyQuiz.weekNumber,
                     userAnswers: userAnswers,
@@ -1476,7 +1518,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
 
     // Helper function to save progress to backend
     const saveProgressToBackend = async (weeksProgress: WeekContent[]) => {
-        const { userId } = getUserInfo();
+        const { userId, userName } = getUserInfo();
         const categoryName = categories.find(c => c.id === selectedCategory)?.name || selectedCategory;
 
         try {
@@ -1486,6 +1528,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                 body: JSON.stringify({
                     action: 'save_progress',
                     userId: userId,
+                    userName: userName,
                     categoryId: selectedCategory,
                     categoryName: categoryName,
                     duration: selectedWeeks,
@@ -1505,7 +1548,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     const markWeekCompletedWithBackend = async (weekNumber: number) => {
         if (!roadmapData) return;
 
-        const { userId } = getUserInfo();
+        const { userId, userName } = getUserInfo();
 
         try {
             // First check if week has quiz
@@ -1536,6 +1579,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                 body: JSON.stringify({
                     action: 'mark_week_completed',
                     userId: userId,
+                    userName: userName,
                     categoryId: selectedCategory,
                     weekNumber: weekNumber
                 })
@@ -2135,6 +2179,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                                                         userName: userName,
                                                         categoryId: selectedCategory,
                                                         categoryName: categoryName,
+                                                        duration: selectedWeeks,
                                                         score: avgScore
                                                     })
                                                 });
