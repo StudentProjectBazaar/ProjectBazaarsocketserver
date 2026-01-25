@@ -4839,7 +4839,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
               <button onClick={() => navigateToView('list')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                 <ArrowLeftIcon />
               </button>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">ðŸ† Leaderboard</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{String.fromCodePoint(0x1F3C6)} Leaderboard</h2>
             </div>
             <button onClick={() => fetchLeaderboard()} disabled={leaderboardLoading} className="text-sm px-3 py-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg hover:bg-orange-200 dark:hover:bg-orange-900/50 transition disabled:opacity-50">
               {leaderboardLoading ? 'Loading...' : 'Refresh'}
@@ -4857,7 +4857,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
           {/* Empty State */}
           {!leaderboardLoading && leaderboard.length === 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-12 flex flex-col items-center justify-center">
-              <div className="text-6xl mb-4">ðŸ†</div>
+              <div className="text-6xl mb-4">{String.fromCodePoint(0x1F3C6)}</div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Rankings Yet</h3>
               <p className="text-gray-500 dark:text-gray-400 text-center max-w-md mb-6">
                 Be the first to complete a mock assessment and claim the top spot on the leaderboard!
@@ -4894,7 +4894,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                   {/* 1st Place */}
                   {leaderboard[0] ? (
                     <div className="text-center -mt-4">
-                      <div className="text-2xl mb-1">ðŸ‘‘</div>
+                      <div className="text-2xl mb-1">{String.fromCodePoint(0x1F451)}</div>
                       <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl mb-2 mx-auto border-4 border-amber-300 overflow-hidden">
                         {leaderboard[0].profilePicture ? <img src={leaderboard[0].profilePicture} alt="" className="w-full h-full object-cover" /> : <span>{leaderboard[0].avatar || 'ðŸ‘¤'}</span>}
                       </div>
@@ -4904,7 +4904,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                     </div>
                   ) : (
                     <div className="text-center -mt-4 opacity-40">
-                      <div className="text-2xl mb-1">ðŸ‘‘</div>
+                      <div className="text-2xl mb-1">{String.fromCodePoint(0x1F451)}</div>
                       <div className="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-3xl mb-2 mx-auto border-4 border-gray-200">?</div>
                       <p className="text-sm font-semibold text-gray-500">---</p>
                       <p className="text-xs text-gray-400">0 XP</p>
