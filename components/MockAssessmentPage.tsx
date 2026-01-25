@@ -652,6 +652,11 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
 
   // Fetch test history
   const fetchTestHistory = useCallback(async () => {
+    // Skip if userId is not available yet
+    if (!userId) {
+      console.log('Skipping fetchTestHistory - userId not available');
+      return;
+    }
     try {
       setIsLoading(true);
       const output = await fetch(MOCK_ASSESSMENTS_API, {
@@ -705,10 +710,10 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
 
   // Fetch history when view changes to 'history'
   useEffect(() => {
-    if (view === 'history' || activeTab === 'history') {
+    if (userId && (view === 'history' || activeTab === 'history')) {
       fetchTestHistory();
     }
-  }, [view, activeTab, fetchTestHistory]);
+  }, [userId, view, activeTab, fetchTestHistory]);
 
 
   const [userProgress, setUserProgress] = useState<UserProgress>({
@@ -724,6 +729,11 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   });
 
   const fetchUserProgress = useCallback(async () => {
+    // Skip if userId is not available yet
+    if (!userId) {
+      console.log('Skipping fetchUserProgress - userId not available');
+      return;
+    }
     try {
       const output = await fetch(MOCK_ASSESSMENTS_API, {
         method: 'POST',
@@ -792,11 +802,13 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     }
   }, []);
 
-  // Fetch user progress on mount and when view is relevant
+  // Fetch user progress on mount and when userId becomes available
   useEffect(() => {
-    fetchUserProgress();
+    if (userId) {
+      fetchUserProgress();
+    }
     fetchLeaderboard();
-  }, [fetchUserProgress, fetchLeaderboard]);
+  }, [userId, fetchUserProgress, fetchLeaderboard]);
   const [testMode, setTestMode] = useState<TestMode>('timed');
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('medium');
   const [antiCheatMode, setAntiCheatMode] = useState<boolean>(true);
