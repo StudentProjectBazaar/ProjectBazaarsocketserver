@@ -422,19 +422,37 @@ def validate_final_exam(body: Dict[str, Any]) -> Dict[str, Any]:
 # ============================================
 
 def generate_certificate(body: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate and save certificate"""
+    """Generate and save certificate with comprehensive details"""
     try:
         user_id = body.get('userId')
         user_name = body.get('userName', 'Student')
         category_id = body.get('categoryId')
         category_name = body.get('categoryName', '')
         score = body.get('score', 0)
+        duration = body.get('duration', 8)
         
         if not all([user_id, category_id]):
             return response(400, {
                 'success': False,
                 'error': 'userId and categoryId are required'
             })
+        
+        # Get user progress to calculate comprehensive stats
+        progress_table = dynamodb.Table(USER_PROGRESS_TABLE)
+        db_response = progress_table.get_item(Key={'userId': user_id, 'categoryId': category_id})
+        progress = db_response.get('Item', {})
+        
+        # Calculate stats from progress
+        weeks_progress = progress.get('weeksProgress', [])
+        total_weeks = len(weeks_progress) if weeks_progress else duration
+        completed_weeks = sum(1 for w in weeks_progress if w.get('quizCompleted'))
+        
+        # Calculate average quiz score
+        quiz_scores = [w.get('quizScore', 100) for w in weeks_progress if w.get('quizCompleted') and w.get('quizScore') is not None]
+        avg_score = round(sum(quiz_scores) / len(quiz_scores)) if quiz_scores else score
+        
+        # Calculate total accuracy (same as avg score for quizzes)
+        accuracy = avg_score
         
         certificate_id = str(uuid.uuid4())
         now = datetime.utcnow()
@@ -445,10 +463,15 @@ def generate_certificate(body: Dict[str, Any]) -> Dict[str, Any]:
             'userName': user_name,
             'categoryId': category_id,
             'categoryName': category_name,
-            'score': score,
+            'score': avg_score,
+            'accuracy': accuracy,
+            'totalWeeks': total_weeks,
+            'completedWeeks': completed_weeks,
+            'duration': duration,
             'issuedAt': now.isoformat(),
             'issuedDate': now.strftime('%B %d, %Y'),
-            'verificationCode': f'CG-{certificate_id[:8].upper()}'
+            'verificationCode': f'CG-{certificate_id[:8].upper()}',
+            'status': 'Passed'
         }
         
         # Save to certificates table
@@ -456,13 +479,11 @@ def generate_certificate(body: Dict[str, Any]) -> Dict[str, Any]:
         table.put_item(Item=certificate)
         
         # Also update user progress
-        progress_table = dynamodb.Table(USER_PROGRESS_TABLE)
-        db_response = progress_table.get_item(Key={'userId': user_id, 'categoryId': category_id})
-        progress = db_response.get('Item', {})
-        
         if progress:
             progress['certificateId'] = certificate_id
             progress['certificateIssuedAt'] = now.isoformat()
+            progress['isRoadmapCompleted'] = True
+            progress['finalScore'] = avg_score
             progress['updatedAt'] = now.isoformat()
             progress_table.put_item(Item=progress)
         

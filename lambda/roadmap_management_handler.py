@@ -273,20 +273,43 @@ def handle_save_roadmap(event_body: Dict):
         # Update the specific program if duration provided
         programs = existing_item.get('programs', {})
         if program_duration:
+            # Get existing weeks for this program duration
+            existing_program = programs.get(str(program_duration), {})
+            existing_weeks = existing_program.get('weeks', [])
+            
+            # Merge weeks by weekNumber - update existing or add new
+            # Create a map of existing weeks by weekNumber
+            existing_weeks_map = {w.get('weekNumber'): w for w in existing_weeks}
+            
+            # Update or add normalized weeks
+            for new_week in normalized_weeks:
+                week_num = new_week.get('weekNumber')
+                existing_weeks_map[week_num] = new_week
+            
+            # Convert back to sorted list
+            merged_weeks = list(existing_weeks_map.values())
+            merged_weeks.sort(key=lambda x: x.get('weekNumber', 0))
+            
             programs[str(program_duration)] = {
-                'weeks': normalized_weeks,
+                'weeks': merged_weeks,
                 'updatedAt': datetime.utcnow().isoformat()
             }
         
         # Determine what to use for top-level 'weeks'
-        # Only overwrite global weeks if: no duration specified, OR duration is 8
-        if not program_duration:
-            global_weeks = normalized_weeks
-        elif str(program_duration) == '8':
-            global_weeks = normalized_weeks
+        # Only update global weeks if: no duration specified, OR duration is 8
+        existing_global_weeks = existing_item.get('weeks', [])
+        
+        if not program_duration or str(program_duration) == '8':
+            # Merge with existing global weeks by weekNumber
+            existing_global_map = {w.get('weekNumber'): w for w in existing_global_weeks}
+            for new_week in normalized_weeks:
+                week_num = new_week.get('weekNumber')
+                existing_global_map[week_num] = new_week
+            global_weeks = list(existing_global_map.values())
+            global_weeks.sort(key=lambda x: x.get('weekNumber', 0))
         else:
             # Preserve existing global weeks for non-8 duration saves
-            global_weeks = existing_item.get('weeks', [])
+            global_weeks = existing_global_weeks
         
         # Prepare item with all data
         item = {
