@@ -8,7 +8,7 @@ import uuid
 
 # Initialize DynamoDB
 dynamodb = boto3.resource('dynamodb', region_name='ap-south-2')
-
+# https://hpof5ndnol.execute-api.ap-south-2.amazonaws.com/default/carrier_guidance_progess_handler
 # Table names
 USER_PROGRESS_TABLE = 'CareerGuidanceUserProgress'
 CERTIFICATES_TABLE = 'CareerGuidanceCertificates'
