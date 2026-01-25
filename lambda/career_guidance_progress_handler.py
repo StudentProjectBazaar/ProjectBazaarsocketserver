@@ -109,13 +109,13 @@ def save_user_progress(body: Dict[str, Any]) -> Dict[str, Any]:
         user_name = body.get('userName', '')
         category_id = body.get('categoryId')
         category_name = body.get('categoryName', '')
-        duration = body.get('duration', 8)
+        duration = body.get('duration')
         weeks_progress = body.get('weeksProgress', [])  # [{weekNumber, isCompleted, quizCompleted, quizScore}]
         
-        if not user_id or not category_id:
+        if not all([user_id, category_id, duration]):
             return response(400, {
                 'success': False,
-                'error': 'userId and categoryId are required'
+                'error': 'userId, categoryId, and duration are required'
             })
         
         table = dynamodb.Table(USER_PROGRESS_TABLE)
@@ -177,12 +177,12 @@ def mark_week_completed(body: Dict[str, Any]) -> Dict[str, Any]:
         user_name = body.get('userName', '')
         category_id = body.get('categoryId')
         week_number = body.get('weekNumber')
-        duration = body.get('duration', 8)
+        duration = body.get('duration')
         
-        if not all([user_id, category_id, week_number]):
+        if not all([user_id, category_id, week_number, duration]):
             return response(400, {
                 'success': False,
-                'error': 'userId, categoryId, and weekNumber are required'
+                'error': 'userId, categoryId, weekNumber, and duration are required'
             })
         
         table = dynamodb.Table(USER_PROGRESS_TABLE)
@@ -273,12 +273,12 @@ def validate_quiz(body: Dict[str, Any]) -> Dict[str, Any]:
         category_id = body.get('categoryId')
         week_number = body.get('weekNumber')
         user_answers = body.get('userAnswers', [])  # [{ questionIndex, selectedAnswer }]
-        duration = body.get('duration', 8)
+        duration = body.get('duration')
         
-        if not all([user_id, category_id, week_number]):
+        if not all([user_id, category_id, week_number, duration]):
             return response(400, {
                 'success': False,
-                'error': 'userId, categoryId, and weekNumber are required'
+                'error': 'userId, categoryId, weekNumber, and duration are required'
             })
         
         # Get roadmap data to validate answers
@@ -528,12 +528,12 @@ def generate_certificate(body: Dict[str, Any]) -> Dict[str, Any]:
         category_id = body.get('categoryId')
         category_name = body.get('categoryName', '')
         score = body.get('score', 0)
-        duration = body.get('duration', 8)
+        duration = body.get('duration')
         
-        if not all([user_id, category_id]):
+        if not all([user_id, category_id, duration]):
             return response(400, {
                 'success': False,
-                'error': 'userId and categoryId are required'
+                'error': 'userId, categoryId, and duration are required'
             })
         
         # Get user progress to calculate comprehensive stats
@@ -679,12 +679,12 @@ def get_completed_course_details(body: Dict[str, Any]) -> Dict[str, Any]:
     try:
         user_id = body.get('userId')
         category_id = body.get('categoryId')
-        duration = body.get('duration', 8)
+        duration = body.get('duration')
         
-        if not all([user_id, category_id]):
+        if not all([user_id, category_id, duration]):
             return response(400, {
                 'success': False,
-                'error': 'userId and categoryId are required'
+                'error': 'userId, categoryId, and duration are required'
             })
         
         # Get user progress
@@ -777,12 +777,12 @@ def check_week_has_quiz(body: Dict[str, Any]) -> Dict[str, Any]:
     try:
         category_id = body.get('categoryId')
         week_number = body.get('weekNumber')
-        duration = body.get('duration', 8)
+        duration = body.get('duration')
         
-        if not all([category_id, week_number]):
+        if not all([category_id, week_number, duration]):
             return response(400, {
                 'success': False,
-                'error': 'categoryId and weekNumber are required'
+                'error': 'categoryId, weekNumber, and duration are required'
             })
         
         # Get roadmap data

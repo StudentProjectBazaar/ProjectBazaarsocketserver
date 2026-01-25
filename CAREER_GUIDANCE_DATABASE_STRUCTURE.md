@@ -3,6 +3,8 @@
 ## Overview
 The database now supports **multiple duration programs** for the same category. Each user can complete a 2-week, 4-week, or 8-week program for any category (e.g., Web Development) and each will have **separate progress tracking** and **separate certificates**.
 
+**⚠️ IMPORTANT:** The `duration` parameter is **REQUIRED** in all API calls. There are **NO DEFAULT VALUES** (e.g., no default of 8). Everything is **fully dynamic** based on the user's selected program duration.
+
 ---
 
 ## DynamoDB Tables
@@ -126,7 +128,7 @@ The database now supports **multiple duration programs** for the same category. 
   "action": "get_progress",
   "userId": "user-abc-123",
   "categoryId": "web-development",
-  "duration": 2  // ← NEW: Optional - returns specific duration data
+  "duration": 2  // ← REQUIRED for specific duration data (dynamic, no defaults)
 }
 ```
 
@@ -159,7 +161,7 @@ The database now supports **multiple duration programs** for the same category. 
   "userName": "John Doe",
   "categoryId": "web-development",
   "categoryName": "Web Development",
-  "duration": 2,  // ← Determines which nested duration to update
+  "duration": 2,  // ← REQUIRED - Determines which nested duration to update (dynamic, no defaults)
   "weeksProgress": [...]
 }
 ```
@@ -175,7 +177,7 @@ The database now supports **multiple duration programs** for the same category. 
   "userName": "John Doe",
   "categoryId": "web-development",
   "weekNumber": 1,
-  "duration": 2,  // ← NEW: Updates correct duration's progress
+  "duration": 2,  // ← REQUIRED - Updates correct duration's progress (dynamic, no defaults)
   "userAnswers": [...]
 }
 ```
@@ -191,7 +193,7 @@ The database now supports **multiple duration programs** for the same category. 
   "userName": "John Doe",
   "categoryId": "web-development",
   "weekNumber": 1,
-  "duration": 2  // ← NEW: Marks week complete for specific duration
+  "duration": 2  // ← REQUIRED - Marks week complete for specific duration (dynamic, no defaults)
 }
 ```
 
@@ -206,7 +208,7 @@ The database now supports **multiple duration programs** for the same category. 
   "userName": "John Doe",
   "categoryId": "web-development",
   "categoryName": "Web Development",
-  "duration": 2,  // ← NEW: Creates certificate for specific duration
+  "duration": 2,  // ← REQUIRED - Creates certificate for specific duration (dynamic, no defaults)
   "score": 87
 }
 ```
