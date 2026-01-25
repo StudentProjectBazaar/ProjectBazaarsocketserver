@@ -563,7 +563,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'career-guidance':
                 return <CareerGuidancePage toggleSidebar={toggleSidebar} />;
             case 'mock-assessment':
-                return <MockAssessmentPage toggleSidebar={toggleSidebar} />;
+                return <MockAssessmentPage embedded toggleSidebar={toggleSidebar} />;
             case 'coding-questions':
                 return <CodingInterviewQuestionsPage toggleSidebar={toggleSidebar} />;
             case 'course-details':
@@ -664,7 +664,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'career-guidance':
                 return <CareerGuidancePage toggleSidebar={toggleSidebar} />;
             case 'mock-assessment':
-                return <MockAssessmentPage toggleSidebar={toggleSidebar} />;
+                return <MockAssessmentPage embedded toggleSidebar={toggleSidebar} />;
             case 'coding-questions':
                 return <CodingInterviewQuestionsPage toggleSidebar={toggleSidebar} />;
             case 'my-projects':

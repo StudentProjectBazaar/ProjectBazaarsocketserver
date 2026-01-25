@@ -493,9 +493,10 @@ const StarIcon = () => (
 interface MockAssessmentPageProps {
   initialView?: AssessmentView;
   toggleSidebar?: () => void;
+  embedded?: boolean; // When true, skip rendering sidebar (used when embedded in DashboardContent)
 }
 
-const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = 'list', toggleSidebar }) => {
+const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = 'list', toggleSidebar, embedded = false }) => {
   const { userId } = useAuth();
   const { navigateTo } = useNavigation();
   const [view, setView] = useState<AssessmentView>(initialView === 'history' ? 'list' : initialView);
@@ -4651,26 +4652,40 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
 
   );
 
-  // Wrap content with Sidebar for non-test views
-  const wrapWithSidebar = (content: React.ReactNode) => (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden">
-      <Sidebar
-        dashboardMode="buyer"
-        activeView="mock-assessment"
-        setActiveView={handleSidebarNavigation}
-        isOpen={isSidebarOpen}
-        isCollapsed={isSidebarCollapsed}
-        onClose={() => setIsSidebarOpen(false)}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        onCollapseToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-      />
-      <div className="flex-1 flex flex-col overflow-hidden relative h-full">
-        <div className="flex-1 overflow-y-auto">
-          {content}
+  // Wrap content with Sidebar for non-test views (only when NOT embedded in DashboardContent)
+  const wrapWithSidebar = (content: React.ReactNode) => {
+    // If embedded in DashboardContent, don't render sidebar (parent already has one)
+    if (embedded) {
+      return (
+        <div className="flex-1 flex flex-col overflow-hidden relative h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+          <div className="flex-1 overflow-y-auto">
+            {content}
+          </div>
+        </div>
+      );
+    }
+    
+    // Standalone mode: render with sidebar
+    return (
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden">
+        <Sidebar
+          dashboardMode="buyer"
+          activeView="mock-assessment"
+          setActiveView={handleSidebarNavigation}
+          isOpen={isSidebarOpen}
+          isCollapsed={isSidebarCollapsed}
+          onClose={() => setIsSidebarOpen(false)}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          onCollapseToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
+        <div className="flex-1 flex flex-col overflow-hidden relative h-full">
+          <div className="flex-1 overflow-y-auto">
+            {content}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Main render
   return (
