@@ -266,7 +266,6 @@ interface LeaderboardEntry {
   testsCompleted: number;
   avgScore: number;
   badges: number;
-  profilePicture?: string;
 }
 
 interface DailyChallenge {
@@ -4932,17 +4931,23 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                   )}
                 </div>
               </div>
-              {leaderboard.length > 3 && (
+              {/* All Rankings List - Shows all users */}
+              <div className="border-t border-gray-100 dark:border-gray-700">
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">All Rankings ({leaderboard.length} users)</h3>
+                </div>
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {leaderboard.slice(3).map((entry: LeaderboardEntry) => (
-                    <div key={entry.rank} className="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <span className="w-8 text-center font-semibold text-gray-500 dark:text-gray-400">{entry.rank}</span>
+                  {leaderboard.map((entry: LeaderboardEntry, index: number) => (
+                    <div key={entry.rank || index} className={`flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${index < 3 ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
+                      <span className={`w-8 text-center font-semibold ${index === 0 ? 'text-amber-500' : index === 1 ? 'text-gray-400' : index === 2 ? 'text-amber-600' : 'text-gray-500 dark:text-gray-400'}`}>
+                        {index === 0 ? String.fromCodePoint(0x1F947) : index === 1 ? String.fromCodePoint(0x1F948) : index === 2 ? String.fromCodePoint(0x1F949) : entry.rank || index + 1}
+                      </span>
                       <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl overflow-hidden">
-                        {entry.profilePicture ? <img src={entry.profilePicture} alt="" className="w-full h-full object-cover" /> : <span>{entry.avatar || 'ðŸ‘¤'}</span>}
+                        {entry.profilePicture ? <img src={entry.profilePicture} alt="" className="w-full h-full object-cover" /> : <span>{entry.avatar || String.fromCodePoint(0x1F464)}</span>}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 dark:text-white truncate">{entry.name || 'User'}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{entry.testsCompleted || 0} tests â€¢ {(entry.avgScore || 0).toFixed(1)}% avg</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{entry.testsCompleted || 0} tests {String.fromCodePoint(0x2022)} {(entry.avgScore || 0).toFixed(1)}% avg</p>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-orange-600 dark:text-orange-400">{(entry.xp || 0).toLocaleString()} XP</p>
@@ -4951,7 +4956,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
