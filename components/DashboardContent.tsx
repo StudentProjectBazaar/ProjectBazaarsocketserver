@@ -389,9 +389,9 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                         {browseView === 'freelancers' && <BrowseFreelancersContent />}
                         {browseView === 'projects' && <BrowseProjectsContent />}
                         {(browseView === 'all' || (!browseView && buyerProjectView === 'all')) && (
-                            <div className="flex flex-col lg:flex-row gap-6">
+                            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
                                 {/* Filters Sidebar */}
-                                <div className="lg:w-80 flex-shrink-0">
+                                <div className="lg:w-72 flex-shrink-0 lg:overflow-y-auto custom-scrollbar pr-2 pb-20">
                                     <DashboardFilters
                                         projects={projects}
                                         onFilterChange={setFilteredProjects}
@@ -399,7 +399,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                                 </div>
 
                                 {/* Projects Grid */}
-                                <div className="flex-1">
+                                <div className="flex-1 overflow-y-auto pb-20 custom-scrollbar pr-2">
                                     {/* Loading State - Skeleton Cards */}
                                     {isLoadingProjects && (
                                         <>
