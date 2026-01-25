@@ -4880,7 +4880,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                         {leaderboard[1].profilePicture ? <img src={leaderboard[1].profilePicture} alt="" className="w-full h-full object-cover" /> : <span>{leaderboard[1].avatar || 'ðŸ‘¤'}</span>}
                       </div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[100px]">{leaderboard[1].name || 'User'}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{(leaderboard[1].xp || 0).toLocaleString()} XP</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{Number(leaderboard[1].xp || 0).toLocaleString()} XP</p>
                       <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-lg font-bold">2</div>
                     </div>
                   ) : (
@@ -4899,7 +4899,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                         {leaderboard[0].profilePicture ? <img src={leaderboard[0].profilePicture} alt="" className="w-full h-full object-cover" /> : <span>{leaderboard[0].avatar || 'ðŸ‘¤'}</span>}
                       </div>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-[120px]">{leaderboard[0].name || 'User'}</p>
-                      <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">{(leaderboard[0].xp || 0).toLocaleString()} XP</p>
+                      <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">{Number(leaderboard[0].xp || 0).toLocaleString()} XP</p>
                       <div className="w-12 h-14 bg-gradient-to-b from-amber-400 to-amber-500 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-xl font-bold text-white">1</div>
                     </div>
                   ) : (
@@ -4918,7 +4918,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                         {leaderboard[2].profilePicture ? <img src={leaderboard[2].profilePicture} alt="" className="w-full h-full object-cover" /> : <span>{leaderboard[2].avatar || 'ðŸ‘¤'}</span>}
                       </div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[100px]">{leaderboard[2].name || 'User'}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{(leaderboard[2].xp || 0).toLocaleString()} XP</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{Number(leaderboard[2].xp || 0).toLocaleString()} XP</p>
                       <div className="w-10 h-8 bg-amber-200 dark:bg-amber-800 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-lg font-bold text-amber-800 dark:text-amber-200">3</div>
                     </div>
                   ) : (
@@ -4947,10 +4947,10 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 dark:text-white truncate">{entry.name || 'User'}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{entry.testsCompleted || 0} tests {String.fromCodePoint(0x2022)} {(entry.avgScore || 0).toFixed(1)}% avg</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{entry.testsCompleted || 0} tests {String.fromCodePoint(0x2022)} {Number(entry.avgScore || 0).toFixed(1)}% avg</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-orange-600 dark:text-orange-400">{(entry.xp || 0).toLocaleString()} XP</p>
+                        <p className="font-semibold text-orange-600 dark:text-orange-400">{Number(entry.xp || 0).toLocaleString()} XP</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{entry.badges || 0} badges</p>
                       </div>
                     </div>
