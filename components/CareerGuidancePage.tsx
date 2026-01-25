@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import PlacementPrepSection, { PlacementPhase } from './PlacementPrepSection';
 
 // ============================================
@@ -189,7 +189,7 @@ const TRENDING_CAREERS_KEY = 'careerTrendingCareers';
 const PROJECT_IDEAS_KEY = 'careerProjectIdeas';
 const PLACEMENT_PREP_KEY = 'careerPlacementPrep';
 const API_ENDPOINT = 'https://kuxbswn0c9.execute-api.ap-south-2.amazonaws.com/default/Trendingcarrers_ProjectIdeas';
-const PLACEMENT_PREP_API_ENDPOINT = import.meta.env.VITE_PLACEMENT_PREP_API_URL || 'https://5xg2r5rgol.execute-api.ap-south-2.amazonaws.com/default/PlacementPrep';
+const PLACEMENT_PREP_API_ENDPOINT = (import.meta as any).env.VITE_PLACEMENT_PREP_API_URL || 'https://5xg2r5rgol.execute-api.ap-south-2.amazonaws.com/default/PlacementPrep';
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -1534,8 +1534,8 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                                             key={weekNum}
                                             onClick={() => setSelectedWeeks(weekNum)}
                                             className={`py-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 ${selectedWeeks === weekNum
-                                                    ? 'border-orange-500 bg-orange-50 shadow-md scale-105'
-                                                    : 'border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50'
+                                                ? 'border-orange-500 bg-orange-50 shadow-md scale-105'
+                                                : 'border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50'
                                                 }`}
                                         >
                                             <span className={`text-lg font-bold ${selectedWeeks === weekNum ? 'text-orange-600' : 'text-gray-700'}`}>

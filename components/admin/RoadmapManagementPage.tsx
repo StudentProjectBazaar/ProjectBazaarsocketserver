@@ -59,7 +59,7 @@ const RoadmapManagementPage: React.FC = () => {
     const [_editingCategoryId, _setEditingCategoryId] = useState<string | null>(null);
     const [roadmaps, setRoadmaps] = useState<Record<string, CategoryRoadmap>>({});
     const [editingWeeks, setEditingWeeks] = useState<RoadmapWeek[]>([]);
-    const [isAddingWeek, setIsAddingWeek] = useState(false);
+    const [_isAddingWeek, setIsAddingWeek] = useState(false);
     const [_loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [autoSaving, setAutoSaving] = useState(false);

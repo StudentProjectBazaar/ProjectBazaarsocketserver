@@ -762,7 +762,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [leaderboardLoading, setLeaderboardLoading] = useState<boolean>(false);
+  const [_leaderboardLoading, setLeaderboardLoading] = useState<boolean>(false);
 
   const fetchLeaderboard = useCallback(async () => {
     setLeaderboardLoading(true);
@@ -4646,7 +4646,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
         </div>
       );
     }
-    
+
     // Standalone mode: render with sidebar
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 overflow-hidden">
