@@ -23,20 +23,20 @@ interface BuyerProjectCardProps {
 }
 
 const HeartIcon = ({ liked }: { liked: boolean }) => (
-    <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        className={`h-5 w-5 transition-all duration-300 ${liked ? 'scale-110' : 'scale-100'}`}
-        fill={liked ? 'currentColor' : 'none'} 
-        viewBox="0 0 24 24" 
-        stroke="currentColor" 
-        strokeWidth={liked ? 0 : 2}
-    >
-        <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 20.25l-7.682-7.682a4.5 4.5 0 010-6.364z" 
-        />
-    </svg>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={`h-5 w-5 transition-all duration-300 ${liked ? 'scale-110' : 'scale-100'}`}
+    fill={liked ? 'currentColor' : 'none'}
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={liked ? 0 : 2}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 20.25l-7.682-7.682a4.5 4.5 0 010-6.364z"
+    />
+  </svg>
 );
 const PremiumIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor">
@@ -50,7 +50,7 @@ const VideoIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w
 const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDetails, onReport }) => {
   const { id, imageUrl, category, title, description, tags, price, isPremium, hasDocumentation, hasExecutionVideo } = project;
   const { isInWishlist, toggleWishlist } = useWishlist();
-  const { isInCart, addToCart } = useCart();
+  const { isInCart, addToCart, removeFromCart } = useCart();
   const { userId } = useAuth();
   const liked = isInWishlist(id);
   const inCart = isInCart(id);
@@ -67,7 +67,11 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsCartAnimating(true);
-    addToCart(id);
+    if (inCart) {
+      removeFromCart(id);
+    } else {
+      addToCart(id);
+    }
     setTimeout(() => setIsCartAnimating(false), 300);
   };
 
@@ -93,7 +97,7 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
           </div>
         </div>
       )}
-      
+
       {/* Action Buttons - Top Right */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         {/* Report Button */}
@@ -120,27 +124,26 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
             </span>
           </button>
         )}
-        
+
         {/* Wishlist Button */}
-        <button 
-            onClick={handleLikeClick}
-            className={`p-2.5 rounded-full transition-all duration-300 shadow-lg backdrop-blur-sm ${
-                liked 
-                    ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700' 
-                    : 'bg-white/95 text-gray-600 hover:bg-white hover:text-orange-500'
+        <button
+          onClick={handleLikeClick}
+          className={`p-2.5 rounded-full transition-all duration-300 shadow-lg backdrop-blur-sm ${liked
+            ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700'
+            : 'bg-white/95 text-gray-600 hover:bg-white hover:text-orange-500'
             } ${isAnimating ? 'animate-pulse scale-125' : liked ? 'scale-110' : 'scale-100 hover:scale-110'}`}
-            aria-label={liked ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-label={liked ? 'Remove from wishlist' : 'Add to wishlist'}
         >
-            <HeartIcon liked={liked} />
+          <HeartIcon liked={liked} />
         </button>
       </div>
 
       {/* Image Section */}
       <div className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-        <img 
-          src={imageUrl} 
-          alt={title} 
-          className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500" 
+        <img
+          src={imageUrl}
+          alt={title}
+          className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       </div>
@@ -163,7 +166,7 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
         <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed flex-grow">
           {description}
         </p>
-        
+
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-4">
           {tags.slice(0, 3).map((tag) => (
@@ -180,18 +183,18 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
 
         {/* Features */}
         <div className="flex flex-wrap gap-2 mb-5">
-            {hasDocumentation && (
-              <span className="flex items-center gap-1.5 bg-orange-50 text-orange-700 text-xs font-semibold px-3 py-1.5 rounded-lg border border-orange-200">
-                <DocsIcon /> 
-                <span>Docs</span>
-              </span>
-            )}
-            {hasExecutionVideo && (
-              <span className="flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-semibold px-3 py-1.5 rounded-lg border border-green-200">
-                <VideoIcon /> 
-                <span>Video</span>
-              </span>
-            )}
+          {hasDocumentation && (
+            <span className="flex items-center gap-1.5 bg-orange-50 text-orange-700 text-xs font-semibold px-3 py-1.5 rounded-lg border border-orange-200">
+              <DocsIcon />
+              <span>Docs</span>
+            </span>
+          )}
+          {hasExecutionVideo && (
+            <span className="flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-semibold px-3 py-1.5 rounded-lg border border-green-200">
+              <VideoIcon />
+              <span>Video</span>
+            </span>
+          )}
         </div>
 
         {/* Footer */}
@@ -205,11 +208,10 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
           <div className="flex items-center gap-2">
             <button
               onClick={handleAddToCart}
-              className={`p-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 ${
-                inCart
-                  ? 'bg-green-500 text-white hover:bg-green-600'
-                  : 'bg-orange-500 text-white hover:bg-orange-600'
-              } ${isCartAnimating ? 'animate-pulse scale-125' : ''}`}
+              className={`p-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 ${inCart
+                ? 'bg-green-500 text-white hover:bg-green-600'
+                : 'bg-orange-500 text-white hover:bg-orange-600'
+                } ${isCartAnimating ? 'animate-pulse scale-125' : ''}`}
               title={inCart ? 'Already in cart' : 'Add to cart'}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -220,7 +222,7 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
                 )}
               </svg>
             </button>
-            <button 
+            <button
               onClick={() => onViewDetails?.(project)}
               className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-2.5 px-6 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 text-sm shadow-md hover:shadow-lg transform hover:scale-105"
             >

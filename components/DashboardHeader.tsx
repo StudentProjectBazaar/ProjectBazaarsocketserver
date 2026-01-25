@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { DashboardView } from './DashboardPage';
+import { useCart, useWishlist } from './DashboardPage';
 import { usePremium, useAuth } from '../App';
 
 const NOTIFICATION_API =
@@ -19,11 +20,10 @@ const ToggleButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-      active
-        ? 'bg-orange-500 text-white shadow-sm'
-        : 'text-gray-500 hover:bg-orange-50'
-    }`}
+    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${active
+      ? 'bg-orange-500 text-white shadow-sm'
+      : 'text-gray-500 hover:bg-orange-50'
+      }`}
   >
     {text}
   </button>
@@ -35,6 +35,7 @@ interface DashboardHeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   activeView: DashboardView;
+  setActiveView: (view: DashboardView) => void;
   buyerProjectView: 'all' | 'activated' | 'disabled';
   setBuyerProjectView: (view: 'all' | 'activated' | 'disabled') => void;
   browseView?: 'all' | 'freelancers' | 'projects';
@@ -74,6 +75,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   searchQuery,
   setSearchQuery,
   activeView,
+  setActiveView,
   buyerProjectView,
   setBuyerProjectView,
   browseView,
@@ -86,6 +88,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   const { isPremium, credits } = usePremium();
   const { userId } = useAuth();
+  const { cartCount } = useCart();
+  const { wishlist } = useWishlist();
+  const wishlistCount = wishlist.length;
 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -191,7 +196,79 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          {/* Quick Access: Purchases, Wishlist, Cart (Buyer mode only) */}
+          {dashboardMode === 'buyer' && (
+            <div className="flex items-center gap-1 mr-2">
+              {/* Purchases */}
+              <div className="relative group">
+                <button
+                  onClick={() => setActiveView('purchases')}
+                  className={`p-2 rounded-xl transition-colors ${activeView === 'purchases'
+                    ? 'bg-orange-500 text-white'
+                    : 'hover:bg-orange-50 text-gray-600'
+                    }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </button>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50 shadow-lg">
+                  My Purchases
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900"></div>
+                </div>
+              </div>
+
+              {/* Wishlist */}
+              <div className="relative group">
+                <button
+                  onClick={() => setActiveView('wishlist')}
+                  className={`relative p-2 rounded-xl transition-colors ${activeView === 'wishlist'
+                    ? 'bg-orange-500 text-white'
+                    : 'hover:bg-orange-50 text-gray-600'
+                    }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 20.25l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+                  </svg>
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                      {wishlistCount > 9 ? '9+' : wishlistCount}
+                    </span>
+                  )}
+                </button>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50 shadow-lg">
+                  My Wishlist
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900"></div>
+                </div>
+              </div>
+
+              {/* Cart */}
+              <div className="relative group">
+                <button
+                  onClick={() => setActiveView('cart')}
+                  className={`relative p-2 rounded-xl transition-colors ${activeView === 'cart'
+                    ? 'bg-orange-500 text-white'
+                    : 'hover:bg-orange-50 text-gray-600'
+                    }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </span>
+                  )}
+                </button>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50 shadow-lg">
+                  Shopping Cart
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900"></div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {isPremium && (
             <div className="px-4 py-2 bg-orange-50 rounded-xl">
               <p className="text-xs">Credits</p>
@@ -239,17 +316,15 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                     notifications.map((n) => (
                       <div
                         key={n.notificationId}
-                        className={`px-6 py-4 border-b hover:bg-orange-50 ${
-                          !n.isRead ? 'bg-orange-50/30' : ''
-                        }`}
+                        className={`px-6 py-4 border-b hover:bg-orange-50 ${!n.isRead ? 'bg-orange-50/30' : ''
+                          }`}
                       >
                         <div className="flex gap-3">
                           {getNotificationIcon(n.type)}
                           <div>
                             <p
-                              className={`text-sm ${
-                                !n.isRead ? 'font-semibold' : ''
-                              }`}
+                              className={`text-sm ${!n.isRead ? 'font-semibold' : ''
+                                }`}
                             >
                               {n.message}
                             </p>
@@ -276,21 +351,19 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           <div className="flex bg-orange-50 rounded-lg p-1">
             <button
               onClick={() => setDashboardMode('buyer')}
-              className={`px-3 py-1 rounded ${
-                dashboardMode === 'buyer'
-                  ? 'bg-orange-500 text-white'
-                  : ''
-              }`}
+              className={`px-3 py-1 rounded ${dashboardMode === 'buyer'
+                ? 'bg-orange-500 text-white'
+                : ''
+                }`}
             >
               Buyer
             </button>
             <button
               onClick={() => setDashboardMode('seller')}
-              className={`px-3 py-1 rounded ${
-                dashboardMode === 'seller'
-                  ? 'bg-orange-500 text-white'
-                  : ''
-              }`}
+              className={`px-3 py-1 rounded ${dashboardMode === 'seller'
+                ? 'bg-orange-500 text-white'
+                : ''
+                }`}
             >
               Seller
             </button>

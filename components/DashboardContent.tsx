@@ -69,122 +69,122 @@ interface ApiResponse {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const buyerProjects: BuyerProject[] = [
     {
-      id: 'proj-1',
-      imageUrl: 'https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop',
-      category: 'Web Development',
-      title: 'E-commerce Platform',
-      description: 'A full-stack e-commerce solution built with MERN stack, including payment integration.',
-      tags: ['React', 'Node.js', 'MongoDB'],
-      price: 49.99,
-      isPremium: true,
-      hasDocumentation: true,
-      hasExecutionVideo: false,
+        id: 'proj-1',
+        imageUrl: 'https://images.unsplash.com/photo-1534237693998-0c6218f200b3?q=80&w=2070&auto=format&fit=crop',
+        category: 'Web Development',
+        title: 'E-commerce Platform',
+        description: 'A full-stack e-commerce solution built with MERN stack, including payment integration.',
+        tags: ['React', 'Node.js', 'MongoDB'],
+        price: 49.99,
+        isPremium: true,
+        hasDocumentation: true,
+        hasExecutionVideo: false,
     },
     {
-      id: 'proj-2',
-      imageUrl: 'https://images.unsplash.com/photo-1611162617213-6d22e4f13374?q=80&w=1974&auto=format&fit=crop',
-      category: 'Mobile App',
-      title: 'Social Media App',
-      description: 'Feature-rich social media app clone using React Native and Firebase for a seamless experience.',
-      tags: ['React Native', 'Firebase'],
-      price: 59.99,
-      hasDocumentation: true,
-      hasExecutionVideo: true,
+        id: 'proj-2',
+        imageUrl: 'https://images.unsplash.com/photo-1611162617213-6d22e4f13374?q=80&w=1974&auto=format&fit=crop',
+        category: 'Mobile App',
+        title: 'Social Media App',
+        description: 'Feature-rich social media app clone using React Native and Firebase for a seamless experience.',
+        tags: ['React Native', 'Firebase'],
+        price: 59.99,
+        hasDocumentation: true,
+        hasExecutionVideo: true,
     },
     {
-      id: 'proj-3',
-      imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
-      category: 'Data Science',
-      title: 'Sales Prediction AI',
-      description: 'A machine learning model to predict future sales data with high accuracy using Python.',
-      tags: ['Python', 'Scikit-learn', 'Pandas'],
-      price: 79.99,
-      isPremium: true,
-      hasExecutionVideo: true,
+        id: 'proj-3',
+        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
+        category: 'Data Science',
+        title: 'Sales Prediction AI',
+        description: 'A machine learning model to predict future sales data with high accuracy using Python.',
+        tags: ['Python', 'Scikit-learn', 'Pandas'],
+        price: 79.99,
+        isPremium: true,
+        hasExecutionVideo: true,
     },
     {
-      id: 'proj-4',
-      imageUrl: 'https://images.unsplash.com/photo-1555099962-4199c345e546?q=80&w=1974&auto=format&fit=crop',
-      category: 'Web Development',
-      title: 'Portfolio Template',
-      description: 'A sleek, modern, and responsive portfolio template for developers and designers.',
-      tags: ['HTML5', 'CSS3', 'JavaScript'],
-      price: 19.99,
-      hasDocumentation: true,
+        id: 'proj-4',
+        imageUrl: 'https://images.unsplash.com/photo-1555099962-4199c345e546?q=80&w=1974&auto=format&fit=crop',
+        category: 'Web Development',
+        title: 'Portfolio Template',
+        description: 'A sleek, modern, and responsive portfolio template for developers and designers.',
+        tags: ['HTML5', 'CSS3', 'JavaScript'],
+        price: 19.99,
+        hasDocumentation: true,
     },
     {
-      id: 'proj-5',
-      imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop',
-      category: 'DevOps',
-      title: 'CI/CD Pipeline Automation',
-      description: 'Automate your deployment process with this CI/CD pipeline using Jenkins and Docker.',
-      tags: ['Jenkins', 'Docker', 'CI/CD'],
-      price: 69.99,
-      isPremium: true,
-      hasDocumentation: true,
+        id: 'proj-5',
+        imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop',
+        category: 'DevOps',
+        title: 'CI/CD Pipeline Automation',
+        description: 'Automate your deployment process with this CI/CD pipeline using Jenkins and Docker.',
+        tags: ['Jenkins', 'Docker', 'CI/CD'],
+        price: 69.99,
+        isPremium: true,
+        hasDocumentation: true,
     },
     {
-      id: 'proj-6',
-      imageUrl: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?q=80&w=2070&auto=format&fit=crop',
-      category: 'UI/UX Design',
-      title: 'Fintech App UI Kit',
-      description: 'A complete UI kit for a modern fintech application, designed in Figma with reusable components.',
-      tags: ['Figma', 'UI Kit', 'Design System'],
-      price: 29.99,
-      hasExecutionVideo: true,
+        id: 'proj-6',
+        imageUrl: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?q=80&w=2070&auto=format&fit=crop',
+        category: 'UI/UX Design',
+        title: 'Fintech App UI Kit',
+        description: 'A complete UI kit for a modern fintech application, designed in Figma with reusable components.',
+        tags: ['Figma', 'UI Kit', 'Design System'],
+        price: 29.99,
+        hasExecutionVideo: true,
     },
     {
-      id: 'proj-7',
-      imageUrl: 'https://images.unsplash.com/photo-1607799279861-4d521203fb8d?q=80&w=2070&auto=format&fit=crop',
-      category: 'Game Development',
-      title: '2D Platformer Game',
-      description: 'An engaging 2D platformer game built with Unity engine and C#. Includes all assets.',
-      tags: ['Unity', 'C#', 'Game Design'],
-      price: 39.99,
+        id: 'proj-7',
+        imageUrl: 'https://images.unsplash.com/photo-1607799279861-4d521203fb8d?q=80&w=2070&auto=format&fit=crop',
+        category: 'Game Development',
+        title: '2D Platformer Game',
+        description: 'An engaging 2D platformer game built with Unity engine and C#. Includes all assets.',
+        tags: ['Unity', 'C#', 'Game Design'],
+        price: 39.99,
     },
     {
-      id: 'proj-8',
-      imageUrl: 'https://images.unsplash.com/photo-1547658719-da2b51169166?q=80&w=1964&auto=format&fit=crop',
-      category: 'Web Application',
-      title: 'Task Management Tool',
-      description: 'A Kanban-style task management application to organize and track your team\'s workflow.',
-      tags: ['Vue.js', 'Firebase', 'TailwindCSS'],
-      price: 44.99,
-      isPremium: true,
-      hasDocumentation: true,
-      hasExecutionVideo: true,
+        id: 'proj-8',
+        imageUrl: 'https://images.unsplash.com/photo-1547658719-da2b51169166?q=80&w=1964&auto=format&fit=crop',
+        category: 'Web Application',
+        title: 'Task Management Tool',
+        description: 'A Kanban-style task management application to organize and track your team\'s workflow.',
+        tags: ['Vue.js', 'Firebase', 'TailwindCSS'],
+        price: 44.99,
+        isPremium: true,
+        hasDocumentation: true,
+        hasExecutionVideo: true,
     },
-  ];
+];
 
 const activatedProjects = [
-  {
-    name: 'Zapier',
-    domain: 'zapier.com',
-    description: 'Automation: No-code tool that connects your CRM to 5,000+ other apps, instantly automating...',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Zapier_logo.svg',
-    tags: ['Automation', 'No-code', 'Integration'],
-  },
-  {
-    name: 'Slack',
-    domain: 'slack.com',
-    description: 'A messaging app for businesses that connects people to the information they need.',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg',
-    tags: ['Communication', 'Teamwork', 'Productivity'],
-  },
-  {
-    name: 'Figma',
-    domain: 'figma.com',
-    description: 'The collaborative interface design tool. Create, test, and ship better designs from start to finish.',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg',
-    tags: ['Design', 'UI/UX', 'Collaboration'],
-  },
-  {
-    name: 'Notion',
-    domain: 'notion.so',
-    description: 'The all-in-one workspace for your notes, tasks, wikis, and databases.',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e9/Notion-logo.svg',
-    tags: ['Productivity', 'Notes', 'Workspace'],
-  },
+    {
+        name: 'Zapier',
+        domain: 'zapier.com',
+        description: 'Automation: No-code tool that connects your CRM to 5,000+ other apps, instantly automating...',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Zapier_logo.svg',
+        tags: ['Automation', 'No-code', 'Integration'],
+    },
+    {
+        name: 'Slack',
+        domain: 'slack.com',
+        description: 'A messaging app for businesses that connects people to the information they need.',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg',
+        tags: ['Communication', 'Teamwork', 'Productivity'],
+    },
+    {
+        name: 'Figma',
+        domain: 'figma.com',
+        description: 'The collaborative interface design tool. Create, test, and ship better designs from start to finish.',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg',
+        tags: ['Design', 'UI/UX', 'Collaboration'],
+    },
+    {
+        name: 'Notion',
+        domain: 'notion.so',
+        description: 'The all-in-one workspace for your notes, tasks, wikis, and databases.',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e9/Notion-logo.svg',
+        tags: ['Productivity', 'Notes', 'Workspace'],
+    },
 ];
 
 
@@ -235,7 +235,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
     const fetchProjects = async () => {
         setIsLoadingProjects(true);
         setProjectsError(null);
-        
+
         try {
             // Fetch user data to get purchased project IDs
             let purchasedProjectIds: string[] = [];
@@ -247,34 +247,34 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             }
 
             const response = await fetch(GET_ALL_PROJECTS_ENDPOINT);
-            
+
             if (!response.ok) {
                 throw new Error(`Failed to fetch projects: ${response.statusText}`);
             }
-            
+
             const data: ApiResponse = await response.json();
-            
+
             if (data.success && data.projects) {
                 // Filter projects: Only show approved projects, exclude user's own projects, and exclude purchased projects
                 const filteredApiProjects = data.projects.filter((apiProject: ApiProject) => {
                     // Check if project is approved
-                    const isApproved = 
-                        apiProject.adminApprovalStatus === 'approved' || 
+                    const isApproved =
+                        apiProject.adminApprovalStatus === 'approved' ||
                         apiProject.status === 'approved' ||
                         (apiProject.adminApproved === true && (apiProject.status === 'active' || apiProject.status === 'live'));
-                    
+
                     // Check if project is not owned by current user
                     const isNotOwnProject = userId ? apiProject.sellerId !== userId : true;
-                    
+
                     // Check if project is not already purchased
                     const isNotPurchased = !purchasedProjectIds.includes(apiProject.projectId);
-                    
+
                     return isApproved && isNotOwnProject && isNotPurchased;
                 });
-                
+
                 // Map filtered projects from API
                 const mappedProjects = filteredApiProjects.map(mapApiProjectToComponent);
-                
+
                 // Create a map of projectId to sellerId and sellerEmail for later use
                 const sellerMap = new Map<string, { sellerId: string; sellerEmail: string }>();
                 filteredApiProjects.forEach((apiProject) => {
@@ -286,7 +286,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                     }
                 });
                 setProjectSellerMap(sellerMap);
-                
+
                 setProjects(mappedProjects);
                 setFilteredProjects(mappedProjects);
                 console.log('Fetched projects for buyer:', mappedProjects.length);
@@ -320,23 +320,23 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
         if (sellerProfileCache.has(sellerId)) {
             return sellerProfileCache.get(sellerId);
         }
-        
+
         try {
             const response = await fetch(GET_USER_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: sellerId }),
             });
-            
+
             const data = await response.json();
             const user = data.data || data.user || data;
-            
+
             if (user && data.success !== false) {
                 const profile = {
                     profilePicture: user.profilePictureUrl || undefined,
                     fullName: user.fullName || user.name || undefined,
                 };
-                
+
                 // Cache the result
                 setSellerProfileCache(prev => new Map(prev).set(sellerId, profile));
                 return profile;
@@ -344,7 +344,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
         } catch (err) {
             console.error('Failed to fetch seller profile:', err);
         }
-        
+
         return { profilePicture: undefined, fullName: undefined };
     };
 
@@ -379,12 +379,12 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
     useEffect(() => {
         setCurrentPage(1);
     }, [searchQuery, filteredProjects.length]);
-    
+
     const renderBuyerContent = () => {
         switch (activeView) {
             case 'dashboard':
                 return (
-                     <div className="mt-8">
+                    <div className="mt-8">
                         {/* Render content based on browseView */}
                         {browseView === 'freelancers' && <BrowseFreelancersContent />}
                         {browseView === 'projects' && <BrowseProjectsContent />}
@@ -392,8 +392,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                             <div className="flex flex-col lg:flex-row gap-6">
                                 {/* Filters Sidebar */}
                                 <div className="lg:w-80 flex-shrink-0">
-                                    <DashboardFilters 
-                                        projects={projects} 
+                                    <DashboardFilters
+                                        projects={projects}
                                         onFilterChange={setFilteredProjects}
                                     />
                                 </div>
@@ -433,8 +433,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
                                                 {paginatedProjects.map((project) => (
-                                                    <BuyerProjectCard 
-                                                        key={project.id} 
+                                                    <BuyerProjectCard
+                                                        key={project.id}
                                                         project={project}
                                                         onViewDetails={(proj) => {
                                                             setPreviousView('dashboard');
@@ -475,8 +475,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                         {buyerProjectView === 'activated' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {activatedProjects.map((project) => (
-                                    <ProjectDashboardCard 
-                                        key={project.name} 
+                                    <ProjectDashboardCard
+                                        key={project.name}
                                         name={project.name}
                                         domain={project.domain}
                                         description={project.description}
@@ -497,7 +497,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 return <PurchasesPage />;
             case 'wishlist':
                 return (
-                    <WishlistPage 
+                    <WishlistPage
                         allProjects={projects}
                         onViewDetails={(proj) => {
                             setPreviousView('wishlist');
@@ -510,7 +510,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 return <CartPage allProjects={projects} />;
             case 'courses':
                 return (
-                    <BuyerCoursesPage 
+                    <BuyerCoursesPage
                         onViewCourse={(course) => {
                             setPreviousView('courses');
                             setSelectedCourse(course);
@@ -520,7 +520,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                 );
             case 'my-courses':
                 return (
-                    <MyCoursesPage 
+                    <MyCoursesPage
                         onViewCourse={(course: PurchasedCourse) => {
                             // Convert PurchasedCourse to Course type for course details
                             const courseForDetails: Course = {
@@ -693,12 +693,13 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             ) : (
                 <div className="container mx-auto px-6 py-8">
                     {activeView !== 'project-details' && activeView !== 'seller-profile' && activeView !== 'course-details' && activeView !== 'hackathons' && activeView !== 'build-portfolio' && activeView !== 'build-resume' && activeView !== 'career-guidance' && activeView !== 'mock-assessment' && activeView !== 'coding-questions' && (
-                        <DashboardHeader 
-                            dashboardMode={dashboardMode} 
+                        <DashboardHeader
+                            dashboardMode={dashboardMode}
                             setDashboardMode={setDashboardMode}
                             searchQuery={searchQuery}
                             setSearchQuery={setSearchQuery}
                             activeView={activeView}
+                            setActiveView={setActiveView}
                             buyerProjectView={buyerProjectView}
                             setBuyerProjectView={setBuyerProjectView}
                             browseView={browseView}
@@ -707,7 +708,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                             toggleSidebar={toggleSidebar}
                         />
                     )}
-                    
+
                     {dashboardMode === 'buyer' ? renderBuyerContent() : renderSellerContent()}
                 </div>
             )}
