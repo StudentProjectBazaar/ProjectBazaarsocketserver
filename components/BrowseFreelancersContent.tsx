@@ -30,7 +30,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
     country: true
   });
   const filterRef = useRef<HTMLDivElement>(null);
-  
+
   // Modal states
   const [selectedFreelancer, setSelectedFreelancer] = useState<Freelancer | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -208,15 +208,15 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
   // Send Invite
   const sendInvite = async () => {
     if (!selectedFreelancer || !inviteMessage.trim()) return;
-    
+
     setIsSending(true);
     try {
       // Simulate API call - in production, this would call a notification/messaging API
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Log the invitation (in production, save to database)
       console.log('Invitation sent to:', selectedFreelancer.name, 'Message:', inviteMessage);
-      
+
       setSendSuccess(`Invitation sent to ${selectedFreelancer.name}!`);
       setTimeout(() => {
         setShowInviteModal(false);
@@ -235,15 +235,15 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
   // Send Message
   const sendMessage = async () => {
     if (!selectedFreelancer || !contactMessage.trim()) return;
-    
+
     setIsSending(true);
     try {
       // Simulate API call - in production, this would call a messaging API
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Log the message (in production, save to database)
       console.log('Message sent to:', selectedFreelancer.name, 'Message:', contactMessage);
-      
+
       setSendSuccess(`Message sent to ${selectedFreelancer.name}!`);
       setTimeout(() => {
         setShowContactModal(false);
@@ -292,16 +292,68 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
     );
   };
 
-  // Loading state
+  // Loading state - Skeleton cards
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="text-center">
-          <svg className="animate-spin h-12 w-12 text-orange-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Loading freelancers...</p>
+      <div>
+        {/* Search Bar Skeleton */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <div className="w-full h-[42px] bg-gray-200 rounded-lg animate-pulse"></div>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filter Sidebar Skeleton */}
+          <div className="lg:w-80">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
+              <div className="h-6 bg-gray-200 rounded w-24 mb-6 animate-pulse"></div>
+              <div className="space-y-4">
+                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Skeleton Grid */}
+          <div className="flex-1">
+            <div className="h-5 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 animate-pulse">
+                  {/* Header */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-16 h-16 rounded-full bg-gray-200"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-16"></div>
+                    </div>
+                  </div>
+                  {/* Rating */}
+                  <div className="flex gap-2 mb-3 pb-3 border-b border-gray-100">
+                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 rounded w-16"></div>
+                  </div>
+                  {/* Rate */}
+                  <div className="h-6 bg-gray-200 rounded w-20 mb-3"></div>
+                  {/* Location */}
+                  <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
+                  {/* Skills */}
+                  <div className="flex gap-2 mb-4">
+                    <div className="h-6 bg-gray-200 rounded-md w-16"></div>
+                    <div className="h-6 bg-gray-200 rounded-md w-20"></div>
+                    <div className="h-6 bg-gray-200 rounded-md w-14"></div>
+                  </div>
+                  {/* Buttons */}
+                  <div className="flex gap-2">
+                    <div className="flex-1 h-9 bg-gray-200 rounded-lg"></div>
+                    <div className="flex-1 h-9 bg-gray-200 rounded-lg"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -678,13 +730,13 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
 
                     {/* Actions */}
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => handleInviteToBid(freelancer)}
                         className="flex-1 px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-sm hover:shadow-md"
                       >
                         Invite to Bid
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleContact(freelancer)}
                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                       >

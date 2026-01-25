@@ -61,7 +61,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
   });
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
-  
+
   // Project details & Bid modal state
   const [selectedProject, setSelectedProject] = useState<BrowseProject | null>(null);
   const [showProjectDetailsModal, setShowProjectDetailsModal] = useState(false);
@@ -85,23 +85,23 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     if (ownerProfileCache.has(ownerId)) {
       return ownerProfileCache.get(ownerId);
     }
-    
+
     try {
       const response = await fetch(GET_USER_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: ownerId }),
       });
-      
+
       const data = await response.json();
       const user = data.data || data.user || data;
-      
+
       if (user && data.success !== false) {
         const profile = {
           name: user.fullName || user.name || undefined,
           profilePicture: user.profilePictureUrl || undefined,
         };
-        
+
         setOwnerProfileCache(prev => new Map(prev).set(ownerId, profile));
         return profile;
       }
@@ -116,7 +116,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     if (bidStatsCache.has(projectId)) {
       return bidStatsCache.get(projectId);
     }
-    
+
     try {
       const stats = await getBidStatsForProjectAsync(projectId);
       setBidStatsCache(prev => new Map(prev).set(projectId, stats));
@@ -132,28 +132,28 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     const fetchProjects = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // Fetch bid request projects (job postings by buyers)
         const bidRequestProjects = await getAllBidRequestProjects();
-        
+
         if (bidRequestProjects && bidRequestProjects.length > 0) {
           setProjects(bidRequestProjects);
-          
+
           // Fetch owner profiles for all projects
           const uniqueOwnerIds = [...new Set(bidRequestProjects.map(p => p.ownerId).filter(Boolean))];
           uniqueOwnerIds.forEach(ownerId => {
             fetchOwnerProfile(ownerId).then(profile => {
               if (profile) {
-                setProjects(prev => prev.map(p => 
-                  p.ownerId === ownerId 
+                setProjects(prev => prev.map(p =>
+                  p.ownerId === ownerId
                     ? { ...p, ownerName: profile.name, ownerProfilePicture: profile.profilePicture }
                     : p
                 ));
               }
             });
           });
-          
+
           // Fetch bid stats for projects with bids
           bidRequestProjects.forEach(project => {
             if (project.bidsCount > 0) {
@@ -181,13 +181,13 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     setBidSuccess(false);
     setBidError(null);
     setHasAlreadyBid(false);
-    
+
     // Check if user already bid on this project
     if (userId) {
       const hasBid = await hasFreelancerBidOnProjectAsync(userId, project.id);
       setHasAlreadyBid(hasBid);
     }
-    
+
     setShowProjectDetailsModal(true);
   };
 
@@ -197,18 +197,18 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
       alert('Please login to place a bid');
       return;
     }
-    
+
     if (hasAlreadyBid) {
       alert('You have already placed a bid on this project');
       return;
     }
-    
+
     // Check if project is still open
     if (selectedProject?.status && selectedProject.status !== 'open') {
       alert('This project is no longer accepting bids');
       return;
     }
-    
+
     if (selectedProject) {
       setBidFormData({
         bidAmount: selectedProject.budget.min,
@@ -234,20 +234,20 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
       setBidError('Please login to place a bid');
       return;
     }
-    
+
     if (!bidFormData.proposal.trim()) {
       setBidError('Please write a proposal');
       return;
     }
-    
+
     if (bidFormData.bidAmount <= 0) {
       setBidError('Please enter a valid bid amount');
       return;
     }
-    
+
     setIsSubmittingBid(true);
     setBidError(null);
-    
+
     try {
       const result = await saveBidAsync(
         bidFormData,
@@ -256,13 +256,13 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
         userEmail.split('@')[0],
         userEmail
       );
-      
+
       if (result.success) {
         setBidSuccess(true);
         setHasAlreadyBid(true);
         // Update bid count locally
-        setProjects(prev => prev.map(p => 
-          p.id === selectedProject.id 
+        setProjects(prev => prev.map(p =>
+          p.id === selectedProject.id
             ? { ...p, bidsCount: p.bidsCount + 1 }
             : p
         ));
@@ -340,7 +340,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
         }
         // Fallback: check if any skill matches the category keywords
         const categoryKeywords = selectedCategory.toLowerCase().split(' ');
-        return p.skills.some(skill => 
+        return p.skills.some(skill =>
           categoryKeywords.some(keyword => skill.toLowerCase().includes(keyword))
         );
       });
@@ -372,16 +372,16 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     setSelectedCategory('All Categories');
   };
 
-  const hasActiveFilters = projectType !== 'all' || 
-    budgetRange[0] > minBudget || 
+  const hasActiveFilters = projectType !== 'all' ||
+    budgetRange[0] > minBudget ||
     budgetRange[1] < maxBudget ||
     selectedSkills.length > 0 ||
     selectedCategory !== 'All Categories';
 
   // Toggle skill selection
   const toggleSkill = (skill: string) => {
-    setSelectedSkills(prev => 
-      prev.includes(skill) 
+    setSelectedSkills(prev =>
+      prev.includes(skill)
         ? prev.filter(s => s !== skill)
         : [...prev, skill]
     );
@@ -402,16 +402,80 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     return text.substring(0, maxLength) + '...';
   };
 
-  // Loading state
+  // Loading state - Skeleton cards
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="text-center">
-          <svg className="animate-spin h-12 w-12 text-orange-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">Loading projects...</p>
+      <div>
+        {/* Search Bar Skeleton */}
+        <div className="mb-6">
+          <div className="w-full h-14 bg-gray-200 rounded-xl animate-pulse"></div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filter Sidebar Skeleton */}
+          <div className="lg:w-80">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
+              <div className="h-6 bg-gray-200 rounded w-24 mb-6 animate-pulse"></div>
+              <div className="space-y-4">
+                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="h-24 bg-gray-200 rounded-xl animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Skeleton List */}
+          <div className="flex-1">
+            <div className="h-5 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
+            <div className="space-y-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white border border-gray-200 rounded-2xl p-6 animate-pulse">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    {/* Left Content */}
+                    <div className="flex-1">
+                      {/* Title */}
+                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                      {/* Description */}
+                      <div className="space-y-2 mb-4">
+                        <div className="h-4 bg-gray-200 rounded w-full"></div>
+                        <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                        <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+                      </div>
+                      {/* Skills */}
+                      <div className="flex gap-2 mb-4">
+                        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                        <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+                        <div className="h-6 bg-gray-200 rounded-full w-14"></div>
+                        <div className="h-6 bg-gray-200 rounded-full w-18"></div>
+                      </div>
+                      {/* Owner Info */}
+                      <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                        <div>
+                          <div className="h-3 bg-gray-200 rounded w-16 mb-1"></div>
+                          <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        </div>
+                      </div>
+                      {/* Meta Info */}
+                      <div className="flex gap-4">
+                        <div className="h-4 bg-gray-200 rounded w-16"></div>
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                      </div>
+                    </div>
+                    {/* Right Content */}
+                    <div className="flex flex-col items-end gap-4 md:min-w-[200px]">
+                      <div className="text-right">
+                        <div className="h-4 bg-gray-200 rounded w-16 mb-1"></div>
+                        <div className="h-7 bg-gray-200 rounded w-32"></div>
+                      </div>
+                      <div className="h-10 bg-gray-200 rounded-xl w-32"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -518,11 +582,10 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                   {CATEGORIES.map((cat) => (
                     <label
                       key={cat}
-                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        selectedCategory === cat 
-                          ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' 
+                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-200 ${selectedCategory === cat
+                          ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
                           : 'hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
+                        }`}
                     >
                       <input
                         type="radio"
@@ -809,9 +872,9 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                       <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                         <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center overflow-hidden">
                           {project.ownerProfilePicture ? (
-                            <img 
-                              src={project.ownerProfilePicture} 
-                              alt={project.ownerName || 'Owner'} 
+                            <img
+                              src={project.ownerProfilePicture}
+                              alt={project.ownerName || 'Owner'}
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -870,32 +933,30 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
 
                       {/* Project Status Badge */}
                       {project.status && project.status !== 'open' && (
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold mb-2 inline-block ${
-                          project.status === 'in_progress' 
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold mb-2 inline-block ${project.status === 'in_progress'
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                             : project.status === 'completed'
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                        }`}>
-                          {project.status === 'in_progress' ? '🎯 Awarded' : 
-                           project.status === 'completed' ? '✓ Completed' : 
-                           project.status === 'cancelled' ? 'Cancelled' : project.status}
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                          }`}>
+                          {project.status === 'in_progress' ? '🎯 Awarded' :
+                            project.status === 'completed' ? '✓ Completed' :
+                              project.status === 'cancelled' ? 'Cancelled' : project.status}
                         </span>
                       )}
 
                       {/* CTA Button */}
-                      <button 
+                      <button
                         onClick={() => handleViewProjectDetails(project)}
-                        className={`w-full md:w-auto px-6 py-3 font-semibold rounded-lg transition-colors duration-200 whitespace-nowrap ${
-                          project.status && project.status !== 'open'
+                        className={`w-full md:w-auto px-6 py-3 font-semibold rounded-lg transition-colors duration-200 whitespace-nowrap ${project.status && project.status !== 'open'
                             ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
                             : 'bg-orange-500 text-white hover:bg-orange-600'
-                        }`}
+                          }`}
                       >
-                        {project.status && project.status !== 'open' 
-                          ? 'View Details' 
-                          : project.bidsCount === 0 
-                            ? 'Be First to Bid' 
+                        {project.status && project.status !== 'open'
+                          ? 'View Details'
+                          : project.bidsCount === 0
+                            ? 'Be First to Bid'
                             : 'Place Bid'}
                       </button>
                     </div>
@@ -926,7 +987,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {showBidForm && (
-                    <button 
+                    <button
                       onClick={handleBackToDetails}
                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                     >
@@ -939,7 +1000,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                     {showBidForm ? 'Place Your Bid' : 'Project Details'}
                   </h2>
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     setShowProjectDetailsModal(false);
                     setShowBidForm(false);
@@ -964,11 +1025,10 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                       {selectedProject.title}
                     </h3>
                     <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        selectedProject.type === 'fixed' 
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${selectedProject.type === 'fixed'
+                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                           : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                      }`}>
+                        }`}>
                         {selectedProject.type === 'fixed' ? 'Fixed Price' : 'Hourly'}
                       </span>
                       <span className="flex items-center gap-1">
@@ -989,7 +1049,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Budget</p>
                     <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                       ₹{selectedProject.budget.min.toLocaleString()}
-                      {selectedProject.budget.max !== selectedProject.budget.min && 
+                      {selectedProject.budget.max !== selectedProject.budget.min &&
                         ` - ₹${selectedProject.budget.max.toLocaleString()}`
                       }
                     </p>
@@ -1062,9 +1122,9 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                   <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                     <div className="w-14 h-14 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center overflow-hidden">
                       {selectedProject.ownerProfilePicture ? (
-                        <img 
-                          src={selectedProject.ownerProfilePicture} 
-                          alt={selectedProject.ownerName || 'Owner'} 
+                        <img
+                          src={selectedProject.ownerProfilePicture}
+                          alt={selectedProject.ownerName || 'Owner'}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -1102,9 +1162,9 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
-                      {selectedProject.status === 'in_progress' ? 'Bid Awarded' : 
-                       selectedProject.status === 'completed' ? 'Project Completed' : 
-                       selectedProject.status === 'cancelled' ? 'Project Cancelled' : 'Closed'}
+                      {selectedProject.status === 'in_progress' ? 'Bid Awarded' :
+                        selectedProject.status === 'completed' ? 'Project Completed' :
+                          selectedProject.status === 'cancelled' ? 'Project Cancelled' : 'Closed'}
                     </div>
                   ) : hasAlreadyBid ? (
                     <div className="flex-1 px-6 py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-semibold rounded-xl flex items-center justify-center gap-2">
@@ -1138,11 +1198,10 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                         Budget: ₹{selectedProject.budget.min.toLocaleString()} - ₹{selectedProject.budget.max.toLocaleString()}
                       </p>
                     </div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      selectedProject.type === 'fixed' 
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${selectedProject.type === 'fixed'
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                         : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                    }`}>
+                      }`}>
                       {selectedProject.type === 'fixed' ? 'Fixed' : 'Hourly'}
                     </span>
                   </div>
