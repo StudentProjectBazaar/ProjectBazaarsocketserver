@@ -8,7 +8,6 @@ import uuid
 
 # Initialize DynamoDB
 dynamodb = boto3.resource('dynamodb', region_name='ap-south-2')
-# https://hpof5ndnol.execute-api.ap-south-2.amazonaws.com/default/carrier_guidance_progess_handler
 # Table names
 USER_PROGRESS_TABLE = 'CareerGuidanceUserProgress'
 CERTIFICATES_TABLE = 'CareerGuidanceCertificates'
@@ -666,10 +665,17 @@ def lambda_handler(event, context):
         elif action == 'check_week_has_quiz':
             return check_week_has_quiz(body)
         
+        elif action == 'generate_certificate':
+            # Direct certificate generation (when all weeks completed)
+            result = generate_certificate(body)
+            if isinstance(result, dict) and 'statusCode' not in result:
+                return response(200, result)
+            return result
+        
         else:
             return response(400, {
                 'success': False,
-                'error': f'Invalid action: {action}. Valid actions: get_progress, save_progress, mark_week_completed, validate_quiz, validate_final_exam, get_certificates, verify_certificate, check_week_has_quiz'
+                'error': f'Invalid action: {action}. Valid actions: get_progress, save_progress, mark_week_completed, validate_quiz, validate_final_exam, get_certificates, verify_certificate, check_week_has_quiz, generate_certificate'
             })
     
     except json.JSONDecodeError as e:

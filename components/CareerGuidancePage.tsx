@@ -669,7 +669,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     setCurrentWeek,
     weeklyQuiz,
     setWeeklyQuiz,
-    finalExam,
+    finalExam: _finalExam,
     setFinalExam,
     certificate,
     setCertificate,
@@ -677,8 +677,8 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
     setIsGeneratingRoadmap,
     isGeneratingQuiz: _isGeneratingQuiz,
     setIsGeneratingQuiz,
-    isGeneratingExam,
-    setIsGeneratingExam,
+    isGeneratingExam: _isGeneratingExam,
+    setIsGeneratingExam: _setIsGeneratingExam,
     roadmapError,
     setRoadmapError,
 }) => {
@@ -692,7 +692,7 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
 
     // API Endpoints
     const ROADMAP_API_ENDPOINT = 'https://07wee2lkxj.execute-api.ap-south-2.amazonaws.com/default/Roadmaps_get_post_put';
-    const PROGRESS_API_ENDPOINT = 'https://fciixra802.execute-api.ap-south-2.amazonaws.com/default/career-guidance-progress';
+    const PROGRESS_API_ENDPOINT = 'https://hpof5ndnol.execute-api.ap-south-2.amazonaws.com/default/carrier_guidance_progess_handler';
 
     // Get user info from localStorage
     const getUserInfo = () => {
@@ -1507,338 +1507,6 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
         }
     };
 
-    // Generate final exam - using static questions for now
-    const generateFinalExam = async () => {
-        setIsGeneratingExam(true);
-        setRoadmapError(null);
-
-        if (!roadmapData) {
-            setRoadmapError('Roadmap data missing');
-            setIsGeneratingExam(false);
-            return;
-        }
-
-        // Simulate loading
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        // Final exam questions (static for now - can be moved to API later)
-        const examQuestions: QuizQuestion[] = [
-            {
-                question: 'What is the primary purpose of version control systems?',
-                options: [
-                    'To track changes and enable collaboration',
-                    'To compile code',
-                    'To design interfaces',
-                    'To deploy applications'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'Which principle is NOT part of Object-Oriented Programming?',
-                options: [
-                    'Sequential Processing',
-                    'Encapsulation',
-                    'Inheritance',
-                    'Polymorphism'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is the main advantage of using frameworks?',
-                options: [
-                    'Provides structure and reusable components',
-                    'Makes code run faster automatically',
-                    'Reduces file size',
-                    'Changes programming language'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What does REST API stand for?',
-                options: [
-                    'Representational State Transfer',
-                    'Remote Execution System Transfer',
-                    'Resource Exchange Standard Transfer',
-                    'Request Execution System Transfer'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is the purpose of database normalization?',
-                options: [
-                    'To reduce data redundancy and improve integrity',
-                    'To increase data storage',
-                    'To delete old data',
-                    'To change data types'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'Which HTTP method is idempotent?',
-                options: [
-                    'GET',
-                    'POST',
-                    'PUT',
-                    'DELETE'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is state management used for in frontend?',
-                options: [
-                    'Managing and sharing data across components',
-                    'Managing server resources',
-                    'Managing database connections',
-                    'Managing file systems'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is the purpose of caching?',
-                options: [
-                    'To improve performance by storing frequently accessed data',
-                    'To delete old data',
-                    'To compress files',
-                    'To encrypt data'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is SQL injection?',
-                options: [
-                    'A security vulnerability where malicious SQL is injected',
-                    'A database query method',
-                    'A data type',
-                    'A programming language feature'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What does CI/CD stand for?',
-                options: [
-                    'Continuous Integration/Continuous Deployment',
-                    'Code Integration/Code Deployment',
-                    'Computer Integration/Computer Deployment',
-                    'Component Integration/Component Deployment'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is containerization?',
-                options: [
-                    'Packaging applications with dependencies in isolated containers',
-                    'Storing data in databases',
-                    'Organizing code files',
-                    'Designing user interfaces'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is the purpose of API documentation?',
-                options: [
-                    'To explain how to use API endpoints',
-                    'To compile code',
-                    'To design interfaces',
-                    'To deploy applications'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is responsive design?',
-                options: [
-                    'Designing websites that work on all screen sizes',
-                    'Designing fast websites',
-                    'Designing secure websites',
-                    'Designing colorful websites'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is the purpose of unit testing?',
-                options: [
-                    'To test individual components in isolation',
-                    'To test entire application at once',
-                    'To test user interfaces only',
-                    'To test network connections'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is scalability?',
-                options: [
-                    'The ability to handle growing amounts of work',
-                    'The size of files',
-                    'The number of lines of code',
-                    'The complexity of algorithms'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is the primary key in a database?',
-                options: [
-                    'A unique identifier for each row',
-                    'A foreign key reference',
-                    'A data type',
-                    'A query statement'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is JWT used for?',
-                options: [
-                    'Authentication and authorization',
-                    'Database queries',
-                    'File storage',
-                    'Network routing'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is code profiling?',
-                options: [
-                    'Analyzing code to identify performance bottlenecks',
-                    'Writing code',
-                    'Compiling code',
-                    'Deploying code'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'What is the purpose of application monitoring?',
-                options: [
-                    'To track performance and health',
-                    'To write code',
-                    'To design UI',
-                    'To compile programs'
-                ],
-                correctAnswer: 0
-            },
-            {
-                question: 'Why are backups important?',
-                options: [
-                    'To prevent data loss and enable recovery',
-                    'To increase performance',
-                    'To reduce costs',
-                    'To improve security'
-                ],
-                correctAnswer: 0
-            }
-        ];
-
-        try {
-            const exam: FinalExam = {
-                questions: examQuestions,
-                userAnswers: new Array(20).fill(undefined),
-                completed: false,
-            };
-            setFinalExam(exam);
-        } catch (err: any) {
-            setRoadmapError('Failed to generate exam');
-        } finally {
-            setIsGeneratingExam(false);
-        }
-    };
-
-    const submitFinalExam = async () => {
-        if (!finalExam || !roadmapData) return;
-
-        setIsValidatingQuiz(true);
-        const { userId, userName } = getUserInfo();
-        const categoryName = categories.find(c => c.id === selectedCategory)?.name || roadmapData.careerGoal;
-
-        try {
-            // Call backend to validate final exam
-            const response = await fetch(PROGRESS_API_ENDPOINT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'validate_final_exam',
-                    userId: userId,
-                    userName: userName,
-                    categoryId: selectedCategory,
-                    categoryName: categoryName,
-                    userAnswers: finalExam.userAnswers,
-                    questions: finalExam.questions
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                const score = result.score;
-                const updatedExam = { ...finalExam, score, completed: true };
-                setFinalExam(updatedExam);
-
-                if (result.passed && result.certificate) {
-                    // Use certificate from backend
-                    const cert: Certificate = {
-                        name: result.certificate.userName || userName,
-                        career: result.certificate.categoryName || categoryName,
-                        score: result.certificate.score || score,
-                        date: result.certificate.issuedDate || new Date().toLocaleDateString(),
-                        certificateId: result.certificate.certificateId,
-                        verificationCode: result.certificate.verificationCode
-                    };
-                    setCertificate(cert);
-                } else if (result.passed) {
-                    // Generate certificate locally as fallback
-                    const cert: Certificate = {
-                        name: userName,
-                        career: categoryName,
-                        score,
-                        date: new Date().toLocaleDateString(),
-                    };
-                    setCertificate(cert);
-                }
-            } else {
-                // Fallback to local validation
-                let correct = 0;
-                finalExam.questions.forEach((q, idx) => {
-                    if (finalExam.userAnswers[idx] === q.correctAnswer) correct++;
-                });
-
-                const score = Math.round((correct / finalExam.questions.length) * 100);
-                const updatedExam = { ...finalExam, score, completed: true };
-                setFinalExam(updatedExam);
-
-                if (score >= 80) {
-                    const cert: Certificate = {
-                        name: userName,
-                        career: categoryName,
-                        score,
-                        date: new Date().toLocaleDateString(),
-                    };
-                    setCertificate(cert);
-                }
-            }
-        } catch (error) {
-            console.error('Final exam validation error:', error);
-            // Fallback to local validation
-            let correct = 0;
-            finalExam.questions.forEach((q, idx) => {
-                if (finalExam.userAnswers[idx] === q.correctAnswer) correct++;
-            });
-
-            const score = Math.round((correct / finalExam.questions.length) * 100);
-            const updatedExam = { ...finalExam, score, completed: true };
-            setFinalExam(updatedExam);
-
-            if (score >= 80) {
-                const cert: Certificate = {
-                    name: userName,
-                    career: categoryName,
-                    score,
-                    date: new Date().toLocaleDateString(),
-                };
-                setCertificate(cert);
-            }
-        } finally {
-            setIsValidatingQuiz(false);
-        }
-
-        setRoadmapStep('evaluation');
-    };
-
     // Render based on current step
     if (roadmapStep === 'analysis') {
         return (
@@ -1995,7 +1663,6 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
         }
 
         const allWeeksCompleted = roadmapData.weeks.every(w => w.isCompleted && w.quizCompleted);
-        const canTakeExam = allWeeksCompleted;
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
@@ -2187,17 +1854,82 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                             ))}
                         </div>
 
-                        {canTakeExam && (
+                        {allWeeksCompleted && (
                             <div className="mt-6 text-center">
-                                <button
-                                    onClick={() => {
-                                        setRoadmapStep('exam');
-                                        generateFinalExam();
-                                    }}
-                                    className="px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all"
-                                >
-                                    Take Final Exam →
-                                </button>
+                                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-8 mb-4">
+                                    <div className="text-6xl mb-4">🎉</div>
+                                    <h3 className="text-2xl font-bold text-green-800 mb-2">Congratulations!</h3>
+                                    <p className="text-green-700 mb-6">You've completed all {roadmapData.totalWeeks} weeks of your {roadmapData.careerGoal} roadmap!</p>
+                                    <button
+                                        onClick={async () => {
+                                            // Generate certificate directly
+                                            const { userId, userName } = getUserInfo();
+                                            const categoryName = categories.find(c => c.id === selectedCategory)?.name || roadmapData.careerGoal;
+                                            
+                                            // Calculate average quiz score
+                                            const quizScores = roadmapData.weeks
+                                                .filter(w => w.quizCompleted)
+                                                .map(() => 100); // Default to 100 if completed
+                                            const avgScore = quizScores.length > 0 
+                                                ? Math.round(quizScores.reduce((a, b) => a + b, 0) / quizScores.length) 
+                                                : 100;
+                                            
+                                            try {
+                                                const response = await fetch(PROGRESS_API_ENDPOINT, {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({
+                                                        action: 'generate_certificate',
+                                                        userId: userId,
+                                                        userName: userName,
+                                                        categoryId: selectedCategory,
+                                                        categoryName: categoryName,
+                                                        score: avgScore
+                                                    })
+                                                });
+                                                
+                                                const result = await response.json();
+                                                
+                                                if (result.success && result.certificate) {
+                                                    const cert: Certificate = {
+                                                        name: result.certificate.userName || userName,
+                                                        career: result.certificate.categoryName || categoryName,
+                                                        score: result.certificate.score || avgScore,
+                                                        date: result.certificate.issuedDate || new Date().toLocaleDateString(),
+                                                        certificateId: result.certificate.certificateId,
+                                                        verificationCode: result.certificate.verificationCode
+                                                    };
+                                                    setCertificate(cert);
+                                                    setRoadmapStep('evaluation');
+                                                } else {
+                                                    // Fallback - generate locally
+                                                    const cert: Certificate = {
+                                                        name: userName,
+                                                        career: categoryName,
+                                                        score: avgScore,
+                                                        date: new Date().toLocaleDateString(),
+                                                    };
+                                                    setCertificate(cert);
+                                                    setRoadmapStep('evaluation');
+                                                }
+                                            } catch (error) {
+                                                console.error('Certificate generation error:', error);
+                                                // Fallback
+                                                const cert: Certificate = {
+                                                    name: userName,
+                                                    career: categoryName,
+                                                    score: avgScore,
+                                                    date: new Date().toLocaleDateString(),
+                                                };
+                                                setCertificate(cert);
+                                                setRoadmapStep('evaluation');
+                                            }
+                                        }}
+                                        className="px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all"
+                                    >
+                                        🏆 Claim Your Certificate
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -2298,92 +2030,35 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
         );
     }
 
-    // Step 4: Final Exam
-    if (roadmapStep === 'exam' && finalExam) {
-        if (isGeneratingExam) {
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8 flex items-center justify-center">
-                    <LoadingSpinner message="Generating final exam..." />
-                </div>
-            );
-        }
-
+    // Step 4: Certificate Display (No Final Exam - Certificate after completing all weeks)
+    if (roadmapStep === 'evaluation' && certificate) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
                 <div>
-                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+                    <div className="bg-white rounded-2xl shadow-xl border-2 border-green-500 p-8">
                         <div className="text-center mb-8">
-                            <h2 className="text-3xl font-bold text-gray-900 mb-2">Final Exam</h2>
-                            <p className="text-gray-600">{roadmapData?.careerGoal} - 20 Questions</p>
-                        </div>
-                        {finalExam.questions.map((q, idx) => (
-                            <div key={idx} className="mb-6 p-6 bg-gray-50 rounded-xl">
-                                <p className="font-semibold text-gray-900 mb-4">{idx + 1}. {q.question}</p>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {q.options.map((opt, optIdx) => (
-                                        <label key={optIdx} className="flex items-center gap-3 p-3 bg-white rounded-lg cursor-pointer hover:bg-orange-50 border-2 border-gray-200 hover:border-orange-300">
-                                            <input
-                                                type="radio"
-                                                name={`exam-question-${idx}`}
-                                                value={optIdx}
-                                                checked={finalExam.userAnswers[idx] === optIdx}
-                                                onChange={() => {
-                                                    const updated = [...finalExam.userAnswers];
-                                                    updated[idx] = optIdx;
-                                                    setFinalExam({ ...finalExam, userAnswers: updated });
-                                                }}
-                                                className="w-4 h-4 text-orange-500"
-                                            />
-                                            <span className="text-gray-700">{opt}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                        <button
-                            onClick={() => submitFinalExam()}
-                            disabled={finalExam.userAnswers.some(a => a === undefined)}
-                            className="w-full py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Submit Exam
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // Step 5: Evaluation & Certificate
-    if (roadmapStep === 'evaluation' && finalExam && finalExam.score !== undefined) {
-        const passed = finalExam.score >= 80;
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 p-8">
-                <div>
-                    <div className={`bg-white rounded-2xl shadow-xl border-2 p-8 ${passed ? 'border-green-500' : 'border-red-500'}`}>
-                        <div className="text-center mb-8">
-                            <div className={`w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl ${passed ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                                }`}>
-                                {passed ? '✓' : '✗'}
+                            <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl bg-green-100 text-green-600">
+                                🏆
                             </div>
                             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                                {passed ? 'Congratulations!' : 'Keep Learning!'}
+                                Congratulations!
                             </h2>
-                            <p className="text-2xl font-semibold text-gray-700">
-                                Your Score: {finalExam.score}%
+                            <p className="text-xl text-gray-600">
+                                You've successfully completed your learning journey!
                             </p>
                         </div>
 
-                        {passed && certificate && (
-                            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-8 mb-6 text-center">
-                                <h3 className="text-2xl font-bold text-gray-900 mb-4">Certificate of Completion</h3>
-                                <div className="bg-white rounded-lg p-6 border-2 border-gray-300">
+                        <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-8 mb-6 text-center">
+                            <h3 className="text-2xl font-bold text-gray-900 mb-4">🎓 Certificate of Completion</h3>
+                            <div className="bg-white rounded-lg p-6 border-2 border-gray-300 shadow-inner">
+                                <div className="border-4 border-double border-orange-200 p-6 rounded-lg">
                                     <p className="text-lg text-gray-700 mb-2">This certifies that</p>
                                     <p className="text-3xl font-bold text-gray-900 mb-4">{certificate.name}</p>
-                                    <p className="text-lg text-gray-700 mb-2">has successfully completed</p>
+                                    <p className="text-lg text-gray-700 mb-2">has successfully completed the</p>
                                     <p className="text-2xl font-bold text-orange-600 mb-4">{certificate.career}</p>
-                                    <p className="text-lg text-gray-700 mb-2">with a score of</p>
-                                    <p className="text-3xl font-bold text-gray-900 mb-4">{certificate.score}%</p>
-                                    <p className="text-sm text-gray-600">{certificate.date}</p>
+                                    <p className="text-lg text-gray-700 mb-2">Learning Roadmap</p>
+                                    <div className="my-4 border-t border-gray-200"></div>
+                                    <p className="text-sm text-gray-600">Issued on {certificate.date}</p>
                                     {certificate.verificationCode && (
                                         <div className="mt-4 pt-4 border-t border-gray-200">
                                             <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Verification Code</p>
@@ -2394,30 +2069,17 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                                     )}
                                 </div>
                             </div>
-                        )}
+                        </div>
 
-                        {!passed && (
-                            <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
-                                <h3 className="font-semibold text-red-900 mb-3">Areas for Improvement</h3>
-                                <p className="text-red-700 mb-4">Your score is below 80%. Review the following weeks and try again:</p>
-                                <ul className="list-disc list-inside text-red-700 space-y-1">
-                                    {roadmapData?.weeks.slice(0, 3).map((w, i) => (
-                                        <li key={i}>Week {w.weekNumber}</li>
-                                    ))}
-                                </ul>
-                                <button
-                                    onClick={() => {
-                                        setRoadmapStep('roadmap');
-                                        setFinalExam(null);
-                                    }}
-                                    className="mt-4 px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600"
-                                >
-                                    Review & Retake Exam
-                                </button>
-                            </div>
-                        )}
-
-                        <div className="text-center">
+                        <div className="flex gap-4 justify-center">
+                            <button
+                                onClick={() => {
+                                    setRoadmapStep('roadmap');
+                                }}
+                                className="px-6 py-3 bg-orange-100 text-orange-700 rounded-xl font-semibold hover:bg-orange-200"
+                            >
+                                ← View Roadmap
+                            </button>
                             <button
                                 onClick={() => {
                                     setRoadmapStep('analysis');
@@ -2426,9 +2088,9 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
                                     setFinalExam(null);
                                     setCertificate(null);
                                 }}
-                                className="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300"
+                                className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:shadow-lg"
                             >
-                                Start New Roadmap
+                                Start New Roadmap →
                             </button>
                         </div>
                     </div>
