@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { useWishlist, useCart } from './DashboardPage';
-import { useAuth } from '../App';
-import ReportProjectModal from './ReportProjectModal';
 
 export interface BuyerProject {
   id: string;
@@ -19,7 +17,6 @@ export interface BuyerProject {
 interface BuyerProjectCardProps {
   project: BuyerProject;
   onViewDetails?: (project: BuyerProject) => void;
-  onReport?: (project: BuyerProject) => void;
 }
 
 const HeartIcon = ({ liked }: { liked: boolean }) => (
@@ -46,17 +43,46 @@ const PremiumIcon = () => (
 const DocsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
 const VideoIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>;
 
+// Custom Tooltip Component
+const Tooltip = ({ children, text, position = 'bottom' }: { children: React.ReactNode; text: string; position?: 'top' | 'bottom' | 'left' | 'right' }) => {
+  const positionClasses = {
+    top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
+    bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
+    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
+    right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+  };
+  
+  const arrowClasses = {
+    top: 'top-full left-1/2 -translate-x-1/2 border-t-gray-900',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-gray-900',
+    left: 'left-full top-1/2 -translate-y-1/2 border-l-gray-900',
+    right: 'right-full top-1/2 -translate-y-1/2 border-r-gray-900',
+  };
 
-const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDetails, onReport }) => {
+  return (
+    <div className="relative group/tooltip">
+      {children}
+      <div className={`absolute ${positionClasses[position]} z-50 pointer-events-none`}>
+        <div className="opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 transform scale-95 group-hover/tooltip:scale-100">
+          <div className="relative bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
+            {text}
+            <div className={`absolute w-0 h-0 border-4 border-transparent ${arrowClasses[position]}`} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDetails }) => {
   const { id, imageUrl, category, title, description, tags, price, isPremium, hasDocumentation, hasExecutionVideo } = project;
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { isInCart, addToCart, removeFromCart } = useCart();
-  const { userId } = useAuth();
   const liked = isInWishlist(id);
   const inCart = isInCart(id);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isCartAnimating, setIsCartAnimating] = useState(false);
-  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const handleLikeClick = () => {
     setIsAnimating(true);
@@ -99,36 +125,21 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
 
       {/* Action Buttons - Top Right */}
       <div className="absolute top-3 right-3 z-10 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        {/* Report Button */}
-        {userId && (
+        {/* Wishlist Button */}
+        <Tooltip text={liked ? 'Remove from Wishlist' : 'Add to Wishlist'} position="left">
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (onReport) onReport(project);
-              else setReportModalOpen(true);
+              handleLikeClick();
             }}
-            className="p-2 rounded-full bg-white/90 hover:bg-red-50 text-gray-500 hover:text-red-500 shadow-sm backdrop-blur-md transition-colors"
-            title="Report"
+            className={`p-2 rounded-full shadow-sm backdrop-blur-md transition-colors ${liked
+              ? 'bg-orange-500 text-white hover:bg-orange-600'
+              : 'bg-white/90 text-gray-500 hover:text-orange-500 hover:bg-orange-50'
+              } ${isAnimating ? 'animate-pulse' : ''}`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+            <HeartIcon liked={liked} />
           </button>
-        )}
-
-        {/* Wishlist Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleLikeClick();
-          }}
-          className={`p-2 rounded-full shadow-sm backdrop-blur-md transition-colors ${liked
-            ? 'bg-orange-500 text-white hover:bg-orange-600'
-            : 'bg-white/90 text-gray-500 hover:text-orange-500 hover:bg-orange-50'
-            } ${isAnimating ? 'animate-pulse' : ''}`}
-        >
-          <HeartIcon liked={liked} />
-        </button>
+        </Tooltip>
       </div>
 
       {/* Image Section - Larger Height */}
@@ -185,22 +196,23 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleAddToCart}
-              className={`p-2.5 rounded-xl transition-all ${inCart
-                ? 'bg-green-100 text-green-700'
-                : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
-                } ${isCartAnimating ? 'scale-90' : ''}`}
-              title={inCart ? 'Remove from Cart' : 'Add to Cart'}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {inCart ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                )}
-              </svg>
-            </button>
+            <Tooltip text={inCart ? 'Remove from Cart' : 'Add to Cart'} position="top">
+              <button
+                onClick={handleAddToCart}
+                className={`p-2.5 rounded-xl transition-all ${inCart
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
+                  } ${isCartAnimating ? 'scale-90' : ''}`}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {inCart ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  )}
+                </svg>
+              </button>
+            </Tooltip>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -213,21 +225,6 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
           </div>
         </div>
       </div>
-
-      {/* Report Project Modal */}
-      {userId && (
-        <ReportProjectModal
-          isOpen={reportModalOpen}
-          onClose={() => setReportModalOpen(false)}
-          projectId={project.id}
-          projectTitle={project.title}
-          buyerId={userId}
-          isPurchased={false}
-          onSuccess={() => {
-            setReportModalOpen(false);
-          }}
-        />
-      )}
     </div>
   );
 };
