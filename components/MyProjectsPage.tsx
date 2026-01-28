@@ -442,7 +442,7 @@ const MyProjectsPage: React.FC = () => {
 
             // Call update API
             const response = await fetch(UPDATE_PROJECT_ENDPOINT, {
-                method: 'PATCH',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
