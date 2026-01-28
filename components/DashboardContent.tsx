@@ -198,7 +198,7 @@ interface DashboardContentProps {
 }
 
 const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setDashboardMode, activeView, isSidebarOpen, toggleSidebar, setActiveView }) => {
-    const { userId } = useAuth();
+    const { userId, userEmail } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [buyerProjectView, setBuyerProjectView] = useState<'all' | 'activated' | 'disabled'>('all');
     const [browseView, setBrowseView] = useState<'all' | 'freelancers' | 'projects'>('all');
@@ -612,7 +612,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'analytics':
                 return <BuyerAnalyticsPage />;
             case 'help-center':
-                return <HelpCenterPage toggleSidebar={toggleSidebar} />;
+                return <HelpCenterPage toggleSidebar={toggleSidebar} userEmail={userEmail || ''} />;
             case 'settings':
                 return <SettingsPage />;
             case 'project-details':
@@ -753,7 +753,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'analytics':
                 return <SellerAnalyticsPage />;
             case 'help-center':
-                return <HelpCenterPage toggleSidebar={toggleSidebar} />;
+                return <HelpCenterPage toggleSidebar={toggleSidebar} userEmail={userEmail || ''} />;
             case 'settings':
                 return <SettingsPage />;
             default:

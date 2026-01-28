@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import type { DashboardView } from './DashboardPage';
 import { useCart } from './DashboardPage';
+import BugReportModal from './BugReportModal';
 
 const GET_USER_ENDPOINT = 'https://6omszxa58g.execute-api.ap-south-2.amazonaws.com/default/Get_user_Details_by_his_Id';
 
@@ -78,6 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({ dashboardMode, activeView, setActiveV
     const [isHovered, setIsHovered] = useState(false);
     const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
     const [userFullName, setUserFullName] = useState<string>('');
+    const [showBugReport, setShowBugReport] = useState(false);
 
     // Always call the hook (React rules), but only use cartCount in buyer mode
     const cart = useCart();
@@ -261,7 +263,41 @@ const Sidebar: React.FC<SidebarProps> = ({ dashboardMode, activeView, setActiveV
                         </div>
                     )}
                 </div>
+
+                {/* Bug Report Button */}
+                <div className={`${isExpanded ? 'px-4' : 'px-2'} pb-4`}>
+                    <button
+                        onClick={() => setShowBugReport(true)}
+                        className={`w-full flex items-center ${isExpanded ? 'px-4' : 'px-2 justify-center'} py-2.5 text-sm font-medium rounded-lg transition-all bg-gradient-to-r from-rose-50 to-red-50 text-rose-600 hover:from-rose-100 hover:to-red-100 border border-rose-200 hover:border-rose-300 group relative`}
+                    >
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        {isExpanded && (
+                            <span className="ml-3 whitespace-nowrap">Report a Bug</span>
+                        )}
+                        {/* Tooltip for collapsed state */}
+                        {!isExpanded && (
+                            <div className="absolute left-full ml-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50 shadow-lg">
+                                Report a Bug
+                                <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                            </div>
+                        )}
+                    </button>
+                </div>
             </div>
+
+            {/* Bug Report Modal */}
+            <BugReportModal
+                isOpen={showBugReport}
+                onClose={() => setShowBugReport(false)}
+                userEmail={userEmail || ''}
+                onSubmit={async (data) => {
+                    // TODO: Implement actual bug report submission to backend
+                    console.log('Bug report submitted:', data);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }}
+            />
         </>
     );
 };

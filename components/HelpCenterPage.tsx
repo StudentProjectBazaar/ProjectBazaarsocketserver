@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import BugReportModal from './BugReportModal';
 
 interface FAQ {
   question: string;
@@ -8,11 +9,13 @@ interface FAQ {
 
 interface HelpCenterPageProps {
   toggleSidebar?: () => void;
+  userEmail?: string;
 }
 
-const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar }) => {
+const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmail }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showBugReport, setShowBugReport] = useState(false);
 
   const faqs: FAQ[] = [
     {
@@ -196,8 +199,8 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar }) => {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
           <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -206,7 +209,7 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar }) => {
           <h3 className="font-bold text-gray-900 mb-2">Documentation</h3>
           <p className="text-sm text-gray-600">Browse our comprehensive guides</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
+        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -215,7 +218,7 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar }) => {
           <h3 className="font-bold text-gray-900 mb-2">Community Forum</h3>
           <p className="text-sm text-gray-600">Connect with other users</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
+        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
           <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -224,7 +227,32 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar }) => {
           <h3 className="font-bold text-gray-900 mb-2">Video Tutorials</h3>
           <p className="text-sm text-gray-600">Watch step-by-step videos</p>
         </div>
+        <button 
+          onClick={() => setShowBugReport(true)}
+          className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-all hover:border-rose-300 group"
+        >
+          <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-rose-200 transition-colors">
+            <svg className="w-6 h-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="font-bold text-gray-900 mb-2 group-hover:text-rose-600 transition-colors">Report a Bug</h3>
+          <p className="text-sm text-gray-600">Found an issue? Let us know</p>
+        </button>
       </div>
+
+      {/* Bug Report Modal */}
+      <BugReportModal
+        isOpen={showBugReport}
+        onClose={() => setShowBugReport(false)}
+        userEmail={userEmail}
+        onSubmit={async (data) => {
+          // TODO: Implement actual bug report submission to backend
+          console.log('Bug report submitted:', data);
+          // For now, just simulate a successful submission
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }}
+      />
     </div>
   );
 };
