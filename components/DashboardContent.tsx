@@ -704,7 +704,39 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
             case 'my-projects':
                 return <MyProjectsPage />;
             case 'my-courses':
-                return <MyCoursesPage />;
+                return (
+                    <MyCoursesPage
+                        onViewCourse={(course: PurchasedCourse) => {
+                            // Convert PurchasedCourse to Course type for course details
+                            const courseForDetails: Course = {
+                                courseId: course.courseId,
+                                title: course.title,
+                                description: course.description,
+                                category: course.category,
+                                subCategory: course.subCategory,
+                                level: course.level,
+                                language: course.language,
+                                price: course.price,
+                                currency: course.currency,
+                                isFree: course.isFree,
+                                thumbnailUrl: course.thumbnailUrl,
+                                promoVideoUrl: course.promoVideoUrl,
+                                status: course.status,
+                                visibility: course.visibility,
+                                likesCount: course.likesCount,
+                                purchasesCount: course.purchasesCount,
+                                viewsCount: course.viewsCount,
+                                createdAt: course.createdAt,
+                                updatedAt: course.updatedAt,
+                                instructor: course.instructor,
+                                content: course.content,
+                            };
+                            setPreviousView('my-courses');
+                            setSelectedCourse(courseForDetails);
+                            setActiveView('course-details');
+                        }}
+                    />
+                );
             case 'earnings':
                 return <EarningsPage />;
             case 'payouts':

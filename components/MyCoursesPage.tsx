@@ -257,7 +257,7 @@ const MyCoursesPage: React.FC<MyCoursesPageProps> = ({ onViewCourse }) => {
                                         {course.priceAtPurchase !== undefined && course.priceAtPurchase > 0 && (
                                             <div className="flex justify-between items-center mt-1">
                                                 <span>Price:</span>
-                                                <span className="font-medium">{course.currency} {course.priceAtPurchase}</span>
+                                                <span className="font-medium">₹{course.priceAtPurchase.toLocaleString('en-IN')}</span>
                                             </div>
                                         )}
                                     </div>
