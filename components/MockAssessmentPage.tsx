@@ -236,6 +236,11 @@ interface TestResult {
   startTime: string;
   difficulty?: DifficultyLevel;
   xpEarned?: number;
+  terminationReason?: 'completed' | 'tab_switch' | 'fullscreen_exit' | 'time_expired';
+  proctoringViolations?: {
+    tabSwitchCount: number;
+    fullScreenExitCount: number;
+  };
   questionResults: {
     questionId: number;
     topic: string;
@@ -594,6 +599,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   const [showFullScreenWarning, setShowFullScreenWarning] = useState(false);
   const [, setCopyPasteAttempts] = useState(0);
   const [showUnansweredConfirmModal, setShowUnansweredConfirmModal] = useState(false);
+  const [terminationReason, setTerminationReason] = useState<'completed' | 'tab_switch' | 'fullscreen_exit' | 'time_expired' | null>(null);
 
   // Custom test case input for programming questions
   const [customTestInput, setCustomTestInput] = useState('');
@@ -1014,6 +1020,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
           const newCount = prev + 1;
           if (newCount >= MAX_TAB_SWITCHES) {
             // Auto-submit on max violations
+            setTerminationReason('tab_switch');
             setTimeout(() => handleSubmitTest(), 100);
           } else {
             setShowTabWarningModal(true);
@@ -1027,6 +1034,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
       setTabSwitchCount(prev => {
         const newCount = prev + 1;
         if (newCount >= MAX_TAB_SWITCHES) {
+          setTerminationReason('tab_switch');
           setTimeout(() => handleSubmitTest(), 100);
         } else {
           setShowTabWarningModal(true);
@@ -1098,6 +1106,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
         setFullScreenExitCount(prev => {
           const newCount = prev + 1;
           if (newCount >= MAX_FULLSCREEN_EXITS) {
+            setTerminationReason('fullscreen_exit');
             setTimeout(() => handleSubmitTest(), 100);
           } else {
             setShowFullScreenWarning(true);
@@ -1239,6 +1248,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     setTabSwitchCount(0);
     setFullScreenExitCount(0);
     setCopyPasteAttempts(0);
+    setTerminationReason(null);
     setHintsUsed({});
     setCustomTestInput('');
     setCustomTestOutput('');
@@ -1351,6 +1361,11 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
       solved,
       duration: selectedAssessment?.time || '30 Minutes',
       startTime: testStartTime?.toLocaleString() || new Date().toLocaleString(),
+      terminationReason: terminationReason || 'completed',
+      proctoringViolations: antiCheatMode ? {
+        tabSwitchCount,
+        fullScreenExitCount,
+      } : undefined,
       questionResults,
     };
 
@@ -2575,7 +2590,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
               <p className="text-2xl font-semibold text-orange-600">
-                {Math.round(testHistory.reduce((acc, r) => acc + r.score, 0) / testHistory.length)}%
+                {Math.min(100, Math.max(0, Math.round(testHistory.reduce((acc, r) => acc + Math.min(100, Math.max(0, r.score)), 0) / testHistory.length)))}%
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Avg. Score</p>
             </div>
@@ -2883,125 +2898,174 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     const answeredQuestions = totalQuestions - unansweredQuestions.length;
     const completionPercentage = Math.round((answeredQuestions / totalQuestions) * 100);
 
+    // Donut chart calculations
+    const circumference = 2 * Math.PI * 42;
+    const answeredStroke = (answeredQuestions / totalQuestions) * circumference;
+
     return (
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
-        style={{
-          animation: 'fadeIn 0.2s ease-out'
-        }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center z-[100] p-4"
+        onClick={() => setShowUnansweredConfirmModal(false)}
       >
         <div
-          className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden"
-          style={{
-            animation: 'slideUp 0.3s ease-out'
+          className="bg-white dark:bg-[#1c1c1e] rounded-[20px] w-full max-w-[380px] overflow-hidden shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+          style={{ 
+            animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)'
           }}
         >
-          {/* Header with orange gradient */}
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
-            <div className="flex items-center justify-center mb-3">
-              <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          {/* Header Section */}
+          <div className="relative pt-8 pb-6 px-6">
+            {/* Background decoration */}
+            <div className="absolute inset-0 bg-gradient-to-b from-orange-50 to-transparent dark:from-orange-950/20 dark:to-transparent" />
+            
+            {/* Icon */}
+            <div className="relative flex justify-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01" />
                 </svg>
               </div>
             </div>
-            <h2 className="text-xl font-semibold text-center mb-1.5">
-              Unanswered Questions Detected
-            </h2>
-            <p className="text-center text-orange-50 text-xs font-medium">
-              Please review before submitting
+            
+            {/* Title */}
+            <h3 className="relative text-lg font-semibold text-gray-900 dark:text-white text-center">
+              Before You Submit
+            </h3>
+            <p className="relative text-sm text-gray-500 dark:text-gray-400 text-center mt-1">
+              {unansweredQuestions.length} question{unansweredQuestions.length !== 1 ? 's' : ''} still need your attention
             </p>
           </div>
 
-          {/* Content */}
-          <div className="p-6 space-y-5">
-            {/* Progress Stats */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{answeredQuestions}</div>
-                <div className="text-xs text-emerald-700 dark:text-emerald-300 mt-1 font-medium">Answered</div>
-              </div>
-              <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                <div className="text-2xl font-semibold text-orange-600 dark:text-orange-400">{unansweredQuestions.length}</div>
-                <div className="text-xs text-orange-700 dark:text-orange-300 mt-1 font-medium">Unanswered</div>
-              </div>
-              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{completionPercentage}%</div>
-                <div className="text-xs text-blue-700 dark:text-blue-300 mt-1 font-medium">Complete</div>
+          {/* Progress Ring & Stats */}
+          <div className="px-6 pb-5">
+            <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-5">
+              <div className="flex items-center gap-5">
+                {/* Donut Chart */}
+                <div className="relative flex-shrink-0">
+                  <svg width="100" height="100" viewBox="0 0 100 100">
+                    {/* Background track */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="42"
+                      fill="none"
+                      stroke="#e5e7eb"
+                      strokeWidth="8"
+                      className="dark:stroke-gray-700"
+                    />
+                    {/* Progress arc */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="42"
+                      fill="none"
+                      stroke="url(#progressGradient)"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={`${answeredStroke} ${circumference}`}
+                      transform="rotate(-90 50 50)"
+                      style={{ transition: 'stroke-dasharray 0.6s ease' }}
+                    />
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#22c55e" />
+                        <stop offset="100%" stopColor="#16a34a" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  {/* Center percentage */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{completionPercentage}%</span>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Answered</span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">{answeredQuestions}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-orange-500" />
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Unanswered</span>
+                    </div>
+                    <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">{unansweredQuestions.length}</span>
+                  </div>
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Total</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{totalQuestions}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Progress Bar */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400 font-medium">Test Progress</span>
-                <span className="text-gray-900 dark:text-gray-100 font-semibold">{completionPercentage}%</span>
-              </div>
-              <div className="w-full h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-orange-500 to-orange-600 rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${completionPercentage}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Unanswered Questions List */}
-            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p className="text-sm font-semibold text-orange-900 dark:text-orange-300">Unanswered Questions ({unansweredQuestions.length}):</p>
+          {/* Questions to review */}
+          {unansweredQuestions.length > 0 && (
+            <div className="px-6 pb-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Jump to Question
+                </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {unansweredQuestions.slice(0, 10).map((qNum) => (
-                  <span
+                  <button
                     key={qNum}
-                    className="inline-flex items-center justify-center w-8 h-8 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-md text-xs font-medium border border-orange-300 dark:border-orange-700"
+                    onClick={() => {
+                      setShowUnansweredConfirmModal(false);
+                      setCurrentQuestionIndex(qNum - 1);
+                    }}
+                    className="group relative w-9 h-9 rounded-xl text-sm font-medium bg-white dark:bg-gray-800 text-orange-600 dark:text-orange-400 border border-gray-200 dark:border-gray-700 hover:border-orange-500 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 dark:hover:border-orange-500 dark:hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     {qNum}
-                  </span>
+                  </button>
                 ))}
                 {unansweredQuestions.length > 10 && (
-                  <span className="inline-flex items-center justify-center px-3 h-8 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-md text-xs font-medium border border-orange-300 dark:border-orange-700">
+                  <div className="flex items-center justify-center px-3 h-9 text-xs font-medium text-gray-400 dark:text-gray-500">
                     +{unansweredQuestions.length - 10} more
-                  </span>
+                  </div>
                 )}
               </div>
             </div>
+          )}
 
-            {/* Warning Message */}
-            <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-              <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          {/* Footer Actions */}
+          <div className="px-6 pb-6 pt-2">
+            {/* Info notice */}
+            <div className="flex items-start gap-2.5 mb-5 p-3 bg-amber-50/80 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-900/30">
+              <svg className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
               </svg>
-              <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-                Unanswered questions will be marked as incorrect and may affect your final score.
+              <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                Unanswered questions will be scored as <span className="font-semibold">0 points</span> each.
               </p>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
+            {/* Buttons */}
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setShowUnansweredConfirmModal(false)}
-                className="flex-1 group flex items-center justify-center gap-2 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-150 border border-gray-300 dark:border-gray-600"
+                className="py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.98] transition-all duration-150"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Go Back to Test
+                Go Back
               </button>
               <button
                 onClick={() => {
                   setShowUnansweredConfirmModal(false);
                   proceedWithSubmission();
                 }}
-                className="flex-1 group flex items-center justify-center gap-2 py-3 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition-colors duration-150 shadow-sm"
+                className="py-3 px-4 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl hover:from-orange-600 hover:to-orange-700 active:scale-[0.98] transition-all duration-150 shadow-md shadow-orange-500/25"
               >
-                Submit Anyway
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                Submit Test
               </button>
             </div>
           </div>
@@ -4128,6 +4192,55 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
               </div>
             </div>
           </div>
+
+          {/* Termination Warning Banner - Show if test was auto-submitted due to violations */}
+          {testResult.terminationReason && testResult.terminationReason !== 'completed' && (
+            <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-2xl shadow-lg shadow-red-500/25 overflow-hidden mb-8">
+              <div className="px-6 py-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                      ⚠️ Test Auto-Submitted Due to Policy Violation
+                    </h3>
+                    <p className="text-white/90 text-sm mt-1">
+                      {testResult.terminationReason === 'tab_switch' && (
+                        <>Your test was automatically submitted because you switched tabs or left the test window. This violates the anti-cheat policy.</>
+                      )}
+                      {testResult.terminationReason === 'fullscreen_exit' && (
+                        <>Your test was automatically submitted because you exited fullscreen mode multiple times. This violates the proctoring policy.</>
+                      )}
+                      {testResult.terminationReason === 'time_expired' && (
+                        <>Your test was automatically submitted because the time limit expired.</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                {testResult.proctoringViolations && (
+                  <div className="mt-4 pt-4 border-t border-white/20">
+                    <div className="flex flex-wrap gap-4">
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-lg">
+                        <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-white/90 text-sm">Tab Switches: <span className="font-bold text-white">{testResult.proctoringViolations.tabSwitchCount}</span></span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-lg">
+                        <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        </svg>
+                        <span className="text-white/90 text-sm">Fullscreen Exits: <span className="font-bold text-white">{testResult.proctoringViolations.fullScreenExitCount}</span></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Two Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
