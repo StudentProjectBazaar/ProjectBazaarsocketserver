@@ -65,6 +65,42 @@ def safe_decimal(val, field):
         raise ValueError(f"Invalid decimal for {field}")
 
 
+# ================== DELETE HANDLER ==================
+def handle_delete_project(project_id, seller_id):
+    """Delete a seller project"""
+    if not project_id or not seller_id:
+        return response(400, {
+            "success": False,
+            "message": "projectId and sellerId are required for deletion"
+        })
+    
+    # Fetch project to verify ownership
+    proj_resp = projects_table.get_item(Key={"projectId": project_id})
+    
+    if "Item" not in proj_resp:
+        return response(404, {
+            "success": False,
+            "message": "Project not found"
+        })
+    
+    project = proj_resp["Item"]
+    
+    # Verify ownership
+    if project["sellerId"] != seller_id:
+        return response(403, {
+            "success": False,
+            "message": "Not authorized to delete this project"
+        })
+    
+    # Delete the project
+    projects_table.delete_item(Key={"projectId": project_id})
+    
+    return response(200, {
+        "success": True,
+        "message": "Project deleted successfully"
+    })
+
+
 # ================== HANDLER ==================
 def lambda_handler(event, context):
     try:
@@ -94,6 +130,11 @@ def lambda_handler(event, context):
                 "success": False,
                 "message": "Invalid JSON in request body"
             })
+
+        # Check for delete action
+        action = body.get("action")
+        if action == "DELETE_PROJECT":
+            return handle_delete_project(body.get("projectId"), body.get("sellerId"))
 
         project_id = body.get("projectId")
         seller_id = body.get("sellerId")  # required only for owner updates

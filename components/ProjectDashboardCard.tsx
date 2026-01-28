@@ -14,9 +14,12 @@ interface ProjectDashboardCardProps {
     adminAction?: string;
     projectId?: string;
     onToggleStatus?: (projectId: string, isActive: boolean) => Promise<void>;
+    onEdit?: () => void;
+    onDelete?: () => void;
+    showActions?: boolean;
 }
 
-const ProjectDashboardCard: React.FC<ProjectDashboardCardProps> = ({ name, domain, description, logo, tags, status, sales, price, category, adminComment, adminAction, projectId, onToggleStatus }) => {
+const ProjectDashboardCard: React.FC<ProjectDashboardCardProps> = ({ name, domain, description, logo, tags, status, sales, price, category, adminComment, adminAction, projectId, onToggleStatus, onEdit, onDelete, showActions = false }) => {
     // Determine initial state: Active if status is 'Approved' or 'Live', Disabled otherwise
     const isInitiallyActive = status === 'Approved' || status === 'Live';
     const [isEnabled, setIsEnabled] = useState(isInitiallyActive);
