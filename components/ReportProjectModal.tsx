@@ -159,33 +159,33 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden transform transition-all border border-gray-100">
+        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-hidden transform transition-all">
           {/* Header */}
-          <div className="bg-gradient-to-r from-red-500 via-red-600 to-orange-500 px-6 py-5 flex items-center justify-between relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
+          <div className="bg-gradient-to-r from-red-500 via-orange-500 to-orange-400 px-6 py-5 flex items-center justify-between relative overflow-hidden">
+            {/* Background Pattern - Plus signs */}
+            <div className="absolute inset-0 opacity-20">
               <div className="absolute inset-0" style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M20 18v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4z'/%3E%3C/g%3E%3C/svg%3E")`,
               }}></div>
             </div>
             <div className="relative z-10 flex items-center gap-4 flex-1">
-              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="p-3 bg-amber-100 rounded-xl shadow-sm">
+                <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-white drop-shadow-sm">Report Project Issue</h2>
-                <p className="text-red-50 text-sm mt-1 font-medium line-clamp-1">{projectTitle}</p>
+                <h2 className="text-xl font-bold text-white">Report Project Issue</h2>
+                <p className="text-white/80 text-sm mt-0.5 line-clamp-1">{projectTitle}</p>
               </div>
             </div>
             <button
               onClick={handleClose}
               disabled={isSubmitting}
-              className="relative z-10 text-white/90 hover:text-white p-2 hover:bg-white/20 rounded-lg transition-all disabled:opacity-50 backdrop-blur-sm"
+              className="relative z-10 text-white hover:text-white/80 p-2 hover:bg-white/10 rounded-lg transition-all disabled:opacity-50"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -206,56 +206,44 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Reason Selection */}
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-2">
-                    <span className="w-1 h-5 bg-gradient-to-b from-red-500 to-orange-500 rounded-full"></span>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-3">
+                    <span className="w-1 h-5 bg-red-500 rounded-full"></span>
                     Reason for Reporting <span className="text-red-500">*</span>
                   </label>
                   {!isPurchased && (
-                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-                      <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-2.5">
+                      <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                       </svg>
-                      <p className="text-sm text-blue-800">
-                        <strong>Note:</strong> Since you haven't purchased this project, some report options are limited. You can report issues visible in the description, preview, or images.
+                      <p className="text-sm text-blue-700">
+                        <span className="font-semibold text-blue-800">Note:</span> Since you haven't purchased this project, some report options are limited. You can report issues visible in the description, preview, or images.
                       </p>
                     </div>
                   )}
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {REPORT_REASONS.map((option) => (
                       <label
                         key={option.value}
-                        className={`group relative flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        className={`group flex items-center p-4 rounded-xl border cursor-pointer transition-all ${
                           reason === option.value
-                            ? 'border-red-400 bg-gradient-to-br from-red-50 to-orange-50 shadow-md'
-                            : 'border-gray-200 hover:border-red-300 hover:bg-gray-50 hover:shadow-sm'
+                            ? 'border-orange-400 bg-orange-50/50'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name="reason"
-                          value={option.value}
-                          checked={reason === option.value}
-                          onChange={(e) => setReason(e.target.value)}
-                          className="mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 cursor-pointer"
-                        />
-                        <div className="ml-3 flex-1">
-                          <div className="font-semibold text-gray-900 flex items-center gap-2">
-                            {option.label}
-                            {reason === option.value && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                                Selected
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-sm text-gray-600 mt-1.5 leading-relaxed">{option.description}</div>
+                        <div className="flex items-center justify-center">
+                          <input
+                            type="radio"
+                            name="reason"
+                            value={option.value}
+                            checked={reason === option.value}
+                            onChange={(e) => setReason(e.target.value)}
+                            className="h-5 w-5 text-orange-500 focus:ring-orange-400 focus:ring-offset-0 border-2 border-gray-300 cursor-pointer"
+                          />
                         </div>
-                        {reason === option.value && (
-                          <div className="ml-3 p-2 bg-red-500 rounded-full">
-                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        )}
+                        <div className="ml-4 flex-1">
+                          <div className="font-semibold text-gray-900">{option.label}</div>
+                          <div className="text-sm text-gray-500 mt-0.5">{option.description}</div>
+                        </div>
                       </label>
                     ))}
                   </div>
