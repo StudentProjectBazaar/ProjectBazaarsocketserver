@@ -1414,7 +1414,8 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
         nextLevelXP: newNextLevelXP,
         totalXP: prev.totalXP + xpEarned,
         testsCompleted: prev.testsCompleted + 1,
-        avgScore: Math.round((prev.avgScore * prev.testsCompleted + (score / questions.length) * 100) / (prev.testsCompleted + 1)),
+        // Note: score is already a percentage (0-100), no need to recalculate
+        avgScore: Math.round((prev.avgScore * prev.testsCompleted + score) / (prev.testsCompleted + 1)),
         badges: updatedBadges,
       };
 

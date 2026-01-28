@@ -546,18 +546,19 @@ def get_test_history(body):
         # Format results
         test_history = []
         for item in items[offset:offset+limit]:
-            percentage = round((item.get('score', 0) / item.get('totalQuestions', 1)) * 100, 2)
+            # Note: score is already stored as a percentage (0-100), not the raw count
+            score = item.get('score', 0)
             test_history.append({
                 'testResultId': item.get('testResultId'),
                 'assessmentId': item.get('assessmentId'),
                 'assessmentTitle': item.get('assessmentTitle'),
-                'score': item.get('score'),
+                'score': score,
                 'totalQuestions': item.get('totalQuestions'),
                 'attempted': item.get('attempted'),
                 'solved': item.get('solved'),
                 'duration': item.get('duration'),
                 'startTime': item.get('startTime'),
-                'percentage': percentage
+                'percentage': round(score, 2)  # score is already percentage
             })
         
         return response(200, {
