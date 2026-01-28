@@ -464,7 +464,7 @@ const MyProjectsPage: React.FC = () => {
                 setSaveSuccess(true);
                 // Refresh projects list
                 await fetchProjects();
-                // Close modal after a short delay
+                // Close modal after a short delay to show success message
                 setTimeout(() => {
                     setEditingProject(null);
                     setEditFormData({});
@@ -472,7 +472,8 @@ const MyProjectsPage: React.FC = () => {
                     setProjectFiles(null);
                     setThumbnailPreview(null);
                     setSaveSuccess(false);
-                }, 1500);
+                    setSaveError(null);
+                }, 800);
             } else {
                 setSaveError(data.message || 'Failed to update project');
             }
@@ -1052,8 +1053,15 @@ const MyProjectsPage: React.FC = () => {
                     <div 
                         className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
                         onClick={() => {
-                            setEditingProject(null);
-                            setEditFormData({});
+                            if (!isSaving) {
+                                setEditingProject(null);
+                                setEditFormData({});
+                                setThumbnailFile(null);
+                                setProjectFiles(null);
+                                setThumbnailPreview(null);
+                                setSaveError(null);
+                                setSaveSuccess(false);
+                            }
                         }}
                     >
                         <div 
@@ -1062,10 +1070,18 @@ const MyProjectsPage: React.FC = () => {
                         >
                             <button
                                 onClick={() => {
-                                    setEditingProject(null);
-                                    setEditFormData({});
+                                    if (!isSaving) {
+                                        setEditingProject(null);
+                                        setEditFormData({});
+                                        setThumbnailFile(null);
+                                        setProjectFiles(null);
+                                        setThumbnailPreview(null);
+                                        setSaveError(null);
+                                        setSaveSuccess(false);
+                                    }
                                 }}
-                                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                                disabled={isSaving}
+                                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1282,8 +1298,14 @@ const MyProjectsPage: React.FC = () => {
                                     onClick={() => {
                                         setEditingProject(null);
                                         setEditFormData({});
+                                        setThumbnailFile(null);
+                                        setProjectFiles(null);
+                                        setThumbnailPreview(null);
+                                        setSaveError(null);
+                                        setSaveSuccess(false);
                                     }}
-                                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                                    disabled={isSaving}
+                                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Cancel
                                 </button>
