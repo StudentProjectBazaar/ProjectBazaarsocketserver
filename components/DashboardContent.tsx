@@ -737,6 +737,15 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                         }}
                     />
                 );
+            case 'course-details':
+                if (!selectedCourse) return null;
+                return (
+                    <CourseDetailsPage
+                        course={selectedCourse}
+                        onBack={() => setActiveView(previousView)}
+                        isPurchased={true}
+                    />
+                );
             case 'earnings':
                 return <EarningsPage />;
             case 'payouts':
