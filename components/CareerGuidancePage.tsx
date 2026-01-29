@@ -3,6 +3,7 @@ import Lottie from 'lottie-react';
 import PlacementPrepSection, { PlacementPhase } from './PlacementPrepSection';
 import { useAuth } from '../App';
 import careerGuidanceAnimation from '../lottiefiles/career_guidance_animation.json';
+import guidanceIconAnimation from '../lottiefiles/guidance.json';
 
 // ============================================
 // TYPES & INTERFACES
@@ -2686,6 +2687,122 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
 // ============================================
 
 // ============================================
+// COUNT-UP ANIMATION COMPONENT
+// ============================================
+
+interface CountUpProps {
+    end: number;
+    duration?: number;
+    prefix?: string;
+    suffix?: string;
+    decimals?: number;
+}
+
+const CountUp: React.FC<CountUpProps> = ({ end, duration = 2000, prefix = '', suffix = '', decimals = 0 }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        let startTime: number | null = null;
+        let animationFrame: number;
+
+        const animate = (timestamp: number) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+
+            // Easing function for smooth animation (easeOutCubic)
+            const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+            setCount(easedProgress * end);
+
+            if (progress < 1) {
+                animationFrame = requestAnimationFrame(animate);
+            } else {
+                setCount(end);
+            }
+        };
+
+        animationFrame = requestAnimationFrame(animate);
+
+        return () => {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+        };
+    }, [end, duration]);
+
+    const displayValue = decimals > 0 ? count.toFixed(decimals) : Math.floor(count);
+
+    return <>{prefix}{displayValue}{suffix}</>;
+};
+
+// ============================================
+// CAREER STATISTICS CALCULATOR
+// ============================================
+
+interface CareerStats {
+    hotCareers: number;
+    maxSalary: number;
+    avgGrowth: number;
+    companiesHiring: number;
+}
+
+const calculateCareerStats = (careers: TrendingCareer[]): CareerStats => {
+    if (!careers || careers.length === 0) {
+        return {
+            hotCareers: 0,
+            maxSalary: 0,
+            avgGrowth: 0,
+            companiesHiring: 0
+        };
+    }
+
+    // Count hot careers (Very High demand)
+    const hotCareers = careers.filter(c => c.demand === 'Very High').length;
+
+    // Extract max salary
+    let maxSalary = 0;
+    careers.forEach(career => {
+        // Parse salary string like "₹8-25 LPA" or "₹5-18 LPA"
+        const match = career.avgSalary.match(/₹(\d+)-(\d+)/);
+        if (match) {
+            const higherSalary = parseInt(match[2]);
+            if (higherSalary > maxSalary) {
+                maxSalary = higherSalary;
+            }
+        }
+    });
+
+    // Calculate average growth
+    let totalGrowth = 0;
+    let growthCount = 0;
+    careers.forEach(career => {
+        // Parse growth string like "+40%" or "+25%"
+        const match = career.growth.match(/\+(\d+)/);
+        if (match) {
+            totalGrowth += parseInt(match[1]);
+            growthCount++;
+        }
+    });
+    const avgGrowth = growthCount > 0 ? Math.round(totalGrowth / growthCount) : 0;
+
+    // Count unique companies
+    const uniqueCompanies = new Set<string>();
+    careers.forEach(career => {
+        career.companies.forEach(company => {
+            uniqueCompanies.add(company);
+        });
+    });
+    const companiesHiring = uniqueCompanies.size;
+
+    return {
+        hotCareers,
+        maxSalary,
+        avgGrowth,
+        companiesHiring
+    };
+};
+
+// ============================================
 // TRENDING CAREERS COMPONENT
 // ============================================
 
@@ -2697,24 +2814,35 @@ interface TrendingCareersSectionProps {
 const TrendingCareersSection: React.FC<TrendingCareersSectionProps> = ({ careers, onExploreRoadmap }) => {
     const [selectedCareer, setSelectedCareer] = useState<TrendingCareer | null>(careers.length > 0 ? careers[0] : null);
 
+    // Calculate dynamic statistics from API-fetched careers data
+    const stats = calculateCareerStats(careers);
+
     return (
         <div className="space-y-6">
-            {/* Header Stats */}
+            {/* Header Stats - Dynamic from API data */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-4 text-center">
-                    <div className="text-3xl font-bold">8+</div>
+                    <div className="text-3xl font-bold">
+                        <CountUp end={stats.hotCareers} suffix="+" />
+                    </div>
                     <div className="text-sm opacity-90">Hot Careers</div>
                 </div>
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 text-center">
-                    <div className="text-3xl font-bold">₹25L+</div>
+                    <div className="text-3xl font-bold">
+                        <CountUp end={stats.maxSalary} prefix="₹" suffix="L+" />
+                    </div>
                     <div className="text-sm opacity-90">Max Salary</div>
                 </div>
                 <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 text-center">
-                    <div className="text-3xl font-bold">40%</div>
+                    <div className="text-3xl font-bold">
+                        <CountUp end={stats.avgGrowth} suffix="%" />
+                    </div>
                     <div className="text-sm opacity-90">Avg Growth</div>
                 </div>
                 <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-4 text-center">
-                    <div className="text-3xl font-bold">100+</div>
+                    <div className="text-3xl font-bold">
+                        <CountUp end={stats.companiesHiring} suffix="+" />
+                    </div>
                     <div className="text-sm opacity-90">Companies Hiring</div>
                 </div>
             </div>
@@ -3295,8 +3423,12 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
                                     </svg>
                                 </button>
                             )}
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30 flex-shrink-0">
-                                <SparkleIcon />
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                <Lottie
+                                    animationData={guidanceIconAnimation}
+                                    loop
+                                    className="w-10 h-10 sm:w-12 sm:h-12"
+                                />
                             </div>
                             <div className="min-w-0">
                                 <h1 className="text-xl sm:text-3xl font-bold text-gray-900 truncate">Career Guidance Hub</h1>
