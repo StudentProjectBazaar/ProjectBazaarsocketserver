@@ -100,7 +100,7 @@ const HackathonsFilters: React.FC<HackathonsFiltersProps> = ({
         <div className="flex items-center gap-1.5">
           <h3 className="text-sm font-semibold text-gray-800">Filters</h3>
           {activeFilterCount > 0 && (
-            <span className="flex items-center justify-center min-w-[18px] h-4.5 px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold">
+            <span className="flex items-center justify-center min-w-[18px] h-4.5 px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold">
               {activeFilterCount}
             </span>
           )}
@@ -108,7 +108,7 @@ const HackathonsFilters: React.FC<HackathonsFiltersProps> = ({
         {activeFilterCount > 0 && (
           <button
             onClick={clearAllFilters}
-            className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="text-xs text-orange-600 hover:text-orange-700 font-medium transition-colors"
           >
             Clear
           </button>
@@ -120,7 +120,7 @@ const HackathonsFilters: React.FC<HackathonsFiltersProps> = ({
         <div className="flex items-center gap-1.5 mb-2">
           <span className="text-xs font-medium text-gray-700">Status</span>
           {statusFilter !== 'all' && (
-            <span className="flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold">
+            <span className="flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold">
               1
             </span>
           )}
@@ -138,7 +138,7 @@ const HackathonsFilters: React.FC<HackathonsFiltersProps> = ({
                       ? 'bg-green-500 text-white border border-green-600 shadow-sm'
                       : option.value === 'upcoming'
                       ? 'bg-blue-500 text-white border border-blue-600 shadow-sm'
-                      : 'bg-blue-500 text-white border border-blue-600 shadow-sm'
+                      : 'bg-orange-500 text-white border border-orange-600 shadow-sm'
                     : 'bg-white text-gray-600 border border-gray-300 hover:border-gray-400 hover:bg-gray-50'
                 }`}
               >
@@ -163,7 +163,7 @@ const HackathonsFilters: React.FC<HackathonsFiltersProps> = ({
         <div className="flex items-center gap-1.5 mb-2">
           <span className="text-xs font-medium text-gray-700">Event Type</span>
           {modeFilter !== 'all' && (
-            <span className="flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold">
+            <span className="flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold">
               1
             </span>
           )}
@@ -181,7 +181,7 @@ const HackathonsFilters: React.FC<HackathonsFiltersProps> = ({
                       ? 'bg-purple-500 text-white border border-purple-600 shadow-sm'
                       : type === 'Offline'
                       ? 'bg-orange-500 text-white border border-orange-600 shadow-sm'
-                      : 'bg-blue-500 text-white border border-blue-600 shadow-sm'
+                      : 'bg-orange-500 text-white border border-orange-600 shadow-sm'
                     : 'bg-white text-gray-600 border border-gray-300 hover:border-gray-400 hover:bg-gray-50'
                 }`}
               >
@@ -211,7 +211,7 @@ const HackathonsFilters: React.FC<HackathonsFiltersProps> = ({
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-medium text-gray-700">Locations</span>
               {locationFilter.length > 0 && (
-                <span className="flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold">
+                <span className="flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold">
                   {locationFilter.length}
                 </span>
               )}
