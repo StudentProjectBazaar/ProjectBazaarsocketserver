@@ -3,15 +3,18 @@ import { useAuth } from '../App';
 
 const PORTFOLIO_API_ENDPOINT = 'https://tya60ig1pc.execute-api.ap-south-2.amazonaws.com/default/portfolio-generator';
 
-// Template metadata for display
+// Template metadata for display - Updated with website color theme
 const TEMPLATE_INFO: Record<string, { name: string; thumbnail: string; color: string }> = {
-  minimal: { name: 'Minimal', thumbnail: '📄', color: '#000000' },
+  minimal: { name: 'Minimal', thumbnail: '📄', color: '#8b5cf6' },
   modern: { name: 'Modern Dark', thumbnail: '🌙', color: '#a78bfa' },
-  professional: { name: 'Professional', thumbnail: '💼', color: '#2563eb' },
-  creative: { name: 'Creative', thumbnail: '🎨', color: '#f59e0b' },
-  developer: { name: 'Developer', thumbnail: '💻', color: '#00ff88' },
-  elegant: { name: 'Elegant', thumbnail: '✨', color: '#d4af37' },
+  professional: { name: 'Professional', thumbnail: '💼', color: '#7c3aed' },
+  creative: { name: 'Creative', thumbnail: '🎨', color: '#c084fc' },
+  developer: { name: 'Developer', thumbnail: '💻', color: '#22d3ee' },
+  elegant: { name: 'Elegant', thumbnail: '✨', color: '#f472b6' },
 };
+
+// Items to show initially before "View More"
+const INITIAL_DISPLAY_COUNT = 4;
 
 interface PortfolioItem {
   portfolioId: string;
@@ -42,6 +45,16 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [shareMenuOpen, setShareMenuOpen] = useState<string | null>(null);
+  
+  // Filter and pagination state
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
+  const [showAll, setShowAll] = useState(false);
+  
+  // Toast notification state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     if (isLoggedIn && userId) {
@@ -50,6 +63,19 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
       setIsLoading(false);
     }
   }, [isLoggedIn, userId]);
+
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  // Show toast notification
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+  };
 
   const fetchHistory = async () => {
     if (!userId) return;
@@ -82,13 +108,16 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
     }
   };
 
-  const handleDelete = async (portfolioId: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (portfolioId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    setDeleteConfirm(portfolioId);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
     
-    if (!confirm('Are you sure you want to delete this portfolio from history?')) {
-      return;
-    }
-    
+    const portfolioId = deleteConfirm;
+    setDeleteConfirm(null);
     setDeletingId(portfolioId);
     
     try {
@@ -106,15 +135,20 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
       
       if (result.success) {
         setHistory(prev => prev.filter(p => p.portfolioId !== portfolioId));
+        showToast('Portfolio deleted successfully', 'success');
       } else {
-        alert('Failed to delete portfolio');
+        showToast('Failed to delete portfolio', 'error');
       }
     } catch (err) {
       console.error('Error deleting portfolio:', err);
-      alert('Failed to delete portfolio');
+      showToast('Failed to delete portfolio', 'error');
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -131,7 +165,7 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
   const copyToClipboard = (url: string, e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText(url);
-    alert('URL copied to clipboard!');
+    showToast('URL copied to clipboard!', 'success');
   };
 
   const handleShare = (url: string, _name: string, e: React.MouseEvent) => {
@@ -190,10 +224,25 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
     } else {
       // Fallback to copy
       navigator.clipboard.writeText(url);
-      alert('Link copied to clipboard!');
+      showToast('Link copied to clipboard!', 'success');
     }
     setShareMenuOpen(null);
   };
+
+  // Filter portfolios based on selected filter
+  const filteredHistory = selectedFilter === 'all' 
+    ? history 
+    : history.filter(p => p.templateId === selectedFilter);
+  
+  // Get unique templates from history for filter options
+  const availableTemplates = Array.from(new Set(history.map(p => p.templateId)));
+  
+  // Determine which portfolios to display
+  const displayedPortfolios = showAll 
+    ? filteredHistory 
+    : filteredHistory.slice(0, INITIAL_DISPLAY_COUNT);
+  
+  const hasMorePortfolios = filteredHistory.length > INITIAL_DISPLAY_COUNT;
 
   // Close share menu when clicking outside
   useEffect(() => {
@@ -204,94 +253,250 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
     }
   }, [shareMenuOpen]);
 
+  // Toast notification component
+  const renderToast = () => {
+    if (!toast) return null;
+    
+    return (
+      <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-sm animate-slide-up ${
+        toast.type === 'success' 
+          ? 'bg-[#16161f]/95 border-violet-500/30 text-white' 
+          : 'bg-[#16161f]/95 border-red-500/30 text-white'
+      }`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+          toast.type === 'success' ? 'bg-violet-500/20' : 'bg-red-500/20'
+        }`}>
+          {toast.type === 'success' ? (
+            <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+        </div>
+        <span className="text-sm font-medium">{toast.message}</span>
+        <button 
+          onClick={() => setToast(null)}
+          className="ml-2 p-1 hover:bg-white/10 rounded-lg transition-colors"
+        >
+          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        
+        <style>{`
+          @keyframes slide-up {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+          }
+          .animate-slide-up { animation: slide-up 0.3s ease-out; }
+        `}</style>
+      </div>
+    );
+  };
+
+  // Delete confirmation modal
+  const renderDeleteConfirm = () => {
+    if (!deleteConfirm) return null;
+    
+    const portfolio = history.find(p => p.portfolioId === deleteConfirm);
+    
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-[#16161f] rounded-2xl border border-white/10 p-6 max-w-sm w-full shadow-2xl">
+          <div className="text-center">
+            <div className="w-14 h-14 mx-auto mb-4 bg-red-500/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-7 h-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">Delete Portfolio?</h3>
+            <p className="text-gray-400 text-sm mb-6">
+              Are you sure you want to delete "{portfolio?.name || 'this portfolio'}"? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteCancel}
+                className="flex-1 py-2.5 bg-[#0a0a0f] hover:bg-white/5 border border-white/10 text-white rounded-xl font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 py-2.5 bg-red-500 hover:bg-red-400 text-white rounded-xl font-medium transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (!isLoggedIn) {
     return (
-      <div className="bg-[#16161f] rounded-2xl border border-white/5 p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 bg-violet-500/20 rounded-2xl flex items-center justify-center">
-          <span className="text-3xl">🔒</span>
+      <>
+        {renderToast()}
+        <div className="bg-gradient-to-br from-[#16161f] to-[#1a1a28] rounded-2xl border border-violet-500/10 p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center">
+            <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Sign in to view history</h3>
+          <p className="text-gray-400 text-sm">Your portfolio generation history will appear here after you sign in.</p>
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">Sign in to view history</h3>
-        <p className="text-gray-500 text-sm">Your portfolio generation history will appear here after you sign in.</p>
-      </div>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="bg-[#16161f] rounded-2xl border border-white/5 p-8">
-        <div className="flex items-center justify-center gap-3">
-          <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-gray-400">Loading history...</span>
+      <>
+        {renderToast()}
+        <div className="bg-gradient-to-br from-[#16161f] to-[#1a1a28] rounded-2xl border border-violet-500/10 p-8">
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-gray-400">Loading history...</span>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-[#16161f] rounded-2xl border border-white/5 p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-2xl flex items-center justify-center">
-          <span className="text-3xl">⚠️</span>
+      <>
+        {renderToast()}
+        <div className="bg-gradient-to-br from-[#16161f] to-[#1a1a28] rounded-2xl border border-violet-500/10 p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-2xl flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Error loading history</h3>
+          <p className="text-gray-400 text-sm mb-4">{error}</p>
+          <button
+            onClick={fetchHistory}
+            className="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-lg text-sm font-medium transition-all shadow-lg shadow-violet-500/20"
+          >
+            Try Again
+          </button>
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">Error loading history</h3>
-        <p className="text-gray-500 text-sm mb-4">{error}</p>
-        <button
-          onClick={fetchHistory}
-          className="px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium transition-colors"
-        >
-          Try Again
-        </button>
-      </div>
+      </>
     );
   }
 
   if (history.length === 0) {
     return (
-      <div className="bg-[#16161f] rounded-2xl border border-white/5 p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 bg-gray-800 rounded-2xl flex items-center justify-center">
-          <span className="text-3xl">📁</span>
+      <>
+        {renderToast()}
+        <div className="bg-gradient-to-br from-[#16161f] to-[#1a1a28] rounded-2xl border border-violet-500/10 p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center">
+            <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">No portfolios yet</h3>
+          <p className="text-gray-400 text-sm">Your generated portfolios will appear here.</p>
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">No portfolios yet</h3>
-        <p className="text-gray-500 text-sm">Your generated portfolios will appear here.</p>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className={compact ? '' : 'bg-[#16161f] rounded-2xl border border-white/5 p-6'}>
-      {!compact && (
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Your Portfolios</h2>
-          <span className="text-sm text-gray-500">{history.length} portfolio{history.length !== 1 ? 's' : ''}</span>
-        </div>
-      )}
+    <>
+      {renderToast()}
+      {renderDeleteConfirm()}
       
-      <div className={`grid gap-4 ${compact ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
-        {history.map((portfolio) => {
+      <div className={compact ? '' : 'bg-gradient-to-br from-[#16161f] to-[#1a1a28] rounded-2xl border border-violet-500/10 p-6'}>
+        {!compact && (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                Your Portfolios
+              </h2>
+              <span className="text-sm text-violet-400 bg-violet-500/10 px-3 py-1 rounded-full font-medium">
+                {history.length} portfolio{history.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            
+            {/* Filter tabs */}
+            {availableTemplates.length > 1 && (
+              <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                <button
+                  onClick={() => { setSelectedFilter('all'); setShowAll(false); }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    selectedFilter === 'all'
+                      ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/20'
+                      : 'bg-[#0a0a0f] text-gray-400 hover:text-white border border-white/5 hover:border-violet-500/30'
+                  }`}
+                >
+                  All ({history.length})
+                </button>
+                {availableTemplates.map(templateId => {
+                  const template = TEMPLATE_INFO[templateId] || TEMPLATE_INFO.modern;
+                  const count = history.filter(p => p.templateId === templateId).length;
+                  return (
+                    <button
+                      key={templateId}
+                      onClick={() => { setSelectedFilter(templateId); setShowAll(false); }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${
+                        selectedFilter === templateId
+                          ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/20'
+                          : 'bg-[#0a0a0f] text-gray-400 hover:text-white border border-white/5 hover:border-violet-500/30'
+                      }`}
+                    >
+                      <span>{template.thumbnail}</span>
+                      <span>{template.name} ({count})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+        
+        <div className={`grid gap-4 ${compact ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
+          {displayedPortfolios.map((portfolio) => {
           const template = TEMPLATE_INFO[portfolio.templateId] || TEMPLATE_INFO.modern;
           
           return (
             <div
               key={portfolio.portfolioId}
               onClick={() => onSelectPortfolio?.(portfolio)}
-              className={`group relative bg-[#0a0a0f] rounded-xl border border-white/5 p-5 transition-all hover:border-violet-500/30 ${
+              className={`group relative bg-[#0a0a0f] rounded-xl border border-white/5 p-5 transition-all hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/5 ${
                 onSelectPortfolio ? 'cursor-pointer' : ''
               }`}
             >
               {/* Template Badge */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">{template.thumbnail}</span>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center text-xl">
+                    {template.thumbnail}
+                  </div>
                   <span 
-                    className="text-xs px-2 py-1 rounded-full font-medium"
-                    style={{ backgroundColor: `${template.color}20`, color: template.color }}
+                    className="text-xs px-2.5 py-1 rounded-full font-medium border"
+                    style={{ 
+                      backgroundColor: `${template.color}15`, 
+                      color: template.color,
+                      borderColor: `${template.color}30`
+                    }}
                   >
                     {template.name}
                   </span>
                 </div>
                 
-                {/* Actions */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Actions Toolbar - Always visible on hover */}
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all bg-[#16161f]/90 backdrop-blur-sm rounded-lg p-1 border border-white/10">
                   <button
                     onClick={(e) => copyToClipboard(portfolio.liveUrl, e)}
                     className="p-2 hover:bg-white/5 rounded-lg transition-colors"
@@ -420,15 +625,15 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
                     </svg>
                   </a>
                   <button
-                    onClick={(e) => handleDelete(portfolio.portfolioId, e)}
+                    onClick={(e) => handleDeleteClick(portfolio.portfolioId, e)}
                     disabled={deletingId === portfolio.portfolioId}
-                    className="p-2 hover:bg-red-500/10 rounded-lg transition-colors"
+                    className="p-2 hover:bg-red-500/20 rounded-lg transition-colors group/del"
                     title="Delete"
                   >
                     {deletingId === portfolio.portfolioId ? (
                       <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-4 h-4 text-gray-400 group-hover/del:text-red-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     )}
@@ -459,16 +664,64 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                  className="text-xs text-violet-400 hover:text-violet-300 transition-colors flex items-center gap-1 group/link"
                 >
-                  View Live →
+                  View Live
+                  <svg className="w-3 h-3 transition-transform group-hover/link:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </a>
               </div>
             </div>
           );
         })}
       </div>
+      
+      {/* View More / View Less Button */}
+      {!compact && hasMorePortfolios && (
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0f] hover:bg-violet-500/10 border border-white/10 hover:border-violet-500/30 rounded-xl text-sm font-medium text-gray-400 hover:text-violet-400 transition-all"
+          >
+            {showAll ? (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+                Show Less
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                View More ({filteredHistory.length - INITIAL_DISPLAY_COUNT} more)
+              </>
+            )}
+          </button>
+        </div>
+      )}
+      
+      {/* Empty state for filtered results */}
+      {filteredHistory.length === 0 && selectedFilter !== 'all' && (
+        <div className="text-center py-8">
+          <div className="w-12 h-12 mx-auto mb-3 bg-violet-500/10 rounded-xl flex items-center justify-center">
+            <svg className="w-6 h-6 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+          </div>
+          <p className="text-gray-400 text-sm">No portfolios with this template</p>
+          <button
+            onClick={() => setSelectedFilter('all')}
+            className="mt-2 text-xs text-violet-400 hover:text-violet-300"
+          >
+            View all portfolios →
+          </button>
+        </div>
+      )}
     </div>
+    </>
   );
 };
 
