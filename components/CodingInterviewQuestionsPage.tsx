@@ -518,20 +518,66 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
   const [replyContent, setReplyContent] = useState('');
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
 
+  // Hints accordion state - only show one at a time
+  const [expandedHintIndex, setExpandedHintIndex] = useState<number | null>(null);
+
+  // Submission history state
+  const [submissionHistory, setSubmissionHistory] = useState<Array<{
+    id: string;
+    status: 'Accepted' | 'Wrong Answer' | 'Time Limit Exceeded' | 'Runtime Error';
+    runtime: string;
+    memory: string;
+    language: string;
+    timestamp: string;
+  }>>([]);
+
+  // Reset code confirmation modal
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   const problemDetails = question.problemDetails || defaultProblemDetails;
-  const currentUserId = getCurrentUserId();
-  const currentUserName = (() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        return user.fullName || user.name || 'Anonymous';
-      } catch {
-        return 'Anonymous';
+  
+  // Use state for user auth to ensure re-render when user logs in
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserName, setCurrentUserName] = useState<string>('Anonymous');
+
+  // Check auth status on mount and when activeTab changes to discussion
+  useEffect(() => {
+    const checkAuth = () => {
+      const userId = getCurrentUserId();
+      setCurrentUserId(userId);
+      
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          setCurrentUserName(user.fullName || user.name || 'Anonymous');
+        } catch {
+          setCurrentUserName('Anonymous');
+        }
+      } else {
+        setCurrentUserName('Anonymous');
       }
+    };
+    
+    // Check auth immediately
+    checkAuth();
+    
+    // Also listen for storage changes (in case user logs in in another tab/component)
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Re-check when discussion tab is opened
+    if (activeTab === 'discussion') {
+      checkAuth();
     }
-    return 'Anonymous';
-  })();
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [activeTab]);
 
   // Initialize code with starter code
   useEffect(() => {
@@ -865,17 +911,39 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     const allPassed = Math.random() > 0.5;
+    const runtime = `${Math.floor(Math.random() * 100) + 20} ms`;
+    const memory = `${(Math.random() * 20 + 35).toFixed(1)} MB`;
+    const timestamp = new Date().toISOString();
+
     if (allPassed) {
-      setOutput('✅ Accepted! All test cases passed.\n\nRuntime: 45 ms (beats 78.5% of submissions)\nMemory: 42.1 MB (beats 65.3% of submissions)');
+      setOutput(`✅ Accepted! All test cases passed.\n\nRuntime: ${runtime} (beats ${Math.floor(Math.random() * 30) + 60}% of submissions)\nMemory: ${memory} (beats ${Math.floor(Math.random() * 30) + 50}% of submissions)`);
       setScore(400);
       // Update status to solved
       onStatusUpdate(question.id, 'solved', true);
+      // Add to submission history
+      setSubmissionHistory(prev => [{
+        id: `sub-${Date.now()}`,
+        status: 'Accepted',
+        runtime,
+        memory,
+        language: supportedLanguages.find(l => l.id === selectedLanguage)?.name || 'Python 3',
+        timestamp
+      }, ...prev]);
     } else {
       const failedTestCase = Math.floor(Math.random() * 3) + 1;
       setOutput(`❌ Wrong Answer\n\nTest case ${failedTestCase} failed.\nInput: ${problemDetails.testCases[0]?.input || '[1,2,3]'}\nExpected: ${problemDetails.testCases[0]?.expectedOutput || '6'}\nGot: Different output`);
       setScore(Math.floor(Math.random() * 300));
       // Update status to attempted
       onStatusUpdate(question.id, 'attempted', false);
+      // Add to submission history
+      setSubmissionHistory(prev => [{
+        id: `sub-${Date.now()}`,
+        status: 'Wrong Answer',
+        runtime,
+        memory,
+        language: supportedLanguages.find(l => l.id === selectedLanguage)?.name || 'Python 3',
+        timestamp
+      }, ...prev]);
     }
 
     setIsSubmitting(false);
@@ -958,18 +1026,20 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
               </>
             )}
           </div>
-          <button
-            onClick={() => {
-              const starterCode = problemDetails.starterCode[selectedLanguage] || problemDetails.starterCode.python || '';
-              setCode(starterCode);
-            }}
-            className="p-2 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
-            title="Reset Code"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
+          <div className="relative group">
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="p-2 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+              title="Reset Code"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-white text-gray-800 text-xs font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg border border-gray-200">
+              Reset Code
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1083,14 +1153,58 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
             )}
 
             {activeTab === 'hints' && (
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Hints</h2>
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Hints</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Click on a hint to reveal it. Try to solve the problem before viewing hints!</p>
                 {problemDetails.hints.map((hint, i) => (
-                  <div key={i} className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 rounded-full flex items-center justify-center text-sm font-bold">{i + 1}</span>
-                      <p className="text-gray-700 dark:text-gray-300">{hint}</p>
-                    </div>
+                  <div key={i} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => setExpandedHintIndex(expandedHintIndex === i ? null : i)}
+                      className={`w-full flex items-center justify-between p-4 transition-colors ${
+                        expandedHintIndex === i 
+                          ? 'bg-yellow-50 dark:bg-yellow-900/30' 
+                          : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                          expandedHintIndex === i
+                            ? 'bg-yellow-400 dark:bg-yellow-600 text-yellow-900 dark:text-yellow-100'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                        }`}>
+                          {i + 1}
+                        </span>
+                        <span className={`font-medium ${
+                          expandedHintIndex === i 
+                            ? 'text-yellow-800 dark:text-yellow-200' 
+                            : 'text-gray-700 dark:text-gray-300'
+                        }`}>
+                          Hint {i + 1}
+                        </span>
+                      </div>
+                      <svg 
+                        className={`w-5 h-5 transition-transform duration-200 ${
+                          expandedHintIndex === i 
+                            ? 'rotate-180 text-yellow-600 dark:text-yellow-400' 
+                            : 'text-gray-400'
+                        }`} 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {expandedHintIndex === i && (
+                      <div className="px-4 pb-4 pt-2 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800/50">
+                        <div className="flex items-start gap-3">
+                          <svg className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                          <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{hint}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1260,11 +1374,74 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
             )}
 
             {activeTab === 'submissions' && (
-              <div className="text-center py-12">
-                <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <p className="text-gray-500 dark:text-gray-400">No submissions yet</p>
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Submission History</h2>
+                {submissionHistory.length === 0 ? (
+                  <div className="text-center py-12">
+                    <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <p className="text-gray-500 dark:text-gray-400">No submissions yet</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Submit your solution to see it here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {submissionHistory.map((submission) => (
+                      <div 
+                        key={submission.id} 
+                        className={`p-4 rounded-xl border transition-colors ${
+                          submission.status === 'Accepted'
+                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {submission.status === 'Accepted' ? (
+                              <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                            <span className={`font-semibold ${
+                              submission.status === 'Accepted' 
+                                ? 'text-green-700 dark:text-green-400' 
+                                : 'text-red-700 dark:text-red-400'
+                            }`}>
+                              {submission.status}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(submission.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="mt-3 flex items-center gap-6 text-sm">
+                          <div className="flex items-center gap-2">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="text-gray-600 dark:text-gray-300">{submission.runtime}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <span className="text-gray-600 dark:text-gray-300">{submission.memory}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                            <span className="text-gray-600 dark:text-gray-300">{submission.language}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1282,25 +1459,13 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
         <div ref={rightPanelRef} style={{ width: `${100 - leftPanelWidth}%` }} className="flex flex-col bg-[#1e1e1e] overflow-hidden relative">
           {/* Top Action Bar - LeetCode Style */}
           <div className="h-10 bg-[#303030] border-b border-[#404040] flex items-center justify-end px-3 gap-1 shrink-0">
-            {/* Settings */}
-            <div className="relative group">
-              <button className="p-2 text-gray-400 hover:text-gray-200 hover:bg-[#404040] rounded transition-colors">
-                <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-[#3c3c3c] text-gray-200 text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg">
-                Settings
-              </div>
-            </div>
-
             {/* Run Button */}
             <div className="relative group">
               <button
                 onClick={handleRun}
                 disabled={isRunning || isSubmitting}
                 className="p-2 text-gray-400 hover:text-white hover:bg-[#404040] rounded transition-colors disabled:opacity-50"
+                title="Run Code"
               >
                 {isRunning ? (
                   <svg className="w-[18px] h-[18px] animate-spin" fill="none" viewBox="0 0 24 24">
@@ -1313,7 +1478,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
                   </svg>
                 )}
               </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-[#3c3c3c] text-gray-200 text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-white text-gray-800 text-xs font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg border border-gray-200">
                 Run Code
               </div>
             </div>
@@ -1324,6 +1489,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
                 onClick={handleSubmit}
                 disabled={isRunning || isSubmitting}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2cbb5d] hover:bg-[#26a34f] text-white text-sm font-medium rounded transition-colors disabled:opacity-50"
+                title="Submit Solution"
               >
                 {isSubmitting ? (
                   <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -1337,32 +1503,34 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
                 )}
                 Submit
               </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-[#3c3c3c] text-gray-200 text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-white text-gray-800 text-xs font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg border border-gray-200">
                 Submit Solution
               </div>
             </div>
 
             {/* Copy Code */}
             <div className="relative group">
-              <button className="p-2 text-gray-400 hover:text-gray-200 hover:bg-[#404040] rounded transition-colors">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(code).then(() => {
+                    // Show a brief toast-like feedback
+                    const btn = document.getElementById('copy-code-btn');
+                    if (btn) {
+                      btn.classList.add('text-green-400');
+                      setTimeout(() => btn.classList.remove('text-green-400'), 1500);
+                    }
+                  });
+                }}
+                id="copy-code-btn"
+                className="p-2 text-gray-400 hover:text-gray-200 hover:bg-[#404040] rounded transition-colors"
+                title="Copy Code"
+              >
                 <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
                 </svg>
               </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-[#3c3c3c] text-gray-200 text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-white text-gray-800 text-xs font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg border border-gray-200">
                 Copy Code
-              </div>
-            </div>
-
-            {/* AI Helper */}
-            <div className="relative group">
-              <button className="p-2 text-purple-400 hover:text-purple-300 hover:bg-[#404040] rounded transition-colors">
-                <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2M7.5 13A2.5 2.5 0 005 15.5 2.5 2.5 0 007.5 18a2.5 2.5 0 002.5-2.5A2.5 2.5 0 007.5 13m9 0a2.5 2.5 0 00-2.5 2.5 2.5 2.5 0 002.5 2.5 2.5 2.5 0 002.5-2.5 2.5 2.5 0 00-2.5-2.5z" />
-                </svg>
-              </button>
-              <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-[#3c3c3c] text-gray-200 text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg">
-                AI Assistant
               </div>
             </div>
           </div>
@@ -1549,26 +1717,41 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
       {/* Bottom Bar */}
       <div className="h-10 bg-[#1e1e1e] border-t border-[#303030] flex items-center justify-between px-4">
         {/* Left: Problem List */}
-        <button onClick={onBack} className="flex items-center gap-2 px-3 py-1.5 text-gray-400 hover:text-gray-200 hover:bg-[#303030] rounded transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-          </svg>
-          <span className="text-sm">Problem List</span>
-        </button>
+        <div className="relative group">
+          <button onClick={onBack} className="flex items-center gap-2 px-3 py-1.5 text-gray-400 hover:text-gray-200 hover:bg-[#303030] rounded transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            <span className="text-sm">Back to List</span>
+          </button>
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white text-gray-800 text-xs font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg border border-gray-200">
+            Return to Problem List
+          </div>
+        </div>
 
         {/* Center: Navigation */}
         <div className="flex items-center gap-1">
-          <button onClick={onPrevious} disabled={questionIndex === 0} className="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-[#303030] rounded disabled:opacity-40 transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-          </button>
+          <div className="relative group">
+            <button onClick={onPrevious} disabled={questionIndex === 0} className="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-[#303030] rounded disabled:opacity-40 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white text-gray-800 text-xs font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg border border-gray-200">
+              Previous Question
+            </div>
+          </div>
           <span className="text-sm text-gray-500 px-2">{questionIndex + 1} / {totalQuestions}</span>
-          <button onClick={onNext} disabled={questionIndex === totalQuestions - 1} className="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-[#303030] rounded disabled:opacity-40 transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-            </svg>
-          </button>
+          <div className="relative group">
+            <button onClick={onNext} disabled={questionIndex === totalQuestions - 1} className="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-[#303030] rounded disabled:opacity-40 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white text-gray-800 text-xs font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg border border-gray-200">
+              Next Question
+            </div>
+          </div>
         </div>
 
         {/* Right: Shortcuts hint */}
@@ -1587,6 +1770,46 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Reset Code Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+              <svg className="w-7 h-7 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-2">
+              Reset Code?
+            </h3>
+
+            <p className="text-gray-600 dark:text-gray-400 text-center mb-6 text-sm">
+              This will reset your code to the starter template. All your changes will be lost.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 py-2.5 px-4 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 font-medium rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const starterCode = problemDetails.starterCode[selectedLanguage] || problemDetails.starterCode.python || '';
+                  setCode(starterCode);
+                  setShowResetConfirm(false);
+                }}
+                className="flex-1 py-2.5 px-4 text-white bg-amber-500 hover:bg-amber-600 font-medium rounded-xl transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
