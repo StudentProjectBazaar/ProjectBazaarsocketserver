@@ -24,6 +24,8 @@ import { CallToAction } from './components/ui/cta-3';
 import FAQWithSpiral from './components/ui/faq-section';
 import BrowseFreelancers from './components/BrowseFreelancers';
 import BrowseProjects from './components/BrowseProjects';
+import FreelancerProfilePage from './components/FreelancerProfilePage';
+import DashboardLayoutWrapper from './components/DashboardLayoutWrapper';
 import BuildPortfolioPage from './components/BuildPortfolioPage';
 import PlatformFeatures from './components/PlatformFeatures';
 import { ResumeBuilderPage } from './components/resume-builder';
@@ -31,7 +33,7 @@ import MockAssessmentPage from './components/MockAssessmentPage';
 import CodingInterviewQuestionsPage from './components/CodingInterviewQuestionsPage';
 
 type Theme = 'light' | 'dark';
-type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browseFreelancers' | 'browseProjects' | 'buildPortfolio' | 'buildResume' | 'mockAssessment' | 'mockLeaderboard' | 'mockAchievements' | 'mockDailyChallenge' | 'mockHistory' | 'codingQuestions' | 'notFound';
+type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browseFreelancers' | 'browseProjects' | 'freelancerProfile' | 'buildPortfolio' | 'buildResume' | 'mockAssessment' | 'mockLeaderboard' | 'mockAchievements' | 'mockDailyChallenge' | 'mockHistory' | 'codingQuestions' | 'notFound';
 type UserRole = 'user' | 'admin';
 
 interface PremiumContextType {
@@ -190,6 +192,12 @@ const AppContent: React.FC = () => {
       return <BrowseFreelancers />;
     case 'browseProjects':
       return <BrowseProjects />;
+    case 'freelancerProfile':
+      return (
+        <DashboardLayoutWrapper>
+          <FreelancerProfilePage />
+        </DashboardLayoutWrapper>
+      );
     case 'buildPortfolio':
       return <BuildPortfolioPage />;
     case 'buildResume':
@@ -270,6 +278,7 @@ const App: React.FC = () => {
         '/faq': 'faq',
         '/browse-freelancers': 'browseFreelancers',
         '/browse-projects': 'browseProjects',
+        '/freelancer': 'freelancerProfile',
         '/build-portfolio': 'buildPortfolio',
         '/build-resume': 'buildResume',
         '/resume-builder': 'buildResume',
@@ -291,6 +300,7 @@ const App: React.FC = () => {
         'faq': 'faq',
         'browseFreelancers': 'browseFreelancers',
         'browseProjects': 'browseProjects',
+        'freelancerProfile': 'freelancerProfile',
         'buildPortfolio': 'buildPortfolio',
         'buildResume': 'buildResume',
         'mockAssessment': 'mockAssessment',
@@ -412,6 +422,7 @@ const App: React.FC = () => {
       'faq': '/faq',
       'browseFreelancers': '/browse-freelancers',
       'browseProjects': '/browse-projects',
+      'freelancerProfile': '/freelancer',
       'buildPortfolio': '/build-portfolio',
       'buildResume': '/build-resume',
       'mockAssessment': '/mock-assessment',

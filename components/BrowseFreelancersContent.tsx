@@ -2,7 +2,9 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Pagination from './Pagination';
 import OrangeCheckbox from './OrangeCheckbox';
 import type { Freelancer } from '../types/browse';
+import type { BrowseProject } from '../types/browse';
 import { getAllFreelancers, searchFreelancers, getAvailableSkills, getAvailableCountries } from '../services/freelancersApi';
+import { getBidRequestProjectsByBuyer } from '../services/bidRequestProjectsApi';
 import { GET_USER_DETAILS_ENDPOINT } from '../services/buyerApi';
 import { useAuth } from '../App';
 import verifiedFreelanceSvg from '../lottiefiles/verified_freelance.svg';
@@ -43,6 +45,9 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
   const [contactMessage, setContactMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [sendSuccess, setSendSuccess] = useState<string | null>(null);
+  const [userProjects, setUserProjects] = useState<BrowseProject[]>([]);
+  const [selectedInviteProjectId, setSelectedInviteProjectId] = useState('');
+  const [loadingUserProjects, setLoadingUserProjects] = useState(false);
 
   // Fetch user profile (name, profile image) from Get_user_Details_by_his_Id
   const fetchUserProfile = useCallback(async (freelancerId: string) => {
@@ -255,16 +260,30 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
     setSortOption('most-relevant');
   };
 
-  // Handle Invite to Bid
-  const handleInviteToBid = (freelancer: Freelancer) => {
+  // Handle Invite to Bid - fetch user's projects when opening modal
+  const handleInviteToBid = async (freelancer: Freelancer) => {
     if (!userId) {
       alert('Please login to invite freelancers to bid');
       return;
     }
     setSelectedFreelancer(freelancer);
-    setInviteMessage(`Hi ${freelancer.name},\n\nI would like to invite you to bid on my project. Your skills in ${freelancer.skills.slice(0, 3).join(', ')} make you a great fit for what I'm looking for.\n\nPlease check out my project and submit your bid if interested.\n\nBest regards`);
+    setSelectedInviteProjectId('');
     setShowInviteModal(true);
     setSendSuccess(null);
+    setLoadingUserProjects(true);
+    try {
+      const projects = await getBidRequestProjectsByBuyer(userId);
+      setUserProjects(projects);
+      const openProjects = projects.filter((p) => p.status === 'open' || !p.status);
+      if (openProjects.length) setSelectedInviteProjectId(openProjects[0].id);
+    } catch (err) {
+      console.error('Error fetching your projects:', err);
+      setUserProjects([]);
+    } finally {
+      setLoadingUserProjects(false);
+    }
+    const defaultMsg = `Hi ${freelancer.name},\n\nI would like to invite you to bid on my project. Your skills in ${freelancer.skills.slice(0, 3).join(', ')} make you a great fit.\n\nPlease check out my project and submit your bid if interested.\n\nBest regards`;
+    setInviteMessage(defaultMsg);
   };
 
   // Handle Contact
@@ -281,22 +300,24 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
 
   // Send Invite
   const sendInvite = async () => {
-    if (!selectedFreelancer || !inviteMessage.trim()) return;
+    if (!selectedFreelancer || !inviteMessage.trim() || !selectedInviteProjectId) return;
 
+    const selectedProject = userProjects.find((p) => p.id === selectedInviteProjectId);
     setIsSending(true);
     try {
-      // Simulate API call - in production, this would call a notification/messaging API
+      // Simulate API call - in production, this would call a notification/messaging API with projectId
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Log the invitation (in production, save to database)
-      console.log('Invitation sent to:', selectedFreelancer.name, 'Message:', inviteMessage);
+      // Log the invitation (in production, save to database with selectedInviteProjectId)
+      console.log('Invitation sent to:', selectedFreelancer.name, 'Project:', selectedProject?.title, 'Message:', inviteMessage);
 
       setSendSuccess(`Invitation sent to ${selectedFreelancer.name}!`);
       setTimeout(() => {
-        setShowInviteModal(false);
-        setSelectedFreelancer(null);
-        setInviteMessage('');
-        setSendSuccess(null);
+setShowInviteModal(false);
+                  setSelectedFreelancer(null);
+                  setSelectedInviteProjectId('');
+                  setInviteMessage('');
+                  setSendSuccess(null);
       }, 2000);
     } catch (err) {
       console.error('Error sending invite:', err);
@@ -741,12 +762,20 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                         )}
                       </div>
 
-                      {/* Name and Username */}
+                      {/* Name and Username - clickable to view profile */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">
+                          <a
+                            href={`/freelancer?p=${encodeURIComponent(btoa(unescape(encodeURIComponent(freelancer.id))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''))}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const enc = btoa(unescape(encodeURIComponent(freelancer.id))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                              window.location.href = `/freelancer?p=${encodeURIComponent(enc)}`;
+                            }}
+                            className="text-base font-bold text-gray-900 dark:text-gray-100 truncate hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                          >
                             {freelancer.name}
-                          </h3>
+                          </a>
                           <img src={verifiedFreelanceSvg} alt="Verified freelancer" className="w-5 h-5 flex-shrink-0" aria-hidden />
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">@{freelancer.username}</p>
@@ -806,19 +835,32 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleInviteToBid(freelancer)}
-                        className="flex-1 px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-sm hover:shadow-md"
-                      >
-                        Invite to Bid
-                      </button>
-                      <button
-                        onClick={() => handleContact(freelancer)}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleInviteToBid(freelancer)}
+                          className="flex-1 px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                        >
+                          Invite to Bid
+                        </button>
+                        <button
+                          onClick={() => handleContact(freelancer)}
                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                        >
+                          Contact
+                        </button>
+                      </div>
+                      <a
+                        href={`/freelancer?p=${encodeURIComponent(btoa(unescape(encodeURIComponent(freelancer.id))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''))}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const enc = btoa(unescape(encodeURIComponent(freelancer.id))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                          window.location.href = `/freelancer?p=${encodeURIComponent(enc)}`;
+                        }}
+                        className="text-center text-sm font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300"
                       >
-                        Contact
-                      </button>
+                        View profile
+                      </a>
                     </div>
                   </div>
                 ))}
@@ -864,6 +906,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                 onClick={() => {
                   setShowInviteModal(false);
                   setSelectedFreelancer(null);
+                  setSelectedInviteProjectId('');
                   setSendSuccess(null);
                 }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -922,6 +965,27 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
               <>
                 <div className="mb-4">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Select your project
+                  </label>
+                  {loadingUserProjects ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Loading your projects...</p>
+                  ) : userProjects.length === 0 ? (
+                    <p className="text-sm text-amber-600 dark:text-amber-400">You have no projects. Post a project first from Browse Projects, then invite freelancers to bid.</p>
+                  ) : (
+                    <select
+                      value={selectedInviteProjectId}
+                      onChange={(e) => setSelectedInviteProjectId(e.target.value)}
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-gray-100 text-sm"
+                    >
+                      <option value="">Choose a project...</option>
+                      {userProjects.filter((p) => p.status === 'open' || !p.status).map((p) => (
+                        <option key={p.id} value={p.id}>{p.title}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Invitation Message
                   </label>
                   <textarea
@@ -938,6 +1002,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                     onClick={() => {
                       setShowInviteModal(false);
                       setSelectedFreelancer(null);
+                      setSelectedInviteProjectId('');
                     }}
                     className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
@@ -945,7 +1010,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                   </button>
                   <button
                     onClick={sendInvite}
-                    disabled={isSending || !inviteMessage.trim()}
+                    disabled={isSending || !inviteMessage.trim() || !selectedInviteProjectId || userProjects.length === 0}
                     className="flex-1 px-4 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                   >
                     {isSending ? (
