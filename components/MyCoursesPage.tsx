@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import { getPurchasedCourses, PurchasedCourse } from '../services/buyerApi';
+import Lottie from 'lottie-react';
+import noCourseAnimation from '../lottiefiles/no_courseanimation.json';
 
 interface MyCoursesPageProps {
     onViewCourse?: (course: PurchasedCourse) => void;
@@ -283,10 +285,13 @@ const MyCoursesPage: React.FC<MyCoursesPageProps> = ({ onViewCourse }) => {
             {/* Empty State */}
             {!isLoading && !error && filteredCourses.length === 0 && (
                 <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
-                    <div className="w-20 h-20 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
-                        <svg className="w-10 h-10 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
+                    <div className="w-64 h-64 mx-auto mb-6 flex items-center justify-center">
+                        <Lottie 
+                            animationData={noCourseAnimation} 
+                            loop={true} 
+                            autoplay={true}
+                            style={{ width: '100%', height: '100%' }}
+                        />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">
                         {searchQuery ? 'No courses found' : 'No courses yet'}

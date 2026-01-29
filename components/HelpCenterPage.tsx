@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import BugReportModal from './BugReportModal';
+import Lottie from 'lottie-react';
+import helpCenterAnimation from '../lottiefiles/helpcenter.json';
 
 interface FAQ {
   question: string;
@@ -104,9 +106,19 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
               </svg>
             </button>
           )}
-          <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Help Center</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">Find answers to common questions and get support</p>
+          <div className="flex-1 flex items-center gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Help Center</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">Find answers to common questions and get support</p>
+            </div>
+            <div className="hidden md:block w-32 h-32 flex-shrink-0">
+              <Lottie 
+                animationData={helpCenterAnimation} 
+                loop={true} 
+                autoplay={true}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -150,7 +162,25 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
       <div className="space-y-4">
         {filteredFaqs.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
-            <p className="text-gray-500">No results found. Try a different search term or category.</p>
+            <div className="w-64 h-64 mx-auto mb-6 flex items-center justify-center">
+              <Lottie 
+                animationData={helpCenterAnimation} 
+                loop={true} 
+                autoplay={true}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No results found</h3>
+            <p className="text-gray-500 mb-4">Try a different search term or category.</p>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('all');
+              }}
+              className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-semibold transition-colors"
+            >
+              Clear Filters
+            </button>
           </div>
         ) : (
           filteredFaqs.map((faq, index) => (
@@ -185,16 +215,30 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
       </div>
 
       {/* Contact Support */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">Still need help?</h2>
-        <p className="mb-4 opacity-90">Our support team is here to assist you 24/7</p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <button className="px-6 py-3 bg-white text-orange-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-            Contact Support
-          </button>
-          <button className="px-6 py-3 bg-orange-700 text-white rounded-lg font-semibold hover:bg-orange-800 transition-colors">
-            Live Chat
-          </button>
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white relative overflow-hidden">
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold mb-2">Still need help?</h2>
+              <p className="mb-4 opacity-90">Our support team is here to assist you 24/7</p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button className="px-6 py-3 bg-white text-orange-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                  Contact Support
+                </button>
+                <button className="px-6 py-3 bg-orange-700 text-white rounded-lg font-semibold hover:bg-orange-800 transition-colors">
+                  Live Chat
+                </button>
+              </div>
+            </div>
+            <div className="w-48 h-48 flex-shrink-0 opacity-80">
+              <Lottie 
+                animationData={helpCenterAnimation} 
+                loop={true} 
+                autoplay={true}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
