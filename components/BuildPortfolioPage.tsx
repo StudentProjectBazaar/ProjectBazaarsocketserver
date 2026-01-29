@@ -675,10 +675,10 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
   };
 
   return (
-    <div className={`${embedded ? 'min-h-full' : 'min-h-screen'} bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f] text-white ${embedded ? 'rounded-2xl' : ''}`}>
+    <div className={`${embedded ? 'min-h-full' : 'min-h-screen'} bg-[#0d0d12] text-white ${embedded ? 'rounded-2xl' : ''}`}>
       {/* Header */}
       {!embedded && (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-[#0d0d12]/90 backdrop-blur-xl border-b border-violet-500/10">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <button onClick={() => navigateTo('home')} className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
@@ -752,7 +752,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
           {/* STAGE: Upload */}
           {status.stage === 'idle' && !deploymentResult && (
             <div className="max-w-2xl mx-auto">
-              <div className="bg-[#16161f] rounded-3xl border border-white/5 p-8">
+              <div className="bg-[#1a1a24] rounded-3xl border border-violet-500/10 p-8">
                 <div
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
@@ -807,7 +807,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
           {/* STAGE: Processing (Uploading, Parsing, Extracting) */}
           {['uploading', 'parsing', 'extracting'].includes(status.stage) && (
             <div className="max-w-lg mx-auto">
-              <div className="bg-[#16161f] rounded-3xl border border-white/5 p-8 text-center">
+              <div className="bg-[#1a1a24] rounded-3xl border border-violet-500/10 p-8 text-center">
                 <div className="w-20 h-20 mx-auto mb-6 relative">
                   <div className="absolute inset-0 rounded-full bg-violet-500/20 animate-ping" style={{ animationDuration: '1.5s' }} />
                   <div className="absolute inset-2 rounded-full bg-violet-500/10 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.3s' }} />
@@ -864,7 +864,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                       className={`relative p-4 rounded-2xl border-2 transition-all text-left ${
                         selectedTemplate === template.id
                           ? 'border-violet-500 bg-violet-500/10'
-                          : 'border-white/10 bg-[#16161f] hover:border-white/20'
+                          : 'border-white/10 bg-[#1a1a24] hover:border-violet-500/30'
                       }`}
                     >
                       {selectedTemplate === template.id && (
@@ -892,7 +892,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                 </div>
 
                     {/* Summary - Show when not editing */}
-                <div className="mt-6 p-4 bg-[#16161f] rounded-2xl border border-white/5">
+                <div className="mt-6 p-4 bg-[#1a1a24] rounded-2xl border border-violet-500/10">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold text-white flex items-center gap-2">
                     <span className="text-green-400">✓</span> Extracted from your resume
@@ -911,7 +911,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                   </>
                 ) : (
                   /* Edit Mode - Full Edit Form */
-                  <div className="p-4 bg-[#16161f] rounded-2xl border border-white/5">
+                  <div className="p-4 bg-[#1a1a24] rounded-2xl border border-violet-500/10">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-semibold text-white flex items-center gap-2">
                         <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -940,7 +940,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                               type="text"
                               value={portfolioData.personal?.name || ''}
                               onChange={(e) => updatePortfolioField('personal', 'name', e.target.value)}
-                              className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none transition-colors"
+                              className="w-full bg-[#0d0d12] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none transition-colors"
                               placeholder="Your Name"
                             />
                           </div>
@@ -950,7 +950,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                               type="text"
                               value={portfolioData.personal?.title || ''}
                               onChange={(e) => updatePortfolioField('personal', 'title', e.target.value)}
-                              className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none transition-colors"
+                              className="w-full bg-[#0d0d12] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none transition-colors"
                               placeholder="Software Developer"
                             />
                           </div>
@@ -962,7 +962,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                               type="email"
                               value={portfolioData.personal?.email || ''}
                               onChange={(e) => updatePortfolioField('personal', 'email', e.target.value)}
-                              className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none transition-colors"
+                              className="w-full bg-[#0d0d12] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none transition-colors"
                               placeholder="your@email.com"
                             />
                           </div>
@@ -972,7 +972,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                               type="tel"
                               value={portfolioData.personal?.phone || ''}
                               onChange={(e) => updatePortfolioField('personal', 'phone', e.target.value)}
-                              className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none transition-colors"
+                              className="w-full bg-[#0d0d12] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none transition-colors"
                               placeholder="+1 (555) 000-0000"
                             />
                           </div>
@@ -1025,7 +1025,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                           </button>
                         </div>
                         {portfolioData.experience && portfolioData.experience.map((exp, index) => (
-                          <div key={index} className="bg-[#0a0a0f] rounded-lg p-3 space-y-2 relative group">
+                          <div key={index} className="bg-[#0d0d12] rounded-lg p-3 space-y-2 relative group">
                             <button
                               onClick={() => removeExperience(index)}
                               className="absolute -top-2 -right-2 w-5 h-5 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1092,7 +1092,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                           </button>
                           </div>
                         {portfolioData.projects && portfolioData.projects.map((project, index) => (
-                          <div key={index} className="bg-[#0a0a0f] rounded-lg p-3 space-y-2 relative group">
+                          <div key={index} className="bg-[#0d0d12] rounded-lg p-3 space-y-2 relative group">
                             <button
                               onClick={() => removeProject(index)}
                               className="absolute -top-2 -right-2 w-5 h-5 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1192,7 +1192,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                           </button>
                         </div>
                         {portfolioData.education && portfolioData.education.map((edu, index) => (
-                          <div key={index} className="bg-[#0a0a0f] rounded-lg p-3 space-y-2 relative group">
+                          <div key={index} className="bg-[#0d0d12] rounded-lg p-3 space-y-2 relative group">
                             <button
                               onClick={() => removeEducation(index)}
                               className="absolute -top-2 -right-2 w-5 h-5 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1251,7 +1251,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                               {skills.map((skill, index) => {
                                 const skillName = typeof skill === 'string' ? skill : skill.name;
                                 return (
-                                  <div key={index} className="group relative flex items-center gap-1 bg-[#0a0a0f] border border-white/10 rounded-lg px-2 py-1">
+                                  <div key={index} className="group relative flex items-center gap-1 bg-[#0d0d12] border border-white/10 rounded-lg px-2 py-1">
                                     <input
                                       type="text"
                                       value={skillName}
@@ -1291,7 +1291,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                               type="url"
                               value={portfolioData.links?.github || ''}
                               onChange={(e) => updatePortfolioField('links', 'github', e.target.value)}
-                              className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                              className="w-full bg-[#0d0d12] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
                               placeholder="https://github.com/username"
                             />
                           </div>
@@ -1301,7 +1301,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                               type="url"
                               value={portfolioData.links?.linkedin || ''}
                               onChange={(e) => updatePortfolioField('links', 'linkedin', e.target.value)}
-                              className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                              className="w-full bg-[#0d0d12] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
                               placeholder="https://linkedin.com/in/username"
                             />
                           </div>
@@ -1313,7 +1313,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                               type="url"
                               value={portfolioData.links?.twitter || ''}
                               onChange={(e) => updatePortfolioField('links', 'twitter', e.target.value)}
-                              className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                              className="w-full bg-[#0d0d12] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
                               placeholder="https://twitter.com/username"
                             />
                           </div>
@@ -1323,7 +1323,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                               type="url"
                               value={portfolioData.links?.website || ''}
                               onChange={(e) => updatePortfolioField('links', 'website', e.target.value)}
-                              className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                              className="w-full bg-[#0d0d12] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
                               placeholder="https://yourwebsite.com"
                             />
                           </div>
@@ -1344,7 +1344,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                 {/* Deploy Confirmation Modal */}
                 {showDeployConfirm && (
                   <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-[#16161f] rounded-2xl border border-white/10 p-6 max-w-md w-full shadow-2xl">
+                    <div className="bg-[#1a1a24] rounded-2xl border border-violet-500/20 p-6 max-w-md w-full shadow-2xl">
                       <div className="text-center mb-6">
                         <div className="w-16 h-16 bg-violet-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                           <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1358,7 +1358,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                       </div>
                       
                       {/* Quick Summary */}
-                      <div className="bg-[#0a0a0f] rounded-xl p-4 mb-6 text-sm space-y-2">
+                      <div className="bg-[#0d0d12] rounded-xl p-4 mb-6 text-sm space-y-2">
                         <div className="flex justify-between">
                           <span className="text-gray-500">Template:</span>
                           <span className="text-white font-medium">{TEMPLATES.find(t => t.id === selectedTemplate)?.name}</span>
@@ -1436,9 +1436,9 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
                   </span>
                   </div>
                 </div>
-                <div className="relative bg-[#16161f] rounded-2xl border border-white/5 overflow-hidden" style={{ height: '600px' }}>
+                <div className="relative bg-[#1a1a24] rounded-2xl border border-violet-500/10 overflow-hidden" style={{ height: '600px' }}>
                   {isLoadingPreview && (
-                    <div className="absolute inset-0 bg-[#16161f] flex items-center justify-center z-10">
+                    <div className="absolute inset-0 bg-[#1a1a24] flex items-center justify-center z-10">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
                         <p className="text-sm text-gray-400">Loading preview...</p>
@@ -1462,7 +1462,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
           {/* STAGE: Deploying */}
           {status.stage === 'deploying' && (
             <div className="max-w-lg mx-auto">
-              <div className="bg-[#16161f] rounded-3xl border border-white/5 p-8 text-center">
+              <div className="bg-[#1a1a24] rounded-3xl border border-violet-500/10 p-8 text-center">
                 <div className="w-20 h-20 mx-auto mb-6 relative">
                   <div className="absolute inset-0 rounded-full bg-violet-500/20 animate-ping" style={{ animationDuration: '1.5s' }} />
                   <div className="absolute inset-2 rounded-full bg-purple-500/10 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.3s' }} />
@@ -1495,7 +1495,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
           {/* STAGE: Complete */}
           {status.stage === 'complete' && deploymentResult?.success && (
             <div className="max-w-2xl mx-auto">
-              <div className="bg-[#16161f] rounded-3xl border border-white/5 p-8 text-center">
+              <div className="bg-[#1a1a24] rounded-3xl border border-violet-500/10 p-8 text-center">
                 <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-green-500 to-emerald-500 rounded-3xl flex items-center justify-center">
                   <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -1549,7 +1549,7 @@ const BuildPortfolioPage: React.FC<BuildPortfolioPageProps> = ({ embedded = fals
           {/* STAGE: Error */}
           {status.stage === 'error' && (
             <div className="max-w-lg mx-auto">
-              <div className="bg-[#16161f] rounded-3xl border border-white/5 p-8 text-center">
+              <div className="bg-[#1a1a24] rounded-3xl border border-violet-500/10 p-8 text-center">
                 <div className="w-20 h-20 mx-auto mb-6 bg-red-500/20 rounded-3xl flex items-center justify-center">
                   <svg className="w-10 h-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
