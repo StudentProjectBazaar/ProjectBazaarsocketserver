@@ -143,6 +143,10 @@ def handle_update_settings(body):
         "isFreelancer",
         "skills",
         "freelancerProjects",
+        # Verifications
+        "emailVerified",
+        "phoneVerified",
+        "paymentVerified",
     ]
 
     updates = {k: v for k, v in body.items() if k in allowed_fields}
