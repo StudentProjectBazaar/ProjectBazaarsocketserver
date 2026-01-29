@@ -529,7 +529,9 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
     memory: string;
     language: string;
     timestamp: string;
+    code?: string;
   }>>([]);
+  const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(false);
 
   // Reset code confirmation modal
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -579,6 +581,61 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [activeTab]);
+
+  // Fetch submission history from backend
+  const fetchSubmissionHistory = async () => {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    setIsLoadingSubmissions(true);
+    try {
+      const response = await fetch(USER_PROGRESS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'get_submissions',
+          userId,
+          questionId: question.id
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data?.submissions) {
+          // Transform backend data to frontend format
+          const transformedSubmissions = data.data.submissions.map((sub: {
+            submissionId: string;
+            passed: boolean;
+            runtime?: string;
+            memory?: string;
+            language?: string;
+            submittedAt?: string;
+            code?: string;
+          }) => ({
+            id: sub.submissionId,
+            status: sub.passed ? 'Accepted' : 'Wrong Answer' as const,
+            runtime: sub.runtime || 'N/A',
+            memory: sub.memory || 'N/A',
+            language: supportedLanguages.find(l => l.id === sub.language)?.name || sub.language || 'Unknown',
+            timestamp: sub.submittedAt || new Date().toISOString(),
+            code: sub.code
+          }));
+          setSubmissionHistory(transformedSubmissions);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+    } finally {
+      setIsLoadingSubmissions(false);
+    }
+  };
+
+  // Fetch submission history when submissions tab is opened
+  useEffect(() => {
+    if (activeTab === 'submissions') {
+      fetchSubmissionHistory();
+    }
+  }, [activeTab, question.id]);
 
   // Initialize code with starter code
   useEffect(() => {
@@ -915,36 +972,60 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
     const runtime = `${Math.floor(Math.random() * 100) + 20} ms`;
     const memory = `${(Math.random() * 20 + 35).toFixed(1)} MB`;
     const timestamp = new Date().toISOString();
+    const submissionId = `sub-${Date.now()}`;
+    const languageName = supportedLanguages.find(l => l.id === selectedLanguage)?.name || 'Python 3';
+    const status: 'Accepted' | 'Wrong Answer' = allPassed ? 'Accepted' : 'Wrong Answer';
+
+    // Create submission object
+    const newSubmission = {
+      id: submissionId,
+      status,
+      runtime,
+      memory,
+      language: languageName,
+      timestamp,
+      code
+    };
 
     if (allPassed) {
       setOutput(`✅ Accepted! All test cases passed.\n\nRuntime: ${runtime} (beats ${Math.floor(Math.random() * 30) + 60}% of submissions)\nMemory: ${memory} (beats ${Math.floor(Math.random() * 30) + 50}% of submissions)`);
       setScore(400);
       // Update status to solved
       onStatusUpdate(question.id, 'solved', true);
-      // Add to submission history
-      setSubmissionHistory(prev => [{
-        id: `sub-${Date.now()}`,
-        status: 'Accepted',
-        runtime,
-        memory,
-        language: supportedLanguages.find(l => l.id === selectedLanguage)?.name || 'Python 3',
-        timestamp
-      }, ...prev]);
     } else {
       const failedTestCase = Math.floor(Math.random() * 3) + 1;
       setOutput(`❌ Wrong Answer\n\nTest case ${failedTestCase} failed.\nInput: ${problemDetails.testCases[0]?.input || '[1,2,3]'}\nExpected: ${problemDetails.testCases[0]?.expectedOutput || '6'}\nGot: Different output`);
       setScore(Math.floor(Math.random() * 300));
       // Update status to attempted
       onStatusUpdate(question.id, 'attempted', false);
-      // Add to submission history
-      setSubmissionHistory(prev => [{
-        id: `sub-${Date.now()}`,
-        status: 'Wrong Answer',
-        runtime,
-        memory,
-        language: supportedLanguages.find(l => l.id === selectedLanguage)?.name || 'Python 3',
-        timestamp
-      }, ...prev]);
+    }
+
+    // Add to local submission history immediately (optimistic update)
+    setSubmissionHistory(prev => [newSubmission, ...prev]);
+
+    // Save submission to backend
+    const userId = getCurrentUserId();
+    if (userId) {
+      try {
+        await fetch(USER_PROGRESS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'submit',
+            userId,
+            questionId: question.id,
+            passed: allPassed,
+            runtime: newSubmission.runtime,
+            memory: newSubmission.memory,
+            language: selectedLanguage,
+            code: newSubmission.code,
+            testsPassed: allPassed ? problemDetails.testCases.length : Math.floor(Math.random() * problemDetails.testCases.length),
+            testsTotal: problemDetails.testCases.length
+          })
+        });
+      } catch (error) {
+        console.error('Error saving submission to backend:', error);
+      }
     }
 
     setIsSubmitting(false);
@@ -1398,7 +1479,18 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
             {activeTab === 'submissions' && (
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Submission History</h2>
-                {submissionHistory.length === 0 ? (
+                
+                {/* Loading State */}
+                {isLoadingSubmissions && (
+                  <div className="flex items-center justify-center py-12">
+                    <svg className="w-8 h-8 animate-spin text-teal-500" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  </div>
+                )}
+
+                {!isLoadingSubmissions && submissionHistory.length === 0 ? (
                   <div className="text-center py-12">
                     <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -1406,7 +1498,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
                     <p className="text-gray-500 dark:text-gray-400">No submissions yet</p>
                     <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Submit your solution to see it here</p>
                   </div>
-                ) : (
+                ) : !isLoadingSubmissions && (
                   <div className="space-y-2">
                     {submissionHistory.map((submission) => (
                       <div 
