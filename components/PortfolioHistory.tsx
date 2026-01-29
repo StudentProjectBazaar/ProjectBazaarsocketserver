@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import Lottie from 'lottie-react';
 import { useAuth } from '../App';
+import noPortfolioAnimation from '../lottiefiles/no_prortofolio_animation.json';
 
 const PORTFOLIO_API_ENDPOINT = 'https://tya60ig1pc.execute-api.ap-south-2.amazonaws.com/default/portfolio-generator';
 
@@ -395,10 +397,12 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
       <>
         {renderToast()}
         <div className="bg-white rounded-2xl border border-orange-200 p-8 text-center shadow-sm">
-          <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 rounded-2xl flex items-center justify-center">
-            <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            </svg>
+          <div className="mx-auto mb-4 w-full max-w-[280px] h-[200px] flex items-center justify-center">
+            <Lottie
+              animationData={noPortfolioAnimation}
+              loop
+              className="w-full h-full"
+            />
           </div>
           <h3 className="text-lg font-semibold text-gray-800 mb-2">No portfolios yet</h3>
           <p className="text-gray-500 text-sm">Your generated portfolios will appear here.</p>
