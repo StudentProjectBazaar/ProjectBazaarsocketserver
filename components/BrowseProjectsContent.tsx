@@ -4,11 +4,9 @@ import type { BrowseProject } from '../types/browse';
 import { useAuth } from '../App';
 import { saveBidAsync, hasFreelancerBidOnProjectAsync, getBidStatsForProjectAsync, type BidStats } from '../services/bidsService';
 import { getAllBidRequestProjects } from '../services/bidRequestProjectsApi';
+import { GET_USER_DETAILS_ENDPOINT } from '../services/buyerApi';
 import type { BidFormData } from '../types/bids';
 import noProjectBidsAnimation from '../lottiefiles/no_project_bids_animation.json';
-
-// API endpoint for fetching owner profiles
-const GET_USER_ENDPOINT = 'https://knb5lt8to2.execute-api.ap-south-2.amazonaws.com/default/Get_User_By_ID';
 
 type SortOption = 'latest' | 'budget-high-low' | 'most-bids';
 type ProjectTypeFilter = 'all' | 'fixed' | 'hourly';
@@ -89,7 +87,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     }
 
     try {
-      const response = await fetch(GET_USER_ENDPOINT, {
+      const response = await fetch(GET_USER_DETAILS_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: ownerId }),
@@ -99,9 +97,18 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
       const user = data.data || data.user || data;
 
       if (user && data.success !== false) {
+        const profilePicture =
+          user.profilePictureUrl ??
+          user.profilePicture ??
+          user.profileImage ??
+          user.profile_picture ??
+          user.avatar ??
+          user.photoURL ??
+          user.imageUrl ??
+          user.photo;
         const profile = {
           name: user.fullName || user.name || undefined,
-          profilePicture: user.profilePictureUrl || undefined,
+          profilePicture: profilePicture || undefined,
         };
 
         setOwnerProfileCache(prev => new Map(prev).set(ownerId, profile));
@@ -516,10 +523,10 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
             placeholder="Search for projects"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-6 py-4 pl-14 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-gray-100 text-lg"
+            className="w-full px-4 py-2.5 pl-11 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-gray-100 text-sm"
           />
           <svg
-            className="absolute left-5 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400"
+            className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -877,24 +884,31 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
                         ))}
                       </div>
 
-                      {/* Requirement Owner Info */}
+                      {/* Requirement Owner Info - show poster profile image */}
                       <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center overflow-hidden">
+                        <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-white dark:ring-gray-600 shadow-sm">
                           {project.ownerProfilePicture ? (
                             <img
                               src={project.ownerProfilePicture}
-                              alt={project.ownerName || 'Owner'}
+                              alt={project.ownerName || 'Posted by'}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
                             />
-                          ) : (
-                            <span className="text-orange-600 dark:text-orange-400 font-semibold text-sm">
-                              {(project.ownerName || project.ownerEmail || 'U').charAt(0).toUpperCase()}
-                            </span>
-                          )}
+                          ) : null}
+                          <span
+                            className={`text-orange-600 dark:text-orange-400 font-semibold text-sm w-full h-full flex items-center justify-center ${project.ownerProfilePicture ? 'hidden' : ''}`}
+                            aria-hidden={!!project.ownerProfilePicture}
+                          >
+                            {(project.ownerName || project.ownerEmail || 'U').charAt(0).toUpperCase()}
+                          </span>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-xs text-gray-500 dark:text-gray-400">Posted by</p>
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                             {project.ownerName || project.ownerEmail?.split('@')[0] || 'Anonymous'}
                           </p>
                         </div>
