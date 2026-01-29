@@ -74,7 +74,7 @@ const NotFound: React.FC = () => {
         {/* Lottie Animation */}
         {!animationError && (
           <div className="mb-12 flex justify-center">
-            <div className="w-full max-w-lg h-96 md:h-[500px]">
+            <div className="w-full max-w-xl h-[420px] md:h-[560px]">
               {isLoading ? (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>

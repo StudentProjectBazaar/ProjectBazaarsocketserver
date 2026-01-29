@@ -869,7 +869,7 @@ const PostBidRequestProjectPage: React.FC<PostBidRequestProjectPageProps> = () =
             </div>
           ) : myProjects.length === 0 ? (
             <div className="text-center py-16">
-              <div className="mx-auto mb-4 w-full max-w-[280px] h-[200px] flex items-center justify-center">
+              <div className="mx-auto mb-4 w-full max-w-[380px] h-[280px] flex items-center justify-center">
                 <Lottie
                   animationData={noProjectAnimation}
                   loop
@@ -1116,7 +1116,7 @@ const PostBidRequestProjectPage: React.FC<PostBidRequestProjectPageProps> = () =
                 </div>
               ) : projectBids.length === 0 ? (
                 <div className="text-center py-16">
-                  <div className="mx-auto mb-4 w-full max-w-[280px] h-[200px] flex items-center justify-center">
+                  <div className="mx-auto mb-4 w-full max-w-[380px] h-[280px] flex items-center justify-center">
                     <Lottie
                       animationData={noProjectBidsAnimation}
                       loop

@@ -502,7 +502,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                                         </>
                                     ) : !isLoadingProjects && !projectsError ? (
                                         <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
-                                            <div className="mx-auto mb-4 w-full max-w-[280px] h-[200px] flex items-center justify-center">
+                                            <div className="mx-auto mb-4 w-full max-w-[380px] h-[280px] flex items-center justify-center">
                                                 <Lottie
                                                     animationData={noProjectAnimation}
                                                     loop

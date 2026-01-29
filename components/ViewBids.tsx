@@ -152,7 +152,7 @@ const ViewBids: React.FC<ViewBidsProps> = ({ projectId, isProjectOwner = false, 
   if (bids.length === 0) {
     return (
       <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-xl">
-        <div className="mx-auto mb-4 w-full max-w-[280px] h-[200px] flex items-center justify-center">
+        <div className="mx-auto mb-4 w-full max-w-[380px] h-[280px] flex items-center justify-center">
           <Lottie
             animationData={noProjectBidsAnimation}
             loop

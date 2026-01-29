@@ -397,7 +397,7 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
       <>
         {renderToast()}
         <div className="bg-white rounded-2xl border border-orange-200 p-8 text-center shadow-sm">
-          <div className="mx-auto mb-4 w-full max-w-[280px] h-[200px] flex items-center justify-center">
+          <div className="mx-auto mb-4 w-full max-w-[380px] h-[280px] flex items-center justify-center">
             <Lottie
               animationData={noPortfolioAnimation}
               loop

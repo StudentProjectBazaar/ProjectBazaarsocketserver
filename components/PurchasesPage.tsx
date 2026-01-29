@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import Lottie from 'lottie-react';
 import OrangeCheckbox from './OrangeCheckbox';
 import { useAuth } from '../App';
+import noPurchaseAnimation from '../lottiefiles/no_purchase_animation.json';
 import { fetchUserData, Purchase } from '../services/buyerApi';
 import ReportProjectModal from './ReportProjectModal';
 
@@ -550,9 +552,13 @@ const PurchasesPage: React.FC = () => {
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center">
-                                            <svg className="h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
+                                            <div className="mx-auto mb-4 w-full max-w-[320px] h-[220px] flex items-center justify-center">
+                                                <Lottie
+                                                    animationData={noPurchaseAnimation}
+                                                    loop
+                                                    className="w-full h-full"
+                                                />
+                                            </div>
                                             <p className="text-gray-500 text-sm font-medium">
                                                 {searchQuery ? 'No purchases found' : 'You have no purchases yet'}
                                             </p>
@@ -696,9 +702,13 @@ const PurchasesPage: React.FC = () => {
                         ) : (
                             <div className="py-12 text-center">
                                 <div className="flex flex-col items-center">
-                                    <svg className="h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
+                                    <div className="mx-auto mb-4 w-full max-w-[380px] h-[280px] flex items-center justify-center">
+                                        <Lottie
+                                            animationData={noPurchaseAnimation}
+                                            loop
+                                            className="w-full h-full"
+                                        />
+                                    </div>
                                     <p className="text-gray-500 text-sm font-medium">
                                         {searchQuery ? 'No purchases found' : 'You have no purchases yet'}
                                     </p>

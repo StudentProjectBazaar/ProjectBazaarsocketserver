@@ -1,7 +1,9 @@
 import React from 'react';
+import Lottie from 'lottie-react';
 import type { BuyerProject } from './BuyerProjectCard';
 import BuyerProjectCard from './BuyerProjectCard';
 import { useWishlist } from './DashboardPage';
+import noWishlistAnimation from '../lottiefiles/no_wishlist_animation.json';
 
 interface WishlistPageProps {
   allProjects: BuyerProject[];
@@ -24,9 +26,13 @@ const WishlistPage: React.FC<WishlistPageProps> = ({ allProjects, onViewDetails 
   if (wishlistProjects.length === 0) {
     return (
       <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
-        <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-        </svg>
+        <div className="mx-auto mb-4 w-full max-w-[380px] h-[280px] flex items-center justify-center">
+          <Lottie
+            animationData={noWishlistAnimation}
+            loop
+            className="w-full h-full"
+          />
+        </div>
         <p className="text-gray-500 text-lg font-medium">Your wishlist is empty</p>
         <p className="text-gray-400 text-sm mt-2">Start adding projects to your wishlist!</p>
       </div>
