@@ -7,12 +7,12 @@ const USER_PROGRESS_API = 'https://jzrc9iaj3j.execute-api.ap-south-2.amazonaws.c
 
 // Helper to get current user ID (from localStorage or auth)
 const getCurrentUserId = (): string | null => {
-  // Try to get user from localStorage
-  const userStr = localStorage.getItem('user');
+  // Try to get user from localStorage - check both 'userData' and 'user' keys
+  const userStr = localStorage.getItem('userData') || localStorage.getItem('user');
   if (userStr) {
     try {
       const user = JSON.parse(userStr);
-      return user.userId || user.id || null;
+      return user.userId || user.id || user.email || null;
     } catch {
       return null;
     }
@@ -546,11 +546,12 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
       const userId = getCurrentUserId();
       setCurrentUserId(userId);
       
-      const userStr = localStorage.getItem('user');
+      // Check both 'userData' and 'user' keys
+      const userStr = localStorage.getItem('userData') || localStorage.getItem('user');
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
-          setCurrentUserName(user.fullName || user.name || 'Anonymous');
+          setCurrentUserName(user.fullName || user.name || user.email?.split('@')[0] || 'Anonymous');
         } catch {
           setCurrentUserName('Anonymous');
         }
@@ -952,9 +953,30 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Top Bar */}
-      <div className="h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4">
-        {/* Left: Tabs */}
-        <div className="flex items-center gap-1">
+      <div className="h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6">
+        {/* Left: Back Button + Tabs */}
+        <div className="flex items-center gap-4">
+          {/* Back Button */}
+          <div className="relative group">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+              <span className="text-sm font-medium">Back</span>
+            </button>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-white text-gray-800 text-xs font-medium rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 shadow-lg border border-gray-200">
+              Return to Problem List
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+
+          {/* Tabs */}
+          <div className="flex items-center gap-1">
           {[
             { id: 'description', label: 'Description' },
             { id: 'discussion', label: 'Discussion' },
@@ -972,6 +994,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
               {tab.label}
             </button>
           ))}
+          </div>
         </div>
 
         {/* Center: Timer & Score */}
@@ -1030,7 +1053,6 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
             <button
               onClick={() => setShowResetConfirm(true)}
               className="p-2 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
-              title="Reset Code"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -1465,7 +1487,6 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
                 onClick={handleRun}
                 disabled={isRunning || isSubmitting}
                 className="p-2 text-gray-400 hover:text-white hover:bg-[#404040] rounded transition-colors disabled:opacity-50"
-                title="Run Code"
               >
                 {isRunning ? (
                   <svg className="w-[18px] h-[18px] animate-spin" fill="none" viewBox="0 0 24 24">
@@ -1489,7 +1510,6 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
                 onClick={handleSubmit}
                 disabled={isRunning || isSubmitting}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2cbb5d] hover:bg-[#26a34f] text-white text-sm font-medium rounded transition-colors disabled:opacity-50"
-                title="Submit Solution"
               >
                 {isSubmitting ? (
                   <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -1523,7 +1543,6 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
                 }}
                 id="copy-code-btn"
                 className="p-2 text-gray-400 hover:text-gray-200 hover:bg-[#404040] rounded transition-colors"
-                title="Copy Code"
               >
                 <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
