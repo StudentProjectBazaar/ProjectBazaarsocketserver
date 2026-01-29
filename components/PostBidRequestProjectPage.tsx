@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import Lottie from 'lottie-react';
 import { useAuth } from '../App';
+import noProjectBidsAnimation from '../lottiefiles/no_project_bids_animation.json';
+import noProjectAnimation from '../lottiefiles/no_project_animation.json';
 import { createBidRequestProject, getBidRequestProjectsByBuyer, deleteBidRequestProject, updateBidRequestProjectStatus } from '../services/bidRequestProjectsApi';
 import { getBidsByProjectIdAsync, acceptBid, rejectBid } from '../services/bidsService';
 import type { BrowseProject } from '../types/browse';
@@ -866,14 +869,18 @@ const PostBidRequestProjectPage: React.FC<PostBidRequestProjectPageProps> = () =
             </div>
           ) : myProjects.length === 0 ? (
             <div className="text-center py-16">
-              <svg className="mx-auto h-16 w-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
+              <div className="mx-auto mb-4 w-full max-w-[280px] h-[200px] flex items-center justify-center">
+                <Lottie
+                  animationData={noProjectAnimation}
+                  loop
+                  className="w-full h-full"
+                />
+              </div>
               <p className="text-gray-500 dark:text-gray-400 text-lg font-medium mb-2">No projects posted yet</p>
               <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">Post your first project to start receiving bids from freelancers</p>
               <button
                 onClick={() => setActiveTab('post')}
-                className="px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-xl hover:from-orange-600 hover:to-amber-600 transition-all duration-200 shadow-lg shadow-orange-500/30 hover:shadow-xl transform hover:-translate-y-0.5"
+                className="px-8 py-4 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-colors duration-200 shadow-sm"
               >
                 Post Your First Project
               </button>
@@ -1109,9 +1116,13 @@ const PostBidRequestProjectPage: React.FC<PostBidRequestProjectPageProps> = () =
                 </div>
               ) : projectBids.length === 0 ? (
                 <div className="text-center py-16">
-                  <svg className="mx-auto h-16 w-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                  </svg>
+                  <div className="mx-auto mb-4 w-full max-w-[280px] h-[200px] flex items-center justify-center">
+                    <Lottie
+                      animationData={noProjectBidsAnimation}
+                      loop
+                      className="w-full h-full"
+                    />
+                  </div>
                   <p className="text-gray-500 dark:text-gray-400 text-lg font-medium mb-2">No bids yet</p>
                   <p className="text-gray-400 dark:text-gray-500 text-sm">
                     Freelancers will start bidding on your project soon
