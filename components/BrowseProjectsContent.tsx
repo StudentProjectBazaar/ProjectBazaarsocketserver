@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import Lottie from 'lottie-react';
 import type { BrowseProject } from '../types/browse';
 import { useAuth } from '../App';
 import { saveBidAsync, hasFreelancerBidOnProjectAsync, getBidStatsForProjectAsync, type BidStats } from '../services/bidsService';
 import { getAllBidRequestProjects } from '../services/bidRequestProjectsApi';
 import type { BidFormData } from '../types/bids';
+import noProjectBidsAnimation from '../lottiefiles/no_project_bids_animation.json';
 
 // API endpoint for fetching owner profiles
 const GET_USER_ENDPOINT = 'https://knb5lt8to2.execute-api.ap-south-2.amazonaws.com/default/Get_User_By_ID';
@@ -973,9 +975,13 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
             </div>
           ) : (
             <div className="text-center py-16 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl">
-              <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <div className="mx-auto mb-4 w-full max-w-[380px] h-[280px] flex items-center justify-center">
+                <Lottie
+                  animationData={noProjectBidsAnimation}
+                  loop
+                  className="w-full h-full"
+                />
+              </div>
               <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">No projects found</p>
               <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
                 Try adjusting your filters or search query
