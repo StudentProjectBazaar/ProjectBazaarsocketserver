@@ -599,6 +599,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   const [showFullScreenWarning, setShowFullScreenWarning] = useState(false);
   const [, setCopyPasteAttempts] = useState(0);
   const [showUnansweredConfirmModal, setShowUnansweredConfirmModal] = useState(false);
+  const [showTerminationAlert, setShowTerminationAlert] = useState(false);
   const [terminationReason, setTerminationReason] = useState<'completed' | 'tab_switch' | 'fullscreen_exit' | 'time_expired' | null>(null);
 
   // Custom test case input for programming questions
@@ -1019,9 +1020,9 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
         setTabSwitchCount(prev => {
           const newCount = prev + 1;
           if (newCount >= MAX_TAB_SWITCHES) {
-            // Auto-submit on max violations
+            // Show termination alert instead of auto-submitting
             setTerminationReason('tab_switch');
-            setTimeout(() => handleSubmitTest(), 100);
+            setShowTerminationAlert(true);
           } else {
             setShowTabWarningModal(true);
           }
@@ -1034,8 +1035,9 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
       setTabSwitchCount(prev => {
         const newCount = prev + 1;
         if (newCount >= MAX_TAB_SWITCHES) {
+          // Show termination alert instead of auto-submitting
           setTerminationReason('tab_switch');
-          setTimeout(() => handleSubmitTest(), 100);
+          setShowTerminationAlert(true);
         } else {
           setShowTabWarningModal(true);
         }
@@ -1106,8 +1108,9 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
         setFullScreenExitCount(prev => {
           const newCount = prev + 1;
           if (newCount >= MAX_FULLSCREEN_EXITS) {
+            // Show termination alert instead of auto-submitting
             setTerminationReason('fullscreen_exit');
-            setTimeout(() => handleSubmitTest(), 100);
+            setShowTerminationAlert(true);
           } else {
             setShowFullScreenWarning(true);
           }
@@ -3117,6 +3120,58 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     </div>
   );
 
+  // Termination alert modal (shown when test is auto-terminated due to anti-cheat violations)
+  const renderTerminationAlertModal = () => {
+    const isTabSwitch = terminationReason === 'tab_switch';
+    const isFullScreenExit = terminationReason === 'fullscreen_exit';
+
+    return (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8">
+          <div className="flex items-center justify-center w-20 h-20 mx-auto mb-5 bg-red-100 dark:bg-red-900/30 rounded-full">
+            <svg className="w-10 h-10 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+
+          <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 text-center mb-3">
+            Test Terminated
+          </h2>
+
+          <p className="text-gray-700 dark:text-gray-300 text-center mb-4 font-medium">
+            {isTabSwitch && 'Your test has been automatically terminated due to exceeding the maximum tab switch limit.'}
+            {isFullScreenExit && 'Your test has been automatically terminated due to exceeding the maximum fullscreen exit limit.'}
+          </p>
+
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-3 text-red-700 dark:text-red-400">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm">
+                {isTabSwitch && `Tab switches: ${tabSwitchCount}/${MAX_TAB_SWITCHES}`}
+                {isFullScreenExit && `Fullscreen exits: ${fullScreenExitCount}/${MAX_FULLSCREEN_EXITS}`}
+              </span>
+            </div>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-3">
+              Your answers will be submitted and scored. This violation has been recorded.
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowTerminationAlert(false);
+              proceedWithSubmission();
+            }}
+            className="w-full py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition shadow-lg shadow-red-500/30"
+          >
+            View Results
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // Code hints for programming questions
   const getHintsForQuestion = (questionId: number): string[] => {
     const hintsMap: Record<number, string[]> = {
@@ -4005,6 +4060,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
         {showTabWarningModal && antiCheatMode && renderTabWarningModal()}
         {showFullScreenWarning && antiCheatMode && renderFullScreenWarningModal()}
         {showUnansweredConfirmModal && renderUnansweredConfirmModal()}
+        {showTerminationAlert && antiCheatMode && renderTerminationAlertModal()}
       </div>
     );
   };
