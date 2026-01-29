@@ -27,6 +27,28 @@ const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, o
     const [purchaseError, setPurchaseError] = useState<string | null>(null);
     const [isAlreadyPurchased, setIsAlreadyPurchased] = useState(isPurchased || false);
     const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+    const [resourceViewer, setResourceViewer] = useState<{ url: string; title: string; isVideo: boolean } | null>(null);
+
+    // Convert video URL to embed URL for in-app playback
+    const getVideoEmbedUrl = (url: string): string => {
+        try {
+            if (/youtube\.com\/watch\?v=/.test(url)) {
+                const match = url.match(/[?&]v=([^&]+)/);
+                return match ? `https://www.youtube.com/embed/${match[1]}` : url;
+            }
+            if (/youtu\.be\//.test(url)) {
+                const match = url.match(/youtu\.be\/([^?]+)/);
+                return match ? `https://www.youtube.com/embed/${match[1]}` : url;
+            }
+            if (/vimeo\.com\//.test(url)) {
+                const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+                return match ? `https://player.vimeo.com/video/${match[1]}` : url;
+            }
+            return url;
+        } catch {
+            return url;
+        }
+    };
 
     // Check if user already purchased this course
     useEffect(() => {
@@ -479,17 +501,17 @@ const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, o
                                                     {course.content.videos.map((video, index) => (
                                                         <div key={index} className="p-4 bg-white border border-gray-200 rounded-lg">
                                                             <h4 className="font-semibold text-gray-900 mb-2">{video.title}</h4>
-                                                            <a
-                                                                href={video.url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setResourceViewer({ url: video.url, title: video.title, isVideo: true })}
                                                                 className="text-orange-600 hover:text-orange-700 text-sm font-medium flex items-center gap-2"
                                                             >
                                                                 Watch Video
                                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                                 </svg>
-                                                            </a>
+                                                            </button>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -507,12 +529,11 @@ const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, o
                                                 </h3>
                                                 <div className="space-y-3">
                                                     {course.content.notes.map((note, index) => (
-                                                        <a
+                                                        <button
                                                             key={index}
-                                                            href={note.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-orange-300 hover:shadow-sm transition-all"
+                                                            type="button"
+                                                            onClick={() => setResourceViewer({ url: note.url, title: note.name, isVideo: false })}
+                                                            className="w-full flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-orange-300 hover:shadow-sm transition-all text-left"
                                                         >
                                                             <div className="flex items-center gap-3">
                                                                 <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -521,9 +542,9 @@ const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, o
                                                                 <span className="font-medium text-gray-900">{note.name}</span>
                                                             </div>
                                                             <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                                             </svg>
-                                                        </a>
+                                                        </button>
                                                     ))}
                                                 </div>
                                             </div>
@@ -540,12 +561,11 @@ const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, o
                                                 </h3>
                                                 <div className="space-y-3">
                                                     {course.content.additionalResources.map((resource, index) => (
-                                                        <a
+                                                        <button
                                                             key={index}
-                                                            href={resource.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-purple-300 hover:shadow-sm transition-all"
+                                                            type="button"
+                                                            onClick={() => setResourceViewer({ url: resource.url, title: resource.name, isVideo: false })}
+                                                            className="w-full flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-purple-300 hover:shadow-sm transition-all text-left"
                                                         >
                                                             <div className="flex items-center gap-3">
                                                                 <svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -554,9 +574,9 @@ const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, o
                                                                 <span className="font-medium text-gray-900">{resource.name}</span>
                                                             </div>
                                                             <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                                             </svg>
-                                                        </a>
+                                                        </button>
                                                     ))}
                                                 </div>
                                             </div>
@@ -599,7 +619,7 @@ const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, o
                                     {course.isFree ? (
                                         <span className="text-green-600">Free</span>
                                     ) : (
-                                        <span>{course.currency} {course.price}</span>
+                                        <span>₹{(course.currency === 'USD' ? course.price * 83 : course.price).toLocaleString('en-IN')}</span>
                                     )}
                                 </div>
                             </div>
@@ -729,9 +749,45 @@ const CourseDetailsPage: React.FC<CourseDetailsPageProps> = ({ course, onBack, o
                     </div>
                 </div>
             </div>
+
+            {/* In-app resource / video viewer modal */}
+            {resourceViewer && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="resource-viewer-title"
+                >
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                            <h2 id="resource-viewer-title" className="text-lg font-semibold text-gray-900 truncate pr-4">
+                                {resourceViewer.title}
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={() => setResourceViewer(null)}
+                                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                                aria-label="Close"
+                            >
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="flex-1 min-h-0 rounded-b-xl overflow-hidden">
+                            <iframe
+                                src={resourceViewer.isVideo ? getVideoEmbedUrl(resourceViewer.url) : resourceViewer.url}
+                                title={resourceViewer.title}
+                                className="w-full h-full min-h-[70vh]"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default CourseDetailsPage;
-

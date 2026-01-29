@@ -873,7 +873,7 @@ const CoursesManagementPage: React.FC = () => {
                                             <p className="text-sm text-gray-600 mb-2 line-clamp-2">{course.description}</p>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-orange-500 font-bold">
-                                                    {course.isFree ? 'Free' : `${course.currency} ${course.price}`}
+                                                    {course.isFree ? 'Free' : `₹${(course.currency === 'USD' ? course.price * 83 : course.price).toLocaleString('en-IN')}`}
                                                 </span>
                                                 <span className={`px-2 py-1 rounded text-xs ${
                                                     course.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'

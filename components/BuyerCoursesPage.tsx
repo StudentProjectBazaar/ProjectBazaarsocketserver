@@ -469,7 +469,7 @@ const BuyerCoursesPage: React.FC<BuyerCoursesPageProps> = ({ onViewCourse }) => 
                                             {course.isFree ? (
                                                 <span className="text-green-600 font-bold text-lg">Free</span>
                                             ) : (
-                                                <span className="text-orange-600 font-bold text-xl">{course.currency} {course.price}</span>
+                                                <span className="text-orange-600 font-bold text-xl">₹{(course.currency === 'USD' ? course.price * 83 : course.price).toLocaleString('en-IN')}</span>
                                             )}
                                         </div>
                                         <button 
