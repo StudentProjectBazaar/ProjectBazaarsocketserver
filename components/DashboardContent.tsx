@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Lottie from 'lottie-react';
 import { useAuth } from '../App';
+import noProjectAnimation from '../lottiefiles/no_project_animation.json';
 import { fetchUserData } from '../services/buyerApi';
 import DashboardHeader from './DashboardHeader';
 import BuyerProjectCard from './BuyerProjectCard';
@@ -199,7 +201,13 @@ interface DashboardContentProps {
 
 const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setDashboardMode, activeView, isSidebarOpen, toggleSidebar, setActiveView }) => {
     const { userId, userEmail } = useAuth();
+    const mainScrollRef = useRef<HTMLElement>(null);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Scroll main content to top when sidebar view changes
+    useEffect(() => {
+        mainScrollRef.current?.scrollTo(0, 0);
+    }, [activeView]);
     const [buyerProjectView, setBuyerProjectView] = useState<'all' | 'activated' | 'disabled'>('all');
     const [browseView, setBrowseView] = useState<'all' | 'freelancers' | 'projects'>('all');
     const [projects, setProjects] = useState<BuyerProject[]>([]);
@@ -494,9 +502,13 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                                         </>
                                     ) : !isLoadingProjects && !projectsError ? (
                                         <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
-                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
+                                            <div className="mx-auto mb-4 w-full max-w-[280px] h-[200px] flex items-center justify-center">
+                                                <Lottie
+                                                    animationData={noProjectAnimation}
+                                                    loop
+                                                    className="w-full h-full"
+                                                />
+                                            </div>
                                             <p className="text-gray-500 text-lg font-medium">No projects found</p>
                                             <p className="text-gray-400 text-sm mt-2">
                                                 {searchQuery ? `No projects match "${searchQuery}"` : projects.length === 0 ? 'No projects available at the moment. Please check back later.' : 'Try adjusting your filters'}
@@ -762,7 +774,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
     };
 
     return (
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-white">
+        <main ref={mainScrollRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-white">
             {activeView === 'help-center' ? (
                 dashboardMode === 'buyer' ? renderBuyerContent() : renderSellerContent()
             ) : (

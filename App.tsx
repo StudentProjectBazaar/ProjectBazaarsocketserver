@@ -165,6 +165,11 @@ const AppContent: React.FC = () => {
   const { page } = useNavigation();
   const { isLoggedIn, userRole } = useAuth();
 
+  // Scroll to top when navigating to a new page (sidebar / route change)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
   switch (page) {
     case 'auth':
       return <AuthPage />;

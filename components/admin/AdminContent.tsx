@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { AdminView } from './AdminDashboard';
 import ProjectManagementPage from './ProjectManagementPage';
 import FraudManagementPage from './FraudManagementPage';
@@ -43,7 +43,13 @@ interface AdminContentProps {
 }
 
 const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, setActiveView }) => {
+    const contentScrollRef = useRef<HTMLDivElement>(null);
     const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; email: string } | null>(null);
+
+    // Scroll content to top when sidebar view changes
+    useEffect(() => {
+        contentScrollRef.current?.scrollTo(0, 0);
+    }, [activeView]);
     const [userProjects, setUserProjects] = useState<AdminProject[]>([]);
     const [selectedProject, setSelectedProject] = useState<AdminProject | null>(null);
     const [selectedReport, setSelectedReport] = useState<any | null>(null);
@@ -184,7 +190,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
+            <div ref={contentScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
                 {activeView === 'project-management' && (
                     <ProjectManagementPage 
                         onViewUser={handleViewUser}
