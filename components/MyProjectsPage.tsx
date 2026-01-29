@@ -719,14 +719,76 @@ const MyProjectsPage: React.FC = () => {
                 )}
             </div>
 
-            {/* Loading State */}
+            {/* Loading State - Skeleton */}
             {isLoadingProjects ? (
-                <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
-                    <svg className="animate-spin h-12 w-12 text-orange-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p className="text-gray-500 text-lg font-medium">Loading projects...</p>
+                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                                <tr>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                        <div className="flex items-center gap-2">
+                                            <span>Project</span>
+                                        </div>
+                                    </th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                                    <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Sales</th>
+                                    <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Views</th>
+                                    <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Likes</th>
+                                    <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Price</th>
+                                    <th scope="col" className="px-8 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-100">
+                                {[...Array(5)].map((_, index) => (
+                                    <tr key={index} className="animate-pulse">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex-shrink-0 h-14 w-14 rounded-lg bg-gray-200"></div>
+                                                <div className="flex-1 min-w-0 space-y-2">
+                                                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                                    <div className="h-3 bg-gray-100 rounded w-1/2"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="space-y-1">
+                                                <div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div>
+                                                <div className="h-3 bg-gray-100 rounded w-12 mx-auto"></div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="space-y-1">
+                                                <div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div>
+                                                <div className="h-3 bg-gray-100 rounded w-12 mx-auto"></div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="space-y-1">
+                                                <div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div>
+                                                <div className="h-3 bg-gray-100 rounded w-12 mx-auto"></div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="space-y-1">
+                                                <div className="h-4 bg-gray-200 rounded w-16 ml-auto"></div>
+                                                <div className="h-3 bg-gray-100 rounded w-20 ml-auto"></div>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-4">
+                                            <div className="flex items-center justify-center gap-4">
+                                                <div className="h-8 w-8 bg-gray-200 rounded-lg"></div>
+                                                <div className="h-8 w-8 bg-gray-200 rounded-lg"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             ) : projectsError ? (
                 <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
