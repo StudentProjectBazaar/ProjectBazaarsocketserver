@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { reportProject, ReportProjectRequest } from '../services/buyerApi';
 
 interface ReportProjectModalProps {
@@ -7,19 +7,17 @@ interface ReportProjectModalProps {
   projectId: string;
   projectTitle: string;
   buyerId: string;
-  isPurchased?: boolean; // Whether the user has purchased this project
+  isPurchased?: boolean;
   onSuccess?: () => void;
 }
 
-const ALL_REPORT_REASONS = [
-  { value: 'NOT_WORKING', label: 'Project Not Working', description: 'Project fails to run or has critical errors', requiresPurchase: true },
-  { value: 'MISSING_FILES', label: 'Missing Files', description: 'Required files or dependencies are missing', requiresPurchase: true },
-  { value: 'POOR_QUALITY', label: 'Poor Quality', description: 'Code quality is below expectations', requiresPurchase: false },
-  { value: 'MISMATCHED_DESCRIPTION', label: 'Description Mismatch', description: 'Project does not match the description or preview', requiresPurchase: false },
-  { value: 'SCAM', label: 'Suspected Scam', description: 'Project appears to be fraudulent or malicious', requiresPurchase: false },
-  { value: 'INAPPROPRIATE_CONTENT', label: 'Inappropriate Content', description: 'Project contains inappropriate, offensive, or harmful content', requiresPurchase: false },
-  { value: 'COPYRIGHT_VIOLATION', label: 'Copyright Violation', description: 'Project appears to violate copyright or intellectual property', requiresPurchase: false },
-  { value: 'OTHER', label: 'Other', description: 'Other issues not listed above', requiresPurchase: false },
+const REPORT_REASONS = [
+  { value: 'POOR_QUALITY', label: 'Poor Quality', subtext: 'Code quality is below expectations' },
+  { value: 'DESCRIPTION_MISMATCH', label: 'Description Mismatch', subtext: 'Project does not match the description or preview' },
+  { value: 'SUSPECTED_SCAM', label: 'Suspected Scam', subtext: 'Project appears to be fraudulent or malicious' },
+  { value: 'INAPPROPRIATE_CONTENT', label: 'Inappropriate Content', subtext: 'Project contains inappropriate, offensive, or harmful content' },
+  { value: 'COPYRIGHT_VIOLATION', label: 'Copyright Violation', subtext: 'Project appears to violate copyright or intellectual property' },
+  { value: 'OTHER', label: 'Other', subtext: 'Other issues not listed above' },
 ];
 
 const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
@@ -31,10 +29,6 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
   isPurchased = false,
   onSuccess,
 }) => {
-  // Filter reasons based on purchase status
-  const REPORT_REASONS = ALL_REPORT_REASONS.filter(reason => 
-    !reason.requiresPurchase || isPurchased
-  );
   const [reason, setReason] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [attachments, setAttachments] = useState<string[]>(['']);
@@ -42,9 +36,22 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Auto-fill description when reason is selected
+  useEffect(() => {
+    if (reason) {
+      const selectedReason = REPORT_REASONS.find(opt => opt.value === reason);
+      if (selectedReason) {
+        // Auto-fill the description with the subtext
+        setDescription(selectedReason.subtext);
+      }
+    } else {
+      // Clear description when reason is cleared
+      setDescription('');
+    }
+  }, [reason]);
+
   const handleClose = () => {
     if (!isSubmitting) {
-      // Reset form
       setReason('');
       setDescription('');
       setAttachments(['']);
@@ -74,7 +81,7 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
   };
 
   const validateUrl = (url: string): boolean => {
-    if (!url.trim()) return true; // Empty URLs are allowed (will be filtered)
+    if (!url.trim()) return true;
     const urlPattern = /^https?:\/\/.+$/;
     return urlPattern.test(url.trim());
   };
@@ -83,7 +90,6 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
     e.preventDefault();
     setError(null);
 
-    // Validation
     if (!buyerId) {
       setError('You must be logged in to report a project');
       return;
@@ -99,7 +105,6 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
       return;
     }
 
-    // Validate attachment URLs
     const validAttachments = attachments
       .map((url) => url.trim())
       .filter((url) => url.length > 0);
@@ -159,30 +164,27 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-hidden transform transition-all">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-red-500 via-orange-500 to-orange-400 px-6 py-5 flex items-center justify-between relative overflow-hidden">
-            {/* Background Pattern - Plus signs */}
-            <div className="absolute inset-0 opacity-20">
-              <div className="absolute inset-0" style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M20 18v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4z'/%3E%3C/g%3E%3C/svg%3E")`,
-              }}></div>
-            </div>
-            <div className="relative z-10 flex items-center gap-4 flex-1">
-              <div className="p-3 bg-amber-100 rounded-xl shadow-sm">
-                <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden transform transition-all">
+          {/* Header - Orange Background */}
+          <div className="bg-orange-500 px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-4 flex-1">
+              {/* Warning Icon */}
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
+              {/* Title and Subtitle */}
               <div className="flex-1">
                 <h2 className="text-xl font-bold text-white">Report Project Issue</h2>
-                <p className="text-white/80 text-sm mt-0.5 line-clamp-1">{projectTitle}</p>
+                <p className="text-white/90 text-sm mt-0.5">AI Resume Analyzer</p>
               </div>
             </div>
+            {/* Close Button */}
             <button
               onClick={handleClose}
               disabled={isSubmitting}
-              className="relative z-10 text-white hover:text-white/80 p-2 hover:bg-white/10 rounded-lg transition-all disabled:opacity-50"
+              className="text-white hover:text-white/80 p-2 hover:bg-white/10 rounded-lg transition-all disabled:opacity-50"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -204,151 +206,114 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Reason Selection */}
+                {/* Reason for Reporting Section */}
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-3">
-                    <span className="w-1 h-5 bg-red-500 rounded-full"></span>
-                    Reason for Reporting <span className="text-red-500">*</span>
-                  </label>
+                  {/* Blue Info Note Box - At the top */}
                   {!isPurchased && (
-                    <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-2.5">
-                      <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
-                      <p className="text-sm text-blue-700">
-                        <span className="font-semibold text-blue-800">Note:</span> Since you haven't purchased this project, some report options are limited. You can report issues visible in the description, preview, or images.
+                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <span className="font-semibold">Note:</span> Since you haven't purchased this project, some report options are limited. You can report issues visible in the description, preview, or images.
                       </p>
                     </div>
                   )}
-                  <div className="space-y-2">
-                    {REPORT_REASONS.map((option) => (
-                      <label
-                        key={option.value}
-                        className={`group flex items-center p-4 rounded-xl border cursor-pointer transition-all ${
-                          reason === option.value
-                            ? 'border-orange-400 bg-orange-50/50'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
-                        }`}
+
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Reason for Reporting <span className="text-red-500">(Required)</span>
+                  </label>
+
+                  {/* Dropdown Select */}
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm text-gray-700 whitespace-nowrap">
+                      I would like to
+                    </label>
+                    <div className="flex-1 relative">
+                      <select
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 appearance-none cursor-pointer pr-10"
                       >
-                        <div className="flex items-center justify-center">
-                          <input
-                            type="radio"
-                            name="reason"
-                            value={option.value}
-                            checked={reason === option.value}
-                            onChange={(e) => setReason(e.target.value)}
-                            className="h-5 w-5 text-orange-500 focus:ring-orange-400 focus:ring-offset-0 border-2 border-gray-300 cursor-pointer"
-                          />
-                        </div>
-                        <div className="ml-4 flex-1">
-                          <div className="font-semibold text-gray-900">{option.label}</div>
-                          <div className="text-sm text-gray-500 mt-0.5">{option.description}</div>
-                        </div>
-                      </label>
-                    ))}
+                        <option value="">Select an option</option>
+                        {REPORT_REASONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      {/* Custom Dropdown Arrow */}
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Description */}
+                {/* Detailed Description Section */}
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
-                    <span className="w-1 h-5 bg-gradient-to-b from-red-500 to-orange-500 rounded-full"></span>
-                    Detailed Description <span className="text-red-500">*</span>
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Detailed Description <span className="text-red-500">(Required)</span>
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    rows={5}
+                    rows={6}
                     placeholder="Please provide detailed information about the issue you encountered. Be as specific as possible to help us understand and resolve the problem quickly..."
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent resize-none transition-all ${
-                      description.length > 0 && description.length < 10
-                        ? 'border-red-300 bg-red-50'
-                        : description.length >= 10
-                        ? 'border-green-300 bg-green-50'
-                        : 'border-gray-300'
-                    }`}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none transition-all"
                   />
-                  <div className="flex items-center justify-between mt-2">
-                    <p className={`text-xs font-medium ${
-                      description.length < 10
-                        ? 'text-red-600'
-                        : 'text-green-600'
-                    }`}>
-                      {description.length >= 10 ? (
-                        <span className="flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          {description.length} characters (minimum met)
-                        </span>
-                      ) : (
-                        `${description.length}/10 characters minimum`
-                      )}
-                    </p>
-                  </div>
+                  <p className="text-sm text-red-500 mt-2">
+                    {description.length}/10 characters minimum
+                  </p>
                 </div>
 
-                {/* Attachments */}
+                {/* Attachments Section */}
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
-                    <span className="w-1 h-5 bg-gradient-to-b from-red-500 to-orange-500 rounded-full"></span>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1">
                     Attachments (Optional)
-                    <span className="text-xs font-normal text-gray-500 ml-2">Max 5 URLs</span>
                   </label>
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <p className="text-xs text-gray-600 mb-3 flex items-start gap-2">
-                      <svg className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>Provide URLs to screenshots, error messages, or any other evidence that supports your report. Upload images to a service like imgur or use S3 URLs.</span>
+                  <p className="text-xs text-gray-500 mb-3">Max 5 URLs</p>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <p className="text-xs text-gray-600 mb-4">
+                      Provide URLs to screenshots, error messages, or any other evidence that supports your report. Upload images to a service like imgur or use S3 URLs.
                     </p>
+                    
                     <div className="space-y-3">
                       {attachments.map((url, index) => (
                         <div key={index} className="flex gap-2">
-                          <div className="flex-1 relative">
-                            <input
-                              type="url"
-                              value={url}
-                              onChange={(e) => handleAttachmentChange(index, e.target.value)}
-                              placeholder="https://example.com/screenshot.png"
-                              className={`w-full px-4 py-2.5 pr-10 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all ${
-                                url.trim() && !validateUrl(url)
-                                  ? 'border-red-300 bg-red-50'
-                                  : url.trim() && validateUrl(url)
-                                  ? 'border-green-300 bg-green-50'
-                                  : 'border-gray-300'
-                              }`}
-                            />
-                            {url && validateUrl(url) && (
-                              <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                            )}
-                          </div>
+                          <input
+                            type="url"
+                            value={url}
+                            onChange={(e) => handleAttachmentChange(index, e.target.value)}
+                            placeholder="https://example.com/screenshot.png"
+                            className={`flex-1 px-4 py-2.5 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all ${
+                              url.trim() && !validateUrl(url)
+                                ? 'border-red-300 bg-red-50'
+                                : 'border-gray-300 bg-white'
+                            }`}
+                          />
                           {attachments.length > 1 && (
                             <button
                               type="button"
                               onClick={() => removeAttachmentField(index)}
-                              className="px-4 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium flex items-center gap-2"
+                              className="px-4 py-2.5 text-red-600 hover:text-red-700 font-medium"
                             >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
                               Remove
                             </button>
                           )}
                         </div>
                       ))}
+                      
                       {attachments.length < 5 && (
                         <button
                           type="button"
                           onClick={addAttachmentField}
-                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-orange-600 hover:text-orange-700 font-medium text-sm border-2 border-dashed border-orange-300 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition-all"
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-orange-600 hover:text-orange-700 font-medium text-sm border-2 border-dashed border-orange-500 rounded-lg hover:bg-orange-50 transition-all"
                         >
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                           </svg>
-                          Add Another Attachment URL ({attachments.length}/5)
+                          + Add Another Attachment URL ({attachments.length}/5)
                         </button>
                       )}
                     </div>
@@ -357,28 +322,25 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
 
                 {/* Error Message */}
                 {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-                    <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <p className="text-red-800 text-sm">{error}</p>
                   </div>
                 )}
 
-                {/* Submit Buttons */}
-                <div className="flex gap-3 pt-4">
+                {/* Footer Buttons */}
+                <div className="flex gap-3 pt-4 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={handleClose}
                     disabled={isSubmitting}
-                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    disabled={isSubmitting || !reason || description.trim().length < 10}
+                    className="flex-1 px-6 py-3 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       <>
@@ -390,8 +352,8 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
                       </>
                     ) : (
                       <>
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                         Submit Report
                       </>
@@ -408,4 +370,3 @@ const ReportProjectModal: React.FC<ReportProjectModalProps> = ({
 };
 
 export default ReportProjectModal;
-
