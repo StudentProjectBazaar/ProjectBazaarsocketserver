@@ -260,8 +260,8 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
     return (
       <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-sm animate-slide-up ${
         toast.type === 'success' 
-          ? 'bg-[#16161f]/95 border-violet-500/30 text-white' 
-          : 'bg-[#16161f]/95 border-red-500/30 text-white'
+          ? 'bg-[#0d0d12]/95 border-violet-500/30 text-white' 
+          : 'bg-[#0d0d12]/95 border-red-500/30 text-white'
       }`}>
         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
           toast.type === 'success' ? 'bg-violet-500/20' : 'bg-red-500/20'
@@ -304,8 +304,8 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
     const portfolio = history.find(p => p.portfolioId === deleteConfirm);
     
     return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-[#16161f] rounded-2xl border border-white/10 p-6 max-w-sm w-full shadow-2xl">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-[#0d0d12] rounded-2xl border border-violet-500/20 p-6 max-w-sm w-full shadow-2xl shadow-black/50">
           <div className="text-center">
             <div className="w-14 h-14 mx-auto mb-4 bg-red-500/20 rounded-2xl flex items-center justify-center">
               <svg className="w-7 h-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -319,7 +319,7 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
             <div className="flex gap-3">
               <button
                 onClick={handleDeleteCancel}
-                className="flex-1 py-2.5 bg-[#0a0a0f] hover:bg-white/5 border border-white/10 text-white rounded-xl font-medium transition-colors"
+                className="flex-1 py-2.5 bg-[#1a1a24] hover:bg-[#252530] border border-white/10 text-white rounded-xl font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -340,8 +340,8 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
     return (
       <>
         {renderToast()}
-        <div className="bg-gradient-to-br from-[#16161f] to-[#1a1a28] rounded-2xl border border-violet-500/10 p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center">
+        <div className="bg-[#0d0d12] rounded-2xl border border-violet-500/10 p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-violet-500/10 rounded-2xl flex items-center justify-center">
             <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
@@ -357,7 +357,7 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
     return (
       <>
         {renderToast()}
-        <div className="bg-gradient-to-br from-[#16161f] to-[#1a1a28] rounded-2xl border border-violet-500/10 p-8">
+        <div className="bg-[#0d0d12] rounded-2xl border border-violet-500/10 p-8">
           <div className="flex items-center justify-center gap-3">
             <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
             <span className="text-gray-400">Loading history...</span>
@@ -371,8 +371,8 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
     return (
       <>
         {renderToast()}
-        <div className="bg-gradient-to-br from-[#16161f] to-[#1a1a28] rounded-2xl border border-violet-500/10 p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-2xl flex items-center justify-center">
+        <div className="bg-[#0d0d12] rounded-2xl border border-violet-500/10 p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-red-500/10 rounded-2xl flex items-center justify-center">
             <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
@@ -381,7 +381,7 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
           <p className="text-gray-400 text-sm mb-4">{error}</p>
           <button
             onClick={fetchHistory}
-            className="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-lg text-sm font-medium transition-all shadow-lg shadow-violet-500/20"
+            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium transition-all"
           >
             Try Again
           </button>
@@ -394,8 +394,8 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
     return (
       <>
         {renderToast()}
-        <div className="bg-gradient-to-br from-[#16161f] to-[#1a1a28] rounded-2xl border border-violet-500/10 p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center">
+        <div className="bg-[#0d0d12] rounded-2xl border border-violet-500/10 p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-violet-500/10 rounded-2xl flex items-center justify-center">
             <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
             </svg>
@@ -412,12 +412,12 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
       {renderToast()}
       {renderDeleteConfirm()}
       
-      <div className={compact ? '' : 'bg-gradient-to-br from-[#16161f] to-[#1a1a28] rounded-2xl border border-violet-500/10 p-6'}>
+      <div className={compact ? '' : 'bg-[#0d0d12] rounded-2xl border border-violet-500/10 p-6'}>
         {!compact && (
           <>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-violet-500/10 rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
@@ -436,8 +436,8 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
                   onClick={() => { setSelectedFilter('all'); setShowAll(false); }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                     selectedFilter === 'all'
-                      ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/20'
-                      : 'bg-[#0a0a0f] text-gray-400 hover:text-white border border-white/5 hover:border-violet-500/30'
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-[#1a1a24] text-gray-400 hover:text-white border border-white/5 hover:border-violet-500/30'
                   }`}
                 >
                   All ({history.length})
@@ -451,8 +451,8 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
                       onClick={() => { setSelectedFilter(templateId); setShowAll(false); }}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${
                         selectedFilter === templateId
-                          ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/20'
-                          : 'bg-[#0a0a0f] text-gray-400 hover:text-white border border-white/5 hover:border-violet-500/30'
+                          ? 'bg-violet-600 text-white'
+                          : 'bg-[#1a1a24] text-gray-400 hover:text-white border border-white/5 hover:border-violet-500/30'
                       }`}
                     >
                       <span>{template.thumbnail}</span>
@@ -473,14 +473,14 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
             <div
               key={portfolio.portfolioId}
               onClick={() => onSelectPortfolio?.(portfolio)}
-              className={`group relative bg-[#0a0a0f] rounded-xl border border-white/5 p-5 transition-all hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/5 ${
+              className={`group relative bg-[#1a1a24] rounded-xl border border-white/5 p-5 transition-all hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/5 ${
                 onSelectPortfolio ? 'cursor-pointer' : ''
               }`}
             >
               {/* Template Badge */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center text-xl">
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-xl">
                     {template.thumbnail}
                   </div>
                   <span 
@@ -496,7 +496,7 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
                 </div>
                 
                 {/* Actions Toolbar - Always visible on hover */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all bg-[#16161f]/90 backdrop-blur-sm rounded-lg p-1 border border-white/10">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all bg-[#0d0d12]/95 backdrop-blur-sm rounded-lg p-1 border border-violet-500/20">
                   <button
                     onClick={(e) => copyToClipboard(portfolio.liveUrl, e)}
                     className="p-2 hover:bg-white/5 rounded-lg transition-colors"
@@ -682,7 +682,7 @@ const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ onSelectPortfolio, 
         <div className="mt-6 text-center">
           <button
             onClick={() => setShowAll(!showAll)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0f] hover:bg-violet-500/10 border border-white/10 hover:border-violet-500/30 rounded-xl text-sm font-medium text-gray-400 hover:text-violet-400 transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1a1a24] hover:bg-violet-500/10 border border-white/10 hover:border-violet-500/30 rounded-xl text-sm font-medium text-gray-400 hover:text-violet-400 transition-all"
           >
             {showAll ? (
               <>
