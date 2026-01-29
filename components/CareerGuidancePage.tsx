@@ -149,11 +149,6 @@ const RoadmapIcon = () => (
 );
 
 
-const TargetIcon = () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
-);
 
 const TrendingIcon = () => (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -429,208 +424,7 @@ export const defaultProjectIdeas: ProjectIdea[] = [
 // OPTION BUTTON COMPONENT
 // ============================================
 
-interface OptionButtonProps {
-    option: string;
-    isSelected: boolean;
-    onToggle: (option: string) => void;
-}
 
-const OptionButton: React.FC<OptionButtonProps> = ({ option, isSelected, onToggle }) => (
-    <button
-        onClick={() => onToggle(option)}
-        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${isSelected
-            ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-    >
-        {option}
-    </button>
-);
-
-// ============================================
-// SELECTOR COMPONENT (REUSABLE)
-// ============================================
-
-interface SelectorProps {
-    title: string;
-    subtitle: string;
-    options: OptionItem[];
-    setOptions: React.Dispatch<React.SetStateAction<OptionItem[]>>;
-    onContinue: (selected: string[]) => void;
-    placeholder?: string;
-}
-
-const Selector: React.FC<SelectorProps> = ({ title, subtitle, options, setOptions, onContinue, placeholder }) => {
-    const [newOption, setNewOption] = useState('');
-
-    const toggleOption = (option: string) => {
-        setOptions(prev => prev.map(item =>
-            item.option === option ? { ...item, isSelected: !item.isSelected } : item
-        ));
-    };
-
-    const addNewOption = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (newOption.trim() && !options.some(o => o.option.toLowerCase() === newOption.toLowerCase())) {
-            setOptions(prev => [...prev, { option: newOption, isSelected: true }]);
-            setNewOption('');
-        }
-    };
-
-    const selectedOptions = options.filter(item => item.isSelected).map(item => item.option);
-
-    return (
-        <div>
-            <div className="mb-8 text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
-                <p className="text-gray-600">{subtitle}</p>
-            </div>
-
-            <div className="flex flex-wrap gap-3 justify-center mb-8">
-                {options.map((item, idx) => (
-                    <OptionButton
-                        key={idx}
-                        option={item.option}
-                        isSelected={item.isSelected}
-                        onToggle={toggleOption}
-                    />
-                ))}
-            </div>
-
-            <form onSubmit={addNewOption} className="flex gap-3 max-w-md mx-auto mb-8">
-                <input
-                    type="text"
-                    value={newOption}
-                    onChange={(e) => setNewOption(e.target.value)}
-                    placeholder={placeholder || "Add your own..."}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
-                />
-                <button
-                    type="submit"
-                    className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
-                >
-                    Add
-                </button>
-            </form>
-
-            <div className="text-center">
-                <button
-                    onClick={() => onContinue(selectedOptions)}
-                    disabled={selectedOptions.length === 0}
-                    className={`px-8 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${selectedOptions.length > 0
-                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 hover:-translate-y-0.5'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        }`}
-                >
-                    Continue ({selectedOptions.length} selected)
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ============================================
-// LOADING COMPONENT
-// ============================================
-
-const LoadingSpinner: React.FC<{ message?: string }> = ({ message = 'Analyzing your profile...' }) => (
-    <div className="flex flex-col items-center justify-center py-16">
-        <div className="relative">
-            <div className="w-20 h-20 border-4 border-orange-200 rounded-full animate-spin">
-                <div className="absolute top-0 left-0 w-20 h-20 border-4 border-transparent border-t-orange-500 rounded-full animate-spin" />
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-                <SparkleIcon />
-            </div>
-        </div>
-        <p className="mt-6 text-lg text-gray-600 font-medium">{message}</p>
-        <p className="mt-2 text-sm text-gray-500">This may take a few moments...</p>
-    </div>
-);
-
-// ============================================
-// RESULT COMPONENT
-// ============================================
-
-interface ResultProps {
-    result: string[];
-    onGenerateAgain: () => void;
-    onContinueToRoadmap: (career: string) => void;
-}
-
-const ResultComponent: React.FC<ResultProps> = ({ result, onGenerateAgain, onContinueToRoadmap }) => (
-    <div className="text-center">
-        <div className="mb-8">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full text-sm font-medium">
-                <SparkleIcon />
-                AI Career Recommendation
-            </span>
-        </div>
-
-        <h2 className="text-xl text-gray-600 mb-4">Based on your profile, we recommend you to be a</h2>
-
-        <div className="relative inline-block mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent animate-pulse">
-                {result[0]}
-            </h1>
-            <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/20 to-orange-600/20 blur-2xl -z-10 rounded-3xl" />
-        </div>
-
-        <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">🚩 Other careers you might be interested in:</h3>
-            <div className="flex flex-wrap gap-4 justify-center">
-                {result.slice(1, 4).map((career, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => onContinueToRoadmap(career)}
-                        className="px-6 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-xl font-medium text-gray-700 hover:shadow-lg hover:border-orange-300 hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                        {career}
-                    </button>
-                ))}
-            </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-                onClick={onGenerateAgain}
-                className="px-6 py-3 border-2 border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-                Generate Again
-            </button>
-            <button
-                onClick={() => onContinueToRoadmap(result[0])}
-                className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all duration-300"
-            >
-                Continue to Roadmap →
-            </button>
-        </div>
-    </div>
-);
-
-// ============================================
-// PROGRESS BAR COMPONENT
-// ============================================
-
-interface ProgressBarProps {
-    step: number;
-    totalSteps: number;
-}
-
-const ProgressBar: React.FC<ProgressBarProps> = ({ step, totalSteps }) => (
-    <div className="mb-8">
-        <div className="flex justify-between text-sm text-gray-500 mb-2">
-            <span>Step {step + 1} of {totalSteps}</span>
-            <span>{Math.round(((step + 1) / totalSteps) * 100)}%</span>
-        </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-                className="h-full bg-gradient-to-r from-orange-500 to-orange-600 rounded-full transition-all duration-500"
-                style={{ width: `${((step + 1) / totalSteps) * 100}%` }}
-            />
-        </div>
-    </div>
-);
 
 // ============================================
 // NEW ROADMAP FEATURE COMPONENT
@@ -3196,9 +2990,9 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [activeTab, setActiveTab] = useState<CareerTab>('trending');
     const [recommendStep, setRecommendStep] = useState<RecommendStep>(0);
-    const [responses, setResponses] = useState<string[][]>([]);
-    const [careerResult, setCareerResult] = useState<string[] | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [responses, _setResponses] = useState<string[][]>([]);
+    const [_careerResult, setCareerResult] = useState<string[] | null>(null);
+    const [_isLoading, setIsLoading] = useState(false);
     // New Roadmap States
     const [roadmapStep, setRoadmapStep] = useState<'analysis' | 'roadmap' | 'progress' | 'exam' | 'evaluation' | 'completed-view'>('analysis');
     const [careerAnalysis, setCareerAnalysis] = useState<CareerAnalysis | null>(null);
@@ -3352,7 +3146,7 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
     }, []);
 
     // Option states for each step
-    const [specializationOptions, setSpecializationOptions] = useState<OptionItem[]>([
+    const [_specializationOptions, _setSpecializationOptions] = useState<OptionItem[]>([
         { option: "Computer Science (CSE)", isSelected: false },
         { option: "Information Technology (IT)", isSelected: false },
         { option: "Electronics & Communication (ECE)", isSelected: false },
@@ -3367,7 +3161,7 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
         { option: "Biotechnology", isSelected: false },
     ]);
 
-    const [interestOptions, setInterestOptions] = useState<OptionItem[]>([
+    const [_interestOptions, _setInterestOptions] = useState<OptionItem[]>([
         { option: "Cloud computing", isSelected: false },
         { option: "Cybersecurity", isSelected: false },
         { option: "Data analytics", isSelected: false },
@@ -3390,7 +3184,7 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
         { option: "Database Technologies", isSelected: false },
     ]);
 
-    const [skillOptions, setSkillOptions] = useState<OptionItem[]>([
+    const [_skillOptions, _setSkillOptions] = useState<OptionItem[]>([
         { option: "Python", isSelected: false },
         { option: "Java", isSelected: false },
         { option: "Kotlin", isSelected: false },
@@ -3415,22 +3209,9 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
         { option: "Power BI", isSelected: false },
     ]);
 
-    const [certOptions, setCertOptions] = useState<OptionItem[]>([
+    const [_certOptions, _setCertOptions] = useState<OptionItem[]>([
         { option: "None", isSelected: false },
     ]);
-
-    const questions = [
-        { title: "What's your specialization?", subtitle: "Select your current field of study or expertise" },
-        { title: "What interests you?", subtitle: "Choose areas that excite you the most" },
-        { title: "What skills do you have?", subtitle: "Select skills you've developed or want to develop" },
-        { title: "Any certifications?", subtitle: "Add any certifications or courses you've completed" },
-    ];
-
-    const handleContinue = (selected: string[]) => {
-        if (selected.length === 0) return;
-        setResponses(prev => [...prev, selected]);
-        setRecommendStep(prev => (prev + 1) as RecommendStep);
-    };
 
     // Submit career recommendation
     useEffect(() => {
@@ -3473,16 +3254,6 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
         }
     };
 
-    const resetRecommendation = () => {
-        setRecommendStep(0);
-        setResponses([]);
-        setCareerResult(null);
-        // Reset selections
-        setSpecializationOptions(prev => prev.map(o => ({ ...o, isSelected: false })));
-        setInterestOptions(prev => prev.map(o => ({ ...o, isSelected: false })));
-        setSkillOptions(prev => prev.map(o => ({ ...o, isSelected: false })));
-        setCertOptions(prev => prev.map(o => ({ ...o, isSelected: false })));
-    };
 
     // Handler to continue to roadmap from career recommendation
     const handleContinueToRoadmap = (career: string) => {
