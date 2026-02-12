@@ -90,54 +90,75 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-5">
       {/* Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-        <div className="flex items-center gap-3 mb-2">
-          {/* Mobile Menu Button */}
-          {toggleSidebar && (
-            <button
-              onClick={toggleSidebar}
-              className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
-              aria-label="Toggle sidebar"
-            >
-              <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          )}
-          <div className="flex-1 flex items-center gap-4">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Help Center</h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">Find answers to common questions and get support</p>
-            </div>
-            <div className="hidden md:block w-32 h-32 flex-shrink-0">
-              <Lottie 
-                animationData={helpCenterAnimation} 
-                loop={true} 
-                autoplay={true}
-                style={{ width: '100%', height: '100%' }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+<div className="bg-gradient-to-r from-orange-500 to-orange-600 shadow-md rounded-xl p-6 space-y-6">
 
+  {/* Top Section: Lottie + Heading */}
+  <div className="flex items-center gap-6">
+    
+    {/* Lottie Left */}
+    <div className="w-28 h-28 flex-shrink-0">
+      <Lottie 
+        animationData={helpCenterAnimation} 
+        loop 
+        autoplay
+        style={{ width: '100%', height: '100%' }}
+      />
+    </div>
+
+    {/* Heading Right */}
+    <div>
+      <h1 className="text-2xl sm:text-3xl font-bold text-white">
+        Help Center
+      </h1>
+      <p className="text-sm sm:text-base text-white/90 mt-1">
+        Find answers to common questions and get support
+      </p>
+    </div>
+
+  </div>
+
+  {/* Search Bar Below */}
+  <div className="relative">
+    <input
+      type="text"
+      placeholder="How can we help you today?"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+     className="w-full pl-10 pr-4 py-3 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+    />
+    <svg
+      className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      />
+    </svg>
+  </div>
+
+</div>
       {/* Search Bar */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
+      {/* <div className="bg-white border border-gray-200 rounded-lg p-4">
         <div className="relative">
           <input
             type="text"
-            placeholder="Search for help..."
+            placeholder="How can we help you today"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-3xl shadow-md focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
           <svg className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
-      </div>
+      </div> */}
 
       {/* Categories */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -243,47 +264,50 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-          <h3 className="font-bold text-gray-900 mb-2">Documentation</h3>
-          <p className="text-sm text-gray-600">Browse our comprehensive guides</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-          </div>
-          <h3 className="font-bold text-gray-900 mb-2">Community Forum</h3>
-          <p className="text-sm text-gray-600">Connect with other users</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h3 className="font-bold text-gray-900 mb-2">Video Tutorials</h3>
-          <p className="text-sm text-gray-600">Watch step-by-step videos</p>
-        </div>
-        <button 
-          onClick={() => setShowBugReport(true)}
-          className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-all hover:border-rose-300 group"
-        >
-          <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-rose-200 transition-colors">
-            <svg className="w-6 h-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <h3 className="font-bold text-gray-900 mb-2 group-hover:text-rose-600 transition-colors">Report a Bug</h3>
-          <p className="text-sm text-gray-600">Found an issue? Let us know</p>
-        </button>
-      </div>
+<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg hover:border-orange-300 transition-all cursor-pointer group">
+    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors">
+      <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    </div>
+    <h3 className="font-bold text-gray-900 mb-2 group-hover:text-orange-600">Documentation</h3>
+    <p className="text-sm text-gray-600">Browse our comprehensive guides</p>
+  </div>
+
+  <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group">
+    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
+      <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+      </svg>
+    </div>
+    <h3 className="font-bold text-gray-900 mb-2 group-hover:text-blue-600">Community Forum</h3>
+    <p className="text-sm text-gray-600">Connect with other users</p>
+  </div>
+
+  <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg hover:border-green-300 transition-all cursor-pointer group">
+    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
+      <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <h3 className="font-bold text-gray-900 mb-2 group-hover:text-green-600">Video Tutorials</h3>
+    <p className="text-sm text-gray-600">Watch step-by-step videos</p>
+  </div>
+
+  <button 
+    onClick={() => setShowBugReport(true)}
+    className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-all hover:border-rose-300 group"
+  >
+    <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-rose-200 transition-colors">
+      <svg className="w-6 h-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+    <h3 className="font-bold text-gray-900 mb-2 group-hover:text-rose-600 transition-colors">Report a Bug</h3>
+    <p className="text-sm text-gray-600">Found an issue? Let us know</p>
+  </button>
+</div>
 
       {/* Bug Report Modal */}
       <BugReportModal
