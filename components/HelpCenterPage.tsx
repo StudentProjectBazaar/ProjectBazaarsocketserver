@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import BugReportModal from './BugReportModal';
 import Lottie from 'lottie-react';
 import helpCenterAnimation from '../lottiefiles/helpcenter.json';
+import helpcenter from '../lottiefiles/helpcenter2.json';
+import { Play, Clock, ChevronRight } from 'lucide-react';
 
 interface FAQ {
   question: string;
@@ -13,6 +15,15 @@ interface HelpCenterPageProps {
   toggleSidebar?: () => void;
   userEmail?: string;
 }
+
+const tutorials = [
+  { id: 1, title: "Getting Started", duration: "5:20" },
+  { id: 2, title: "Advanced Techniques", duration: "12:45" },
+  { id: 3, title: "Workflow Optimization", duration: "8:15" },
+  { id: 4, title: "Project Management", duration: "10:30" },
+  { id: 5, title: "Custom Integration", duration: "7:50" },
+  { id: 6, title: "Security Best Practices", duration: "15:10" },
+];
 
 const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmail }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -81,7 +92,7 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
 
   const filteredFaqs = faqs.filter(faq => {
     const matchesCategory = selectedCategory === 'all' || faq.category === selectedCategory;
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
@@ -90,53 +101,59 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-5">
       {/* Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-        <div className="flex items-center gap-3 mb-2">
-          {/* Mobile Menu Button */}
-          {toggleSidebar && (
-            <button
-              onClick={toggleSidebar}
-              className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
-              aria-label="Toggle sidebar"
-            >
-              <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          )}
-          <div className="flex-1 flex items-center gap-4">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Help Center</h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">Find answers to common questions and get support</p>
-            </div>
-            <div className="hidden md:block w-32 h-32 flex-shrink-0">
-              <Lottie 
-                animationData={helpCenterAnimation} 
-                loop={true} 
-                autoplay={true}
-                style={{ width: '100%', height: '100%' }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 shadow-md rounded-xl p-6 space-y-6">
 
-      {/* Search Bar */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
+        {/* Top Section: Lottie + Heading */}
+        <div className="flex items-center gap-6">
+
+          {/* Lottie Left */}
+          <div className="w-28 h-28 flex-shrink-0">
+            <Lottie
+              animationData={helpCenterAnimation}
+              loop
+              autoplay
+              style={{ width: '100%', height: '100%' }}
+            />
+          </div>
+
+          {/* Heading Right */}
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+              Help Center
+            </h1>
+            <p className="text-sm sm:text-base text-white/90 mt-1">
+              Find answers to common questions and get support
+            </p>
+          </div>
+
+        </div>
+
+        {/* Search Bar Below */}
         <div className="relative">
           <input
             type="text"
-            placeholder="Search for help..."
+            placeholder="How can we help you today?"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full pl-10 pr-4 py-3 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
           />
-          <svg className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg
+            className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
         </div>
+
       </div>
 
       {/* Categories */}
@@ -146,11 +163,10 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                selectedCategory === category
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${selectedCategory === category
+                ? 'bg-orange-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               {category.charAt(0).toUpperCase() + category.slice(1)}
             </button>
@@ -158,60 +174,122 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
         </div>
       </div>
 
-      {/* FAQs */}
-      <div className="space-y-4">
-        {filteredFaqs.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
-            <div className="w-64 h-64 mx-auto mb-6 flex items-center justify-center">
-              <Lottie 
-                animationData={helpCenterAnimation} 
-                loop={true} 
-                autoplay={true}
-                style={{ width: '100%', height: '100%' }}
-              />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No results found</h3>
-            <p className="text-gray-500 mb-4">Try a different search term or category.</p>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('all');
-              }}
-              className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-semibold transition-colors"
-            >
-              Clear Filters
-            </button>
+      {/* FAQs Section */}
+      <div className="flex gap-8 items-start">
+
+        {/* LEFT SIDE – 70% */}
+        <div className="w-[70%]">
+          <div className="bg-white border border-orange-600 rounded-tl-3xl rounded-br-3xl overflow-hidden divide-y divide-orange-200">
+
+            {filteredFaqs.length === 0 ? (
+              <div className="p-12 text-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  No results found
+                </h3>
+                <p className="text-gray-500">
+                  Try a different search term or category.
+                </p>
+              </div>
+            ) : (
+              filteredFaqs.map((faq, index) => (
+                <div key={index}>
+                  <button
+                    onClick={() =>
+                      setOpenIndex(openIndex === index ? null : index)
+                    }
+                    className="w-full px-6 py-5 flex items-center justify-between hover:bg-orange-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+                        {faq.category}
+                      </span>
+                      <span className="text-left font-semibold text-gray-900">
+                        {faq.question}
+                      </span>
+                    </div>
+
+                    <svg
+                      className={`w-5 h-5 text-gray-500 transition-transform ${openIndex === index ? 'rotate-180' : ''
+                        }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {openIndex === index && (
+                    <div className="px-6 py-4 bg-orange-50">
+                      <p className="text-gray-700 leading-relaxed">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
-        ) : (
-          filteredFaqs.map((faq, index) => (
-            <div key={index} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
-                    {faq.category}
-                  </span>
-                  <span className="text-left font-semibold text-gray-900">{faq.question}</span>
-                </div>
-                <svg
-                  className={`w-5 h-5 text-gray-500 transition-transform ${openIndex === index ? 'transform rotate-180' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+        </div>
+
+        {/* RIGHT SIDE – 30% */}
+        <div className="w-[30%] flex justify-center items-start">
+          <Lottie
+            animationData={helpcenter}
+            loop
+            autoplay
+            style={{ width: '100%', height: 'auto' }}
+          />
+        </div>
+
+      </div>
+
+{/* Video Tutorials */}
+      <div className="min-h-screen p-2 md:p-2">
+          <div className="bg-white border border-orange-600 rounded-xl p-4 md:p-5">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Video Tutorials</h2>
+                <p className="text-gray-500 mt-1">Master the platform with these step-by-step guides.</p>
+              </div>
+              <button className="hidden sm:flex items-center text-blue-600 font-medium hover:text-blue-700 transition-colors">
+                View all tutorials <ChevronRight className="w-4 h-4 ml-1" />
               </button>
-              {openIndex === index && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                  <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
-                </div>
-              )}
             </div>
-          ))
-        )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {tutorials.map((video) => (
+                <div
+                  key={video.id}
+                  className="group bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                >
+                  {/* Video Placeholder */}
+                  <div className="relative w-full h-48 bg-gray-900 flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Play className="text-white fill-white w-6 h-6 ml-1" />
+                    </div>
+                    <span className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {video.duration}
+                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                      {video.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">Module {video.id} • Essential Training</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>    
       </div>
 
       {/* Contact Support */}
@@ -231,9 +309,9 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
               </div>
             </div>
             <div className="w-48 h-48 flex-shrink-0 opacity-80">
-              <Lottie 
-                animationData={helpCenterAnimation} 
-                loop={true} 
+              <Lottie
+                animationData={helpCenterAnimation}
+                loop={true}
                 autoplay={true}
                 style={{ width: '100%', height: '100%' }}
               />
@@ -244,36 +322,39 @@ const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmai
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg hover:border-orange-300 transition-all cursor-pointer group">
+          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition-colors">
             <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
-          <h3 className="font-bold text-gray-900 mb-2">Documentation</h3>
+          <h3 className="font-bold text-gray-900 mb-2 group-hover:text-orange-600">Documentation</h3>
           <p className="text-sm text-gray-600">Browse our comprehensive guides</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+
+        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group">
+          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
             <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
           </div>
-          <h3 className="font-bold text-gray-900 mb-2">Community Forum</h3>
+          <h3 className="font-bold text-gray-900 mb-2 group-hover:text-blue-600">Community Forum</h3>
           <p className="text-sm text-gray-600">Connect with other users</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+
+        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg hover:border-green-300 transition-all cursor-pointer group">
+          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
             <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="font-bold text-gray-900 mb-2">Video Tutorials</h3>
+          <h3 className="font-bold text-gray-900 mb-2 group-hover:text-green-600">Video Tutorials</h3>
           <p className="text-sm text-gray-600">Watch step-by-step videos</p>
         </div>
-        <button 
+
+        <button
           onClick={() => setShowBugReport(true)}
-          className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-lg transition-all hover:border-rose-300 group"
+          className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-all hover:border-rose-300 group"
         >
           <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-rose-200 transition-colors">
             <svg className="w-6 h-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
