@@ -57,8 +57,8 @@
     --sky-500: #0ea5e9;
   }
 
- body {
-    @apply bg-background text-foreground;
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 

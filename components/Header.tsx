@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigation, useAuth, useTheme } from '../App';
 import { Sun, Moon } from 'lucide-react';
 
@@ -100,7 +100,7 @@ const Header: React.FC = () => {
         <div className="hidden md:flex items-center gap-3">
           <button
             onClick={toggleTheme}
-            className={`p-2 rounded-full transition-colors ${isScrolled ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-black/60 hover:text-black hover:bg-black/5'}`}
+            className="p-2 rounded-full transition-colors text-black/60 hover:text-black hover:bg-black/5"
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -112,7 +112,7 @@ const Header: React.FC = () => {
               </button>
               <button
                 onClick={logout}
-                className={`h-[42px] px-5 rounded-full text-sm font-semibold transition-all ${isScrolled ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-black/5 hover:bg-black/10 text-black'}`}
+                className="h-[42px] px-5 rounded-full text-sm font-semibold transition-all bg-black/5 hover:bg-black/10 text-black"
               >
                 Logout
               </button>
@@ -131,14 +131,14 @@ const Header: React.FC = () => {
         <div className="md:hidden flex items-center gap-1">
           <button
             onClick={toggleTheme}
-            className={`p-2 rounded-full ${isScrolled ? 'text-white/80' : 'text-black/70'}`}
+            className="p-2 rounded-full text-black/70"
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className={`p-2 rounded-lg focus:outline-none ${isScrolled ? 'text-white' : 'text-black'}`}
+            className="p-2 rounded-lg focus:outline-none text-black"
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +155,7 @@ const Header: React.FC = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className={`md:hidden mt-3 rounded-[12px] p-6 shadow-xl backdrop-blur-[12px] ${isScrolled ? 'bg-black/90 border border-white/10' : 'bg-white border border-black/5'}`}>
+        <div className="md:hidden mt-3 rounded-[12px] p-6 shadow-xl backdrop-blur-[12px] bg-white border border-black/5">
           <nav className="flex flex-col items-center gap-4" style={navFontStyle}>
             {navLinks.map((link) => (
               <button
@@ -169,7 +169,7 @@ const Header: React.FC = () => {
                 {link.name}
               </button>
             ))}
-            <div className={`w-full h-px my-2 ${isScrolled ? 'bg-white/10' : 'bg-black/10'}`} />
+            <div className="w-full h-px my-2 bg-black/10" />
             {isLoggedIn ? (
               <>
                 <button
@@ -180,7 +180,7 @@ const Header: React.FC = () => {
                 </button>
                 <button
                   onClick={() => { logout(); setIsOpen(false); }}
-                  className={`w-full font-semibold py-3 px-6 rounded-full ${isScrolled ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-black/5 hover:bg-black/10 text-black'}`}
+                  className="w-full font-semibold py-3 px-6 rounded-full bg-black/5 hover:bg-black/10 text-black"
                 >
                   Logout
                 </button>

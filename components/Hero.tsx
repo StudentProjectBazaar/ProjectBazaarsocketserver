@@ -128,7 +128,7 @@ const Hero: React.FC = () => {
           custom={1}
           className="max-w-[1000px] text-center mb-10"
         >
-          <h1 className="text-[44px] md:text-[72px] lg:text-[80px] font-extrabold leading-[1.08] tracking-tight text-white">
+          <h1 className="text-[44px] md:text-[72px] lg:text-[80px] font-extrabold leading-[1.08] tracking-tight text-white font-sans">
             Discover. Build. &{' '}
             <span className="orange-gradient-text italic">Earn.</span>
           </h1>
