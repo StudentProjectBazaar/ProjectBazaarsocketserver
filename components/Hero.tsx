@@ -1,377 +1,255 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform } from 'motion/react';
 import { useNavigation } from '../App';
-import { RotatingStats } from './ui/animated-counter';
 
-// Floating Avatar Component
-const FloatingAvatar: React.FC<{
-  src: string;
-  size?: 'sm' | 'md' | 'lg';
-  delay?: number;
-  className?: string;
-}> = ({ src, size = 'md', delay = 0, className = '' }) => {
-  const sizeClasses = {
-    sm: 'w-10 h-10',
-    md: 'w-14 h-14',
-    lg: 'w-16 h-16',
-  };
+const TYPEWRITER_PHRASES = [
+  'Sell your capstone project and earn real revenue',
+  'Buy production-ready apps and save months of dev time',
+  'Find freelancers who ship—not just promise',
+  'Turn academic projects into assets that pay you back',
+  'Discover. Build. Earn.—all in one marketplace.',
+];
 
-  return (
-    <div
-      className={`absolute rounded-full overflow-hidden border-2 border-white/20 shadow-xl ${sizeClasses[size]} ${className}`}
-      style={{
-        animation: `float 6s ease-in-out infinite`,
-        animationDelay: `${delay}s`,
-      }}
-    >
-      <img src={src} alt="Specialist" className="w-full h-full object-cover" />
-    </div>
-  );
+function useTypewriter(phrases: string[], speed = 45, pause = 1800) {
+  const [displayed, setDisplayed] = useState('');
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [charIdx, setCharIdx] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const current = phrases[phraseIdx];
+    let timeout: ReturnType<typeof setTimeout>;
+
+    if (!deleting && charIdx < current.length) {
+      timeout = setTimeout(() => setCharIdx((c) => c + 1), speed);
+    } else if (!deleting && charIdx === current.length) {
+      timeout = setTimeout(() => setDeleting(true), pause);
+    } else if (deleting && charIdx > 0) {
+      timeout = setTimeout(() => setCharIdx((c) => c - 1), speed / 2.5);
+    } else {
+      setDeleting(false);
+      setPhraseIdx((p) => (p + 1) % phrases.length);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [charIdx, deleting, phraseIdx, phrases, speed, pause]);
+
+  useEffect(() => {
+    setDisplayed(phrases[phraseIdx].slice(0, charIdx));
+  }, [charIdx, phraseIdx, phrases]);
+
+  return displayed;
+}
+
+function useCountdown(targetMs: number) {
+  const [remaining, setRemaining] = useState(targetMs);
+  useEffect(() => {
+    const iv = setInterval(() => setRemaining((r) => Math.max(0, r - 1000)), 1000);
+    return () => clearInterval(iv);
+  }, []);
+  const d = Math.floor(remaining / 86400000);
+  const h = Math.floor((remaining % 86400000) / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  return { d, h, m, s };
+}
+
+const Pad = (n: number) => String(n).padStart(2, '0');
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.65, ease: 'easeOut' as const, delay: i * 0.12 },
+  }),
 };
 
-// Floating Icon Component with rotation
-const FloatingIcon: React.FC<{
-  icon: React.ReactNode;
-  delay?: number;
-  className?: string;
-  rotateDirection?: 'cw' | 'ccw';
-}> = ({ icon, delay = 0, className = '', rotateDirection = 'cw' }) => {
-  return (
-    <div
-      className={`absolute w-12 h-12 rounded-xl bg-gray-900/90 backdrop-blur-sm flex items-center justify-center shadow-xl border border-white/10 ${className}`}
-      style={{
-        animation: `floatRotate${rotateDirection === 'cw' ? 'CW' : 'CCW'} 8s ease-in-out infinite`,
-        animationDelay: `${delay}s`,
-      }}
-    >
-      {icon}
-    </div>
-  );
-};
-
-// Company Logo Item
-const LogoItem: React.FC<{ icon: React.ReactNode; name: string }> = ({ icon, name }) => (
-  <div className="flex items-center gap-3 text-white/50 hover:text-white/70 transition-colors duration-300 px-8 shrink-0">
-    {icon}
-    <span className="font-semibold tracking-wide text-lg whitespace-nowrap">{name}</span>
-  </div>
-);
-
-// Company Logo Components with infinite scroll
-const CompanyLogos: React.FC = () => {
-  const logos = [
-    {
-      name: 'TechFlow',
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-        </svg>
-      ),
-    },
-    {
-      name: 'InnovateLab',
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="12" r="10" strokeWidth="2" stroke="currentColor" fill="none"/>
-          <path d="M12 6v6l4 2"/>
-        </svg>
-      ),
-    },
-    {
-      name: 'CodeSphere',
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-          <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
-          <path d="M9 9h6v6H9z"/>
-        </svg>
-      ),
-    },
-    {
-      name: 'BuildHub',
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-        </svg>
-      ),
-    },
-    {
-      name: 'DevStack',
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5"/>
-        </svg>
-      ),
-    },
-    {
-      name: 'Nexus',
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
-      ),
-    },
-    {
-      name: 'CloudSync',
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
-        </svg>
-      ),
-    },
-    {
-      name: 'Quantum',
-      icon: (
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-        </svg>
-      ),
-    },
-  ];
-
-  return (
-    <div className="relative overflow-hidden">
-      {/* Gradient masks for smooth fade effect */}
-      <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#1a1025] to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#1a1025] to-transparent z-10 pointer-events-none" />
-      
-      {/* Scrolling container */}
-      <div className="flex animate-scroll">
-        {/* First set of logos */}
-        <div className="flex shrink-0">
-          {logos.map((logo, index) => (
-            <LogoItem key={`first-${index}`} icon={logo.icon} name={logo.name} />
-          ))}
-        </div>
-        {/* Duplicate set for seamless loop */}
-        <div className="flex shrink-0">
-          {logos.map((logo, index) => (
-            <LogoItem key={`second-${index}`} icon={logo.icon} name={logo.name} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
+const AVATARS = [
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop',
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop',
+];
 
 const Hero: React.FC = () => {
   const { navigateTo } = useNavigation();
+  const text = useTypewriter(TYPEWRITER_PHRASES);
+  const { d, h, m, s } = useCountdown(6 * 86400000);
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
+  const videoY = useTransform(scrollYProgress, [0, 1], [0, 80]);
+  const bgY = useTransform(scrollYProgress, [0, 1], [0, -40]);
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black">
-      {/* Background Elements - orange glows only */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -left-40 top-1/4 w-[500px] h-[500px] bg-orange-500/20 rounded-full blur-[150px]" />
-        <div className="absolute -left-20 bottom-0 w-[400px] h-[400px] bg-orange-600/25 rounded-full blur-[120px]" />
-        <div className="absolute right-0 top-1/3 w-[300px] h-[300px] bg-orange-500/15 rounded-full blur-[100px]" />
-      </div>
-      
-      {/* Main Content */}
-      <div className="relative z-10 container mx-auto px-4 pt-32 pb-20">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-          {/* Left Content */}
-          <div className="text-center lg:text-left">
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] font-extrabold leading-[1.1] tracking-tight mb-6">
-              <span className="text-white">Discover. Build.</span>
-                    <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-400">
-                        Earn.
-                    </span>
-                </h1>
+    <section
+      ref={ref}
+      className="relative w-full overflow-hidden bg-[#0a0a0a] pt-32 pb-20 md:pt-40 md:pb-32"
+    >
+      {/* Background grid + glows */}
+      <motion.div
+        style={{ y: bgY }}
+        className="absolute inset-0 z-0 pointer-events-none"
+      >
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[#ff7a001a] blur-[120px]" />
+        <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-white/[0.05] blur-[100px]" />
+        <div className="absolute bottom-[-20%] left-[20%] w-[70%] h-[50%] bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent z-10" />
+      </motion.div>
 
-            <p className="text-white/80 text-lg md:text-xl max-w-lg mb-10 mx-auto lg:mx-0 leading-relaxed">
-                    The ultimate marketplace for projects, ideas, and collaborations. Turn your academic and personal projects into real revenue.
-                </p>
-
-            <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-              <button
-                onClick={() => navigateTo('auth')}
-                className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-4 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
-              >
-                    Explore Projects
-                </button>
-              <button
-                onClick={() => navigateTo('auth')}
-                className="w-full sm:w-auto bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white font-semibold py-4 px-8 rounded-full transition-all duration-300"
-              >
-                    Become a Seller
-                </button>
-                </div>
-
+      <div className="landing-container relative z-10 flex flex-col items-center">
+        {/* Countdown badge */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={0}
+          className="mb-8 flex items-center justify-center"
+        >
+          <div className="flex items-center gap-0 border border-white/10 rounded-lg overflow-hidden">
+            <div className="bg-[#1a1a1a] px-4 py-2 text-sm font-medium text-white/80 whitespace-nowrap">
+              New projects added weekly — join now
+            </div>
+            <div className="bg-white px-4 py-2 text-sm font-bold text-black font-mono tabular-nums">
+              {Pad(d)} : {Pad(h)} : {Pad(m)} : {Pad(s)}
+            </div>
           </div>
+        </motion.div>
 
-          {/* Right Content - Orbital Visualization */}
-          <div className="relative h-[500px] lg:h-[600px] flex items-center justify-center">
-            {/* Orbital Rings */}
-            <div className="absolute w-[280px] h-[280px] md:w-[350px] md:h-[350px] rounded-full border border-white/10" />
-            <div className="absolute w-[400px] h-[400px] md:w-[480px] md:h-[480px] rounded-full border border-white/10" />
-            <div className="absolute w-[520px] h-[520px] md:w-[600px] md:h-[600px] rounded-full border border-white/5" />
+        {/* Headline */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={1}
+          className="max-w-[1000px] text-center mb-10"
+        >
+          <h1 className="text-[44px] md:text-[72px] font-extrabold leading-[1.08] tracking-tight text-white">
+            Discover. Build.{' '}
+            <span className="orange-gradient-text italic">Earn.</span>
+          </h1>
+        </motion.div>
 
-            {/* Center Stats - Animated Counter */}
-            <div className="relative z-10 text-center">
-              <RotatingStats
-                stats={[
-                  { value: 100, label: 'Users', suffix: '+' },
-                  { value: 1000, label: 'Projects', suffix: '+' },
-                  { value: 500, label: 'Freelancers', suffix: '+' },
-                  { value: 50, label: 'Categories', suffix: '+' },
-                  { value: 20000, label: 'Specialists', suffix: '+' },
-                ]}
-                rotationInterval={3000}
+        <motion.p
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={2}
+          className="text-white/80 text-lg md:text-xl max-w-[640px] text-center mb-10"
+        >
+          The ultimate marketplace for projects, ideas, and collaborations. Turn your academic and personal projects into real revenue.
+        </motion.p>
+
+        {/* Typewriter card */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={3}
+          className="w-full max-w-[680px] mb-12"
+        >
+          <div className="glass-panel border border-white/10 rounded-2xl p-6 bg-[#1a1a1a]/40 shadow-2xl">
+            <div className="text-white/90 text-lg md:text-xl font-medium mb-6 min-h-[56px] flex items-start">
+              <span>{text}</span>
+              <motion.span
+                animate={{ opacity: [1, 0] }}
+                transition={{ duration: 0.6, repeat: Infinity, repeatType: 'reverse' }}
+                className="inline-block w-[3px] h-6 bg-[#ff7a00] ml-1 mt-1 flex-shrink-0"
               />
             </div>
-
-            {/* Floating Avatars - positioned around the orbits */}
-            <FloatingAvatar
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop"
-              size="md"
-              delay={0}
-              className="top-[5%] left-[40%]"
-            />
-            <FloatingAvatar
-              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop"
-              size="lg"
-              delay={0.5}
-              className="top-[20%] right-[5%]"
-            />
-            <FloatingAvatar
-              src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop"
-              size="md"
-              delay={1}
-              className="top-[60%] right-[0%]"
-            />
-            <FloatingAvatar
-              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop"
-              size="lg"
-              delay={1.5}
-              className="bottom-[10%] right-[25%]"
-            />
-            <FloatingAvatar
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"
-              size="md"
-              delay={2}
-              className="bottom-[30%] left-[5%]"
-            />
-            <FloatingAvatar
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop"
-              size="sm"
-              delay={2.5}
-              className="top-[35%] left-[10%]"
-            />
-
-            {/* Floating Icons */}
-            <FloatingIcon
-              icon={
-                <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.51 0 10-4.48 10-10S17.51 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                </svg>
-              }
-              delay={0.8}
-              rotateDirection="cw"
-              className="top-[25%] left-[25%]"
-            />
-            <FloatingIcon
-              icon={
-                <svg className="w-6 h-6 text-pink-400" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-              }
-              delay={1.2}
-              rotateDirection="ccw"
-              className="top-[50%] right-[10%]"
-            />
-            <FloatingIcon
-              icon={
-                <svg className="w-6 h-6 text-purple-400" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
-                </svg>
-              }
-              delay={1.8}
-              rotateDirection="cw"
-              className="bottom-[20%] left-[15%]"
-            />
-            <FloatingIcon
-              icon={
-                <svg className="w-6 h-6 text-green-400" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                </svg>
-              }
-              delay={2.2}
-              rotateDirection="ccw"
-              className="top-[10%] right-[20%]"
-            />
+            <div className="flex items-center justify-between pt-4 border-t border-white/5">
+              <span className="text-white/40 text-sm font-medium">Projects · Freelancers · Hackathons</span>
             </div>
-        </div>
-      </div>
+          </div>
+        </motion.div>
 
-      {/* Bottom Company Logos */}
-      <div className="relative z-10 container mx-auto px-4 pb-12">
-        <CompanyLogos />
-      </div>
+        {/* CTA + Avatars */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={4}
+          className="flex flex-col md:flex-row items-center gap-8 mb-16"
+        >
+          <motion.button
+            onClick={() => navigateTo('auth')}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.97 }}
+            className="btn-primary-orange group h-[60px] px-8 text-lg flex items-center justify-center min-w-[260px]"
+          >
+            <span>Explore Projects</span>
+            <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center ml-4 group-hover:scale-110 transition-transform">
+              <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </span>
+          </motion.button>
+          <button
+            onClick={() => {
+              const el = document.getElementById('how-it-works');
+              el?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="h-[60px] px-8 text-lg font-semibold text-white/90 hover:text-white border border-white/20 rounded-full transition-colors"
+          >
+            Become a Seller
+          </button>
+          <div className="flex items-center gap-8">
+            <div className="flex -space-x-3">
+              {AVATARS.map((src, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + i * 0.08 }}
+                  className="w-10 h-10 rounded-full border-2 border-[#1a1a1a] overflow-hidden bg-gray-700"
+                >
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                </motion.div>
+              ))}
+            </div>
+            <p className="text-white/60 uppercase text-xs font-bold tracking-widest max-w-[180px]">
+              Join thousands building and earning.
+            </p>
+          </div>
+        </motion.div>
 
-      {/* CSS for animations */}
-      <style>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-15px);
-          }
-        }
-        
-        @keyframes floatRotateCW {
-          0% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          25% {
-            transform: translateY(-10px) rotate(10deg);
-          }
-          50% {
-            transform: translateY(-15px) rotate(0deg);
-          }
-          75% {
-            transform: translateY(-10px) rotate(-10deg);
-          }
-          100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-        }
-        
-        @keyframes floatRotateCCW {
-          0% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          25% {
-            transform: translateY(-10px) rotate(-10deg);
-          }
-          50% {
-            transform: translateY(-15px) rotate(0deg);
-          }
-          75% {
-            transform: translateY(-10px) rotate(10deg);
-          }
-          100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-        }
-        
-        @keyframes scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        
-        .animate-scroll {
-          animation: scroll 30s linear infinite;
-        }
-        
-        .animate-scroll:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
+        {/* Hero visual */}
+        <motion.div
+          style={{ y: videoY }}
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={5}
+          className="w-full max-w-[1000px] relative"
+        >
+          <motion.div
+            animate={{
+              boxShadow: [
+                '0 0 60px rgba(255,122,0,0.1)',
+                '0 0 100px rgba(255,122,0,0.2)',
+                '0 0 60px rgba(255,122,0,0.1)',
+              ],
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 bg-[#1a1a1a]"
+          >
+            <div className="absolute inset-0 flex items-center justify-center gap-4 flex-wrap p-8">
+              {['Projects', 'Freelancers', 'Hackathons', 'Portfolio', 'Resume'].map((label, i) => (
+                <div
+                  key={i}
+                  className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/90 font-medium"
+                >
+                  {label}
+                </div>
+              ))}
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          </motion.div>
+        </motion.div>
+      </div>
     </section>
   );
 };

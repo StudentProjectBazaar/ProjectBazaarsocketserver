@@ -59,7 +59,7 @@ const FeaturedProjects: React.FC = () => {
   const { navigateTo } = useNavigation();
 
   return (
-    <section className="py-20 bg-black">
+    <section id="projects" className="py-20 bg-[#0a0a0a]">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">Featured Projects</h2>
         <p className="text-gray-400 max-w-2xl mx-auto mb-12 text-center">

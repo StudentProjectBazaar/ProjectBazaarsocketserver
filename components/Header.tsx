@@ -5,11 +5,10 @@ import { Sun, Moon } from 'lucide-react';
 const LogoIcon: React.FC = () => (
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect x="3" y="3" width="18" height="18" rx="4" fill="url(#logo-gradient)" />
-    <path d="M8 12h8M12 8v8" stroke="white" strokeWidth="2" strokeLinecap="round" />
     <defs>
       <linearGradient id="logo-gradient" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#8B5CF6"/>
-        <stop offset="1" stopColor="#6D28D9"/>
+        <stop stopColor="#ff7a00"/>
+        <stop offset="1" stopColor="#ff9533"/>
       </linearGradient>
     </defs>
   </svg>
@@ -29,10 +28,9 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // On scroll: navbar "comes close" from both sides (horizontal margin shrinks)
   const isScrolled = scrollY > 20;
-  const barMargin = isScrolled ? 'mx-4' : 'mx-8';
-  const barMaxWidth = isScrolled ? 'max-w-5xl' : 'max-w-6xl';
+  const navBg = isScrolled ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.75)';
+  const navShadow = isScrolled ? '0 8px 32px rgba(0,0,0,0.4)' : '0 4px 24px rgba(0,0,0,0.2)';
 
   interface NavLink {
     name: string;
@@ -57,70 +55,65 @@ const Header: React.FC = () => {
     { name: 'FAQs', onClick: () => navigateTo('faq') },
   ];
 
-  const isDark = theme === 'dark';
-  const glassBar =
-    'rounded-2xl backdrop-blur-xl border shadow-lg transition-all duration-300 ease-out ' +
-    (isDark
-      ? 'bg-gray-900/60 border-white/10'
-      : 'bg-white/70 border-black/5');
-
-  const linkClass = isDark
-    ? 'text-white/80 hover:text-white'
-    : 'text-gray-700 hover:text-gray-900';
-  const ctaClass = isDark
-    ? 'bg-white text-gray-900 hover:bg-gray-100'
-    : 'bg-gray-900 text-white hover:bg-gray-800';
+  const linkClass = 'text-white/90 hover:text-[#ff7a00] transition-colors duration-200 font-medium text-[14px]';
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 py-4 px-2 sm:px-4 pointer-events-none">
+    <header className="fixed top-0 left-1/2 -translate-x-1/2 z-[100] w-full max-w-[900px] px-4 pt-6 pointer-events-none">
       <div
-        className={`pointer-events-auto mx-auto ${barMargin} ${barMaxWidth} flex items-center justify-between py-3 px-5 sm:px-6 ${glassBar}`}
+        className="pointer-events-auto flex items-center justify-between w-full h-[68px] px-4 rounded-[12px] backdrop-blur-[12px] border border-white/10 transition-all duration-350"
+        style={{
+          backgroundColor: navBg,
+          boxShadow: navShadow,
+        }}
       >
-        {/* Logo */}
-        <button
-          onClick={() => navigateTo('home')}
-          className="flex items-center gap-3 shrink-0"
-          aria-label="Go to homepage"
-        >
-          <LogoIcon />
-          <span className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+        {/* Logo + divider */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigateTo('home')}
+            className="flex items-center justify-center w-9 h-9 shrink-0"
+            aria-label="Go to homepage"
+          >
+            <LogoIcon />
+          </button>
+          <div className="w-px h-5 bg-white/20 hidden sm:block" />
+          <span className="text-lg font-bold text-white tracking-tight hidden sm:inline">
             ProjectBazaar
           </span>
-        </button>
+        </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-7">
+        <nav className="hidden md:flex items-center gap-6 px-4">
           {navLinks.map((link) => (
             <button
               key={link.name}
               onClick={link.onClick}
-              className={`transition-colors duration-200 font-medium ${linkClass}`}
+              className={linkClass}
             >
               {link.name}
             </button>
           ))}
         </nav>
 
-        {/* Desktop: Theme toggle + Auth */}
+        {/* Desktop: Theme + Auth */}
         <div className="hidden md:flex items-center gap-3">
           <button
             onClick={toggleTheme}
-            className={`p-2 rounded-lg transition-colors ${isDark ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           {isLoggedIn ? (
             <>
               <button
                 onClick={() => navigateTo('dashboard')}
-                className={`font-medium transition-colors duration-200 ${linkClass}`}
+                className={linkClass}
               >
                 Dashboard
               </button>
               <button
                 onClick={logout}
-                className="bg-gradient-to-r from-red-500 to-orange-500 text-white font-semibold py-2.5 px-5 rounded-full hover:opacity-90 transition-all duration-200"
+                className="h-[42px] px-5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition-all"
               >
                 Logout
               </button>
@@ -129,15 +122,16 @@ const Header: React.FC = () => {
             <>
               <button
                 onClick={() => navigateTo('auth')}
-                className={`font-medium transition-colors duration-200 ${linkClass}`}
+                className={linkClass}
               >
                 Log In
               </button>
               <button
                 onClick={() => navigateTo('auth')}
-                className={`font-semibold py-2.5 px-5 rounded-full transition-all duration-200 ${ctaClass}`}
+                className="h-[42px] px-5 rounded-full bg-gradient-to-r from-[#ff7a00] to-[#ff9533] text-white text-sm font-semibold shadow-[0_4px_14px_rgba(255,122,0,0.35)] hover:opacity-95 transition-all flex items-center gap-2"
               >
                 Join Now
+                <svg width="14" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
             </>
           )}
@@ -147,14 +141,14 @@ const Header: React.FC = () => {
         <div className="md:hidden flex items-center gap-1">
           <button
             onClick={toggleTheme}
-            className={`p-2 rounded-lg ${isDark ? 'text-white/80' : 'text-gray-600'}`}
+            className="p-2 rounded-full text-white/80"
             aria-label="Toggle theme"
           >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className={`p-2 rounded-lg focus:outline-none ${isDark ? 'text-white' : 'text-gray-900'}`}
+            className="p-2 rounded-lg focus:outline-none text-white"
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,11 +163,9 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Menu - glassy */}
+      {/* Mobile Menu */}
       {isOpen && (
-        <div
-          className={`md:hidden mt-3 mx-4 max-w-6xl rounded-2xl p-6 border shadow-xl backdrop-blur-xl ${isDark ? 'bg-gray-900/90 border-white/10' : 'bg-white/90 border-black/5'}`}
-        >
+        <div className="md:hidden mt-3 rounded-[12px] p-6 border border-white/10 backdrop-blur-[12px] bg-black/90">
           <nav className="flex flex-col items-center gap-4">
             {navLinks.map((link) => (
               <button
@@ -182,23 +174,23 @@ const Header: React.FC = () => {
                   link.onClick?.();
                   setIsOpen(false);
                 }}
-                className={`font-medium py-2 transition-colors ${linkClass}`}
+                className={linkClass}
               >
                 {link.name}
               </button>
             ))}
-            <div className={`w-full h-px my-2 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+            <div className="w-full h-px my-2 bg-white/10" />
             {isLoggedIn ? (
               <>
                 <button
                   onClick={() => { navigateTo('dashboard'); setIsOpen(false); }}
-                  className={`font-medium py-2 ${linkClass}`}
+                  className={linkClass}
                 >
                   Dashboard
                 </button>
                 <button
                   onClick={() => { logout(); setIsOpen(false); }}
-                  className="w-full bg-gradient-to-r from-red-500 to-orange-500 text-white font-semibold py-3 px-6 rounded-full"
+                  className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-6 rounded-full"
                 >
                   Logout
                 </button>
@@ -207,13 +199,13 @@ const Header: React.FC = () => {
               <>
                 <button
                   onClick={() => { navigateTo('auth'); setIsOpen(false); }}
-                  className={`font-medium py-2 ${linkClass}`}
+                  className={linkClass}
                 >
                   Log In
                 </button>
                 <button
                   onClick={() => { navigateTo('auth'); setIsOpen(false); }}
-                  className={`w-full font-semibold py-3 px-6 rounded-full ${ctaClass}`}
+                  className="w-full bg-gradient-to-r from-[#ff7a00] to-[#ff9533] text-white font-semibold py-3 px-6 rounded-full"
                 >
                   Join Now
                 </button>

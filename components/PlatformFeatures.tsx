@@ -117,7 +117,7 @@ const FeatureCard: React.FC<{ feature: Feature; index: number }> = ({ feature, i
 
 const PlatformFeatures: React.FC = () => {
   return (
-    <section className="relative py-24 overflow-hidden bg-black">
+    <section id="how-it-works" className="relative py-24 overflow-hidden bg-[#0a0a0a]">
       {/* Background decorations - orange only */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute left-1/4 top-0 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[200px]" />

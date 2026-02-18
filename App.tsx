@@ -1,33 +1,26 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import FeaturedProjects from './components/FeaturedProjects';
-import Faqs from './components/Faqs';
-import CtaSection from './components/CtaSection';
 import Footer from './components/Footer';
-import Stats from './components/Stats';
-import Referral from './components/Referral';
-import Pricing from './components/Pricing';
+import ProblemsSection from './components/ProblemsSection';
+import UniSystemSection from './components/sections/UniSystemSection';
+import CurriculumSection from './components/sections/CurriculumSection';
+import ResultsGridSection from './components/sections/ResultsGridSection';
+import TestimonialsSection from './components/sections/TestimonialsSection';
+import InstructorSection from './components/sections/InstructorSection';
+import FAQSection from './components/sections/FAQSection';
+import FinalCTASection from './components/sections/FinalCTASection';
 import AuthPage from './components/AuthPage';
 import DashboardPage from './components/DashboardPage';
 import SellerDashboardPage from './components/SellerDashboardPage';
 import AdminDashboard from './components/admin/AdminDashboard';
 import NotFound from './components/NotFound';
-import Categories from './components/Categories';
-import TopSellers from './components/TopSellers';
-import Testimonials from './components/Testimonials';
-import SellerSuccessStories from './components/SellerSuccessStories';
-import WhatCanYouSell from './components/WhatCanYouSell';
-import SellerCta from './components/SellerCta';
-import BuyerSellerToggle from './components/BuyerSellerToggle';
-import { CallToAction } from './components/ui/cta-3';
 import FAQWithSpiral from './components/ui/faq-section';
 import BrowseFreelancers from './components/BrowseFreelancers';
 import BrowseProjects from './components/BrowseProjects';
 import FreelancerProfilePage from './components/FreelancerProfilePage';
 import DashboardLayoutWrapper from './components/DashboardLayoutWrapper';
 import BuildPortfolioPage from './components/BuildPortfolioPage';
-import PlatformFeatures from './components/PlatformFeatures';
 import { ResumeBuilderPage } from './components/resume-builder';
 import MockAssessmentPage from './components/MockAssessmentPage';
 import CodingInterviewQuestionsPage from './components/CodingInterviewQuestionsPage';
@@ -219,27 +212,18 @@ const AppContent: React.FC = () => {
     case 'home':
     default:
       return (
-        <div className="dark bg-black text-gray-100 min-h-screen overflow-x-hidden transition-colors duration-300">
+        <div className="dark bg-[#0a0a0a] text-gray-100 min-h-screen overflow-x-hidden transition-colors duration-300">
           <Header />
-          <main>
+          <main className="min-h-screen bg-[#0a0a0a]">
             <Hero />
-            <Stats />
-            <PlatformFeatures />
-            <Categories />
-            <BuyerSellerToggle />
-            <TopSellers />
-            <FeaturedProjects />
-            <WhatCanYouSell />
-            <SellerSuccessStories />
-            <Testimonials />
-            <SellerCta />
-            <Referral />
-            <Pricing />
-            <Faqs />
-            <div className="py-12 px-4">
-              <CallToAction />
-            </div>
-            <CtaSection />
+            <ProblemsSection />
+            <UniSystemSection />
+            <CurriculumSection />
+            <ResultsGridSection />
+            <TestimonialsSection />
+            <InstructorSection />
+            <FAQSection />
+            <FinalCTASection />
           </main>
           <Footer />
         </div>
