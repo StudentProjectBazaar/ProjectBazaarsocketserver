@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import Footer from './components/Footer';
+import FlickeringFooter from './components/ui/flickering-footer';
 import ProblemsSection from './components/ProblemsSection';
 import UniSystemSection from './components/sections/UniSystemSection';
 import CurriculumSection from './components/sections/CurriculumSection';
@@ -225,7 +225,7 @@ const AppContent: React.FC = () => {
             <FAQSection />
             <FinalCTASection />
           </main>
-          <Footer />
+          <FlickeringFooter />
         </div>
       );
   }
