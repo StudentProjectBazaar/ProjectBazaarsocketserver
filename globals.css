@@ -57,8 +57,11 @@
     --sky-500: #0ea5e9;
   }
 
- body {
+  body {
     @apply bg-background text-foreground;
+    font-family: 'Montserrat', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
