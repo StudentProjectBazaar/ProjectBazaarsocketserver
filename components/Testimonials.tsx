@@ -65,11 +65,11 @@ const thirdColumn = testimonials.slice(6, 9);
 
 const Testimonials: React.FC = () => {
   return (
-    <section className="relative py-20 overflow-hidden bg-gradient-to-b from-[#1a1025] via-[#0f0a15] to-[#1a1025]">
-      {/* Background glows */}
+    <section className="relative py-20 overflow-hidden bg-black">
+      {/* Background glows - orange only */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute left-1/4 top-1/4 w-[400px] h-[400px] bg-orange-500/10 rounded-full blur-[150px]" />
-        <div className="absolute right-1/4 bottom-1/4 w-[300px] h-[300px] bg-purple-500/10 rounded-full blur-[120px]" />
+        <div className="absolute right-1/4 bottom-1/4 w-[300px] h-[300px] bg-orange-600/8 rounded-full blur-[120px]" />
       </div>
 
       <div className="container z-10 mx-auto px-4 relative">
@@ -92,7 +92,7 @@ const Testimonials: React.FC = () => {
               10,000+ Users
             </span>
           </h2>
-          <p className="text-center mt-5 text-white/60 text-lg max-w-md">
+          <p className="text-center mt-5 text-white/80 text-lg max-w-md">
             Join thousands of students and developers who are already earning and learning on ProjectBazaar.
           </p>
         </motion.div>

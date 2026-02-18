@@ -159,9 +159,9 @@ const SellerCard: React.FC<{ seller: Seller; index: number }> = ({ seller, index
       whileHover={{ y: -8 }}
       className="group"
     >
-      <div className="relative p-6 rounded-3xl border border-white/10 bg-gradient-to-br from-[#1a1025]/90 to-[#2d1f47]/60 backdrop-blur-sm hover:border-orange-500/30 transition-all duration-500 overflow-hidden">
+      <div className="relative p-6 rounded-3xl border border-white/10 bg-black/80 backdrop-blur-sm hover:border-orange-500/30 transition-all duration-500 overflow-hidden">
         {/* Background glow on hover */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
         {/* Badge */}
         <div className="relative">
@@ -175,7 +175,7 @@ const SellerCard: React.FC<{ seller: Seller; index: number }> = ({ seller, index
                 alt={seller.name}
                 className="w-20 h-20 rounded-full object-cover ring-4 ring-white/10 group-hover:ring-orange-500/30 transition-all duration-300"
               />
-              <div className="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-3 border-[#1a1025] flex items-center justify-center">
+              <div className="absolute -bottom-1 -right-1 bg-orange-500 w-5 h-5 rounded-full border-2 border-black flex items-center justify-center">
                 <div className="w-2 h-2 bg-white rounded-full" />
               </div>
             </div>
@@ -217,7 +217,7 @@ const SellerCard: React.FC<{ seller: Seller; index: number }> = ({ seller, index
                 <div className="text-white/40 text-xs">Sold</div>
               </div>
               <div className="text-center">
-                <div className="text-white font-semibold text-green-400">
+                <div className="text-white font-semibold text-orange-400">
                   {seller.earnings}
                 </div>
                 <div className="text-white/40 text-xs">Earned</div>
@@ -263,11 +263,11 @@ const TopSellers: React.FC = () => {
   }, []);
 
   return (
-    <section className="relative py-20 overflow-hidden bg-gradient-to-b from-[#1a1025] to-[#0f0a15]">
-      {/* Background decorations */}
+    <section className="relative py-20 overflow-hidden bg-black">
+      {/* Background decorations - orange only */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute left-1/3 top-0 w-[600px] h-[600px] bg-orange-500/5 rounded-full blur-[200px]" />
-        <div className="absolute right-0 bottom-1/4 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[150px]" />
+        <div className="absolute left-1/3 top-0 w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-[200px]" />
+        <div className="absolute right-0 bottom-1/4 w-[400px] h-[400px] bg-orange-600/8 rounded-full blur-[150px]" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -302,7 +302,7 @@ const TopSellers: React.FC = () => {
             // Loading skeleton
             Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="animate-pulse">
-                <div className="p-6 rounded-3xl border border-white/10 bg-gradient-to-br from-[#1a1025]/90 to-[#2d1f47]/60">
+                <div className="p-6 rounded-3xl border border-white/10 bg-black/80 backdrop-blur-sm">
                   <div className="flex justify-center mb-4">
                     <div className="w-20 h-20 rounded-full bg-white/10"></div>
                   </div>

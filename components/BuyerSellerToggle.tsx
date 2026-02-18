@@ -138,7 +138,7 @@ const ToggleSwitch: React.FC<{ mode: Mode; setMode: (mode: Mode) => void }> = ({
         {mode === "buyer" && (
           <motion.div
             layoutId="toggle-bg"
-            className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"
+            className="absolute inset-0 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full"
             transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
           />
         )}
@@ -171,8 +171,8 @@ const ToggleSwitch: React.FC<{ mode: Mode; setMode: (mode: Mode) => void }> = ({
 
 const StepCard: React.FC<{ step: Step; index: number; mode: Mode }> = ({ step, index, mode }) => {
   const gradients = {
-    buyer: ["from-blue-500 to-cyan-500", "from-purple-500 to-pink-500", "from-green-500 to-emerald-500"],
-    seller: ["from-blue-500 to-cyan-500", "from-orange-500 to-amber-500", "from-green-500 to-emerald-500"],
+    buyer: ["from-orange-500 to-orange-600", "from-amber-500 to-orange-500", "from-orange-600 to-amber-500"],
+    seller: ["from-orange-500 to-amber-500", "from-orange-600 to-orange-500", "from-amber-500 to-orange-600"],
   };
 
   return (
@@ -217,7 +217,7 @@ const BenefitCard: React.FC<{ benefit: Benefit; index: number; mode: Mode }> = (
       {benefit.highlight && (
         <div className={`absolute -top-2.5 right-3 px-2.5 py-0.5 text-xs font-bold rounded-full shadow-lg ${
           mode === "buyer" 
-            ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white" 
+            ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white" 
             : "bg-gradient-to-r from-orange-500 to-amber-500 text-white"
         }`}>
           {benefit.highlight}
@@ -226,7 +226,7 @@ const BenefitCard: React.FC<{ benefit: Benefit; index: number; mode: Mode }> = (
       
       <div className="flex items-start gap-3">
         <div className={`p-2 rounded-lg ${
-          mode === "buyer" ? "bg-blue-500/20 text-blue-400" : "bg-orange-500/20 text-orange-400"
+          "bg-orange-500/20 text-orange-400"
         }`}>
           {benefit.icon}
         </div>
@@ -247,24 +247,24 @@ const BuyerSellerToggle: React.FC = () => {
   const benefits = mode === "buyer" ? buyerBenefits : sellerBenefits;
 
   return (
-    <section className="relative py-24 overflow-hidden bg-gradient-to-b from-[#0f0a15] via-[#1a1025] to-[#0f0a15]">
-      {/* Background decorations */}
+    <section className="relative py-24 overflow-hidden bg-black">
+      {/* Background decorations - orange only */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           animate={{
             x: mode === "buyer" ? -100 : 100,
-            opacity: mode === "buyer" ? 0.1 : 0.05,
+            opacity: mode === "buyer" ? 0.08 : 0.04,
           }}
           transition={{ duration: 0.8 }}
-          className="absolute left-0 top-1/4 w-[500px] h-[500px] bg-blue-500 rounded-full blur-[200px]"
+          className="absolute left-0 top-1/4 w-[500px] h-[500px] bg-orange-500 rounded-full blur-[200px]"
         />
         <motion.div
           animate={{
             x: mode === "seller" ? -100 : 100,
-            opacity: mode === "seller" ? 0.1 : 0.05,
+            opacity: mode === "seller" ? 0.08 : 0.04,
           }}
           transition={{ duration: 0.8 }}
-          className="absolute right-0 bottom-1/4 w-[500px] h-[500px] bg-orange-500 rounded-full blur-[200px]"
+          className="absolute right-0 bottom-1/4 w-[500px] h-[500px] bg-orange-600 rounded-full blur-[200px]"
         />
       </div>
 
@@ -292,18 +292,14 @@ const BuyerSellerToggle: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
-                  className={`text-transparent bg-clip-text ${
-                    mode === "buyer" 
-                      ? "bg-gradient-to-r from-blue-400 to-cyan-400" 
-                      : "bg-gradient-to-r from-orange-400 to-amber-400"
-                  }`}
+                  className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400"
                 >
                   {mode === "buyer" ? "Buyers" : "Sellers"}
                 </motion.span>
               </AnimatePresence>
               <span className="text-white"> Win</span>
             </h2>
-            <p className="text-white/60 text-lg max-w-xl mx-auto">
+            <p className="text-white/80 text-lg max-w-xl mx-auto">
               {mode === "buyer" 
                 ? "Find the perfect project and start building in minutes." 
                 : "Turn your projects into passive income with ease."}
@@ -333,11 +329,7 @@ const BuyerSellerToggle: React.FC = () => {
 
         {/* Connector line on desktop */}
         <div className="hidden md:flex justify-center mb-16">
-          <div className={`h-0.5 w-48 rounded-full ${
-            mode === "buyer" 
-              ? "bg-gradient-to-r from-blue-500/50 to-cyan-500/50" 
-              : "bg-gradient-to-r from-orange-500/50 to-amber-500/50"
-          }`} />
+          <div className="h-0.5 w-48 rounded-full bg-gradient-to-r from-orange-500/50 to-amber-500/50" />
         </div>
 
         {/* Benefits Grid */}
@@ -376,11 +368,7 @@ const BuyerSellerToggle: React.FC = () => {
             >
               <button
                 onClick={() => navigateTo('auth')}
-                className={`inline-flex items-center gap-2 px-8 py-4 font-semibold rounded-full transition-all duration-300 shadow-lg group ${
-                  mode === "buyer"
-                    ? "bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-blue-500/25 hover:shadow-blue-500/40"
-                    : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-orange-500/25 hover:shadow-orange-500/40"
-                }`}
+                className="inline-flex items-center gap-2 px-8 py-4 font-semibold rounded-full transition-all duration-300 shadow-lg group bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-orange-500/25 hover:shadow-orange-500/40"
               >
                 {mode === "buyer" ? "Start Browsing Projects" : "Start Selling Today"}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

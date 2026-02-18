@@ -67,7 +67,7 @@ const StoryCard: React.FC<{ story: SuccessStory; index: number }> = ({ story, in
       viewport={{ once: true }}
       className="group"
     >
-      <div className="relative h-full p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-[#1a1025]/90 to-[#2d1f47]/60 backdrop-blur-sm hover:border-orange-500/30 transition-all duration-500 overflow-hidden">
+      <div className="relative h-full p-8 rounded-3xl border border-white/10 bg-black/80 backdrop-blur-sm hover:border-orange-500/30 transition-all duration-500 overflow-hidden">
         {/* Quote icon */}
         <Quote className="absolute top-6 right-6 w-10 h-10 text-orange-500/20" />
         
@@ -93,17 +93,17 @@ const StoryCard: React.FC<{ story: SuccessStory; index: number }> = ({ story, in
         </p>
 
         {/* Earnings transformation */}
-        <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-green-500/10 to-emerald-500/5 border border-green-500/20 mb-6">
+        <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 to-orange-600/5 border border-orange-500/20 mb-6">
           <div className="text-center">
             <div className="text-white/40 text-xs mb-1">Before</div>
-            <div className="text-white/60 font-semibold">{story.beforeEarnings}</div>
+            <div className="text-white/70 font-semibold">{story.beforeEarnings}</div>
           </div>
           <div className="flex-1 flex items-center justify-center">
-            <TrendingUp className="w-6 h-6 text-green-400" />
+            <TrendingUp className="w-6 h-6 text-orange-400" />
           </div>
           <div className="text-center">
-            <div className="text-green-400 text-xs mb-1">After</div>
-            <div className="text-green-400 font-bold text-xl">{story.afterEarnings}</div>
+            <div className="text-orange-400 text-xs mb-1">After</div>
+            <div className="text-orange-400 font-bold text-xl">{story.afterEarnings}</div>
           </div>
         </div>
 
@@ -144,11 +144,11 @@ const StoryCard: React.FC<{ story: SuccessStory; index: number }> = ({ story, in
 
 const SellerSuccessStories: React.FC = () => {
   return (
-    <section className="relative py-24 overflow-hidden bg-gradient-to-b from-[#0f0a15] to-[#1a1025]">
-      {/* Background decorations */}
+    <section className="relative py-24 overflow-hidden bg-black">
+      {/* Background decorations - orange only */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute left-1/4 top-1/4 w-[500px] h-[500px] bg-green-500/5 rounded-full blur-[200px]" />
-        <div className="absolute right-0 bottom-0 w-[400px] h-[400px] bg-orange-500/5 rounded-full blur-[150px]" />
+        <div className="absolute left-1/4 top-1/4 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[200px]" />
+        <div className="absolute right-0 bottom-0 w-[400px] h-[400px] bg-orange-600/8 rounded-full blur-[150px]" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -160,20 +160,20 @@ const SellerSuccessStories: React.FC = () => {
           viewport={{ once: true }}
           className="text-center mb-14"
         >
-          <div className="inline-flex items-center gap-2 border border-green-500/30 bg-green-500/10 text-green-400 py-1.5 px-5 rounded-full text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 border border-orange-500/30 bg-orange-500/10 text-orange-400 py-1.5 px-5 rounded-full text-sm font-medium mb-6">
             <TrendingUp className="w-4 h-4" />
             Real Success Stories
           </div>
           
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
             <span className="text-white">From </span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">₹0</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/80">₹0</span>
             <span className="text-white"> to </span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-500">
               Lakhs
             </span>
           </h2>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto">
+          <p className="text-white/80 text-lg max-w-2xl mx-auto">
             See how students and developers like you turned their projects into real income. 
             These are real stories from our top sellers.
           </p>
@@ -195,7 +195,7 @@ const SellerSuccessStories: React.FC = () => {
           className="text-center mt-14"
         >
           <p className="text-white/50 mb-4">Ready to write your success story?</p>
-          <button className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold rounded-full transition-all duration-300 shadow-lg shadow-green-500/25 hover:shadow-green-500/40">
+          <button className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-full transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40">
             Start Your Journey Today
           </button>
         </motion.div>

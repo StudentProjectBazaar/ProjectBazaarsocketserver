@@ -90,7 +90,7 @@ const Pricing: React.FC = () => {
     }));
 
     return (
-        <section id="pricing" className="py-20 bg-white dark:bg-[#0a0a0a]">
+        <section id="pricing" className="py-20 bg-black border-t border-white/5">
             <AnimatedPricing
                 plans={plansWithHandlers}
                 title="Choose Your Plan"

@@ -122,11 +122,11 @@ const CategoryCard: React.FC<{ category: Category; index: number }> = ({ categor
 
 const Categories: React.FC = () => {
   return (
-    <section className="relative py-20 overflow-hidden bg-gradient-to-b from-[#0f0a15] to-[#1a1025]">
-      {/* Background decoration */}
+    <section className="relative py-20 overflow-hidden bg-black">
+      {/* Background decoration - orange only */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -right-20 top-1/3 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-[150px]" />
-        <div className="absolute -left-20 bottom-0 w-[400px] h-[400px] bg-orange-500/5 rounded-full blur-[120px]" />
+        <div className="absolute -right-20 top-1/3 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[150px]" />
+        <div className="absolute -left-20 bottom-0 w-[400px] h-[400px] bg-orange-600/8 rounded-full blur-[120px]" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -138,18 +138,18 @@ const Categories: React.FC = () => {
           viewport={{ once: true }}
           className="text-center mb-14"
         >
-          <div className="inline-flex items-center gap-2 border border-purple-500/30 bg-purple-500/10 text-purple-400 py-1.5 px-5 rounded-full text-sm font-medium mb-6">
-            <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+          <div className="inline-flex items-center gap-2 border border-orange-500/30 bg-orange-500/10 text-orange-400 py-1.5 px-5 rounded-full text-sm font-medium mb-6">
+            <span className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
             Browse Categories
           </div>
           
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
             <span className="text-white">Explore </span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-orange-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-500">
               10,000+ Projects
             </span>
           </h2>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto">
+          <p className="text-white/80 text-lg max-w-2xl mx-auto">
             Find the perfect project for your needs across our diverse categories. 
             From web apps to AI models, we've got you covered.
           </p>

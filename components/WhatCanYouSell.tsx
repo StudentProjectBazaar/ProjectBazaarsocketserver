@@ -125,11 +125,11 @@ const ProjectTypeCard: React.FC<{ projectType: ProjectType; index: number }> = (
 
 const WhatCanYouSell: React.FC = () => {
   return (
-    <section className="relative py-24 overflow-hidden bg-gradient-to-b from-[#1a1025] to-[#0f0a15]">
-      {/* Background decorations */}
+    <section className="relative py-24 overflow-hidden bg-black">
+      {/* Background decorations - orange only */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -left-20 top-1/3 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[180px]" />
-        <div className="absolute right-1/4 bottom-0 w-[500px] h-[500px] bg-orange-500/5 rounded-full blur-[200px]" />
+        <div className="absolute -left-20 top-1/3 w-[400px] h-[400px] bg-orange-500/10 rounded-full blur-[180px]" />
+        <div className="absolute right-1/4 bottom-0 w-[500px] h-[500px] bg-orange-600/8 rounded-full blur-[200px]" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -141,19 +141,19 @@ const WhatCanYouSell: React.FC = () => {
           viewport={{ once: true }}
           className="text-center mb-14"
         >
-          <div className="inline-flex items-center gap-2 border border-purple-500/30 bg-purple-500/10 text-purple-400 py-1.5 px-5 rounded-full text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 border border-orange-500/30 bg-orange-500/10 text-orange-400 py-1.5 px-5 rounded-full text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4" />
             What You Can Sell
           </div>
           
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
             <span className="text-white">Turn </span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-500">
               Any Project
             </span>
             <span className="text-white"> Into Income</span>
           </h2>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto">
+          <p className="text-white/80 text-lg max-w-2xl mx-auto">
             From college assignments to professional work - if you've built it, you can sell it. 
             Here's what's popular on our platform.
           </p>
@@ -174,7 +174,7 @@ const WhatCanYouSell: React.FC = () => {
           viewport={{ once: true }}
           className="text-center"
         >
-          <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl bg-gradient-to-r from-orange-500/10 to-purple-500/10 border border-white/10 max-w-2xl">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-white/10 max-w-2xl">
             <div className="text-left">
               <h4 className="text-white font-semibold mb-1">Not sure if your project qualifies?</h4>
               <p className="text-white/50 text-sm">We accept almost everything! Upload and our team will review it within 24 hours.</p>

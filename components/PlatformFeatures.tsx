@@ -28,9 +28,9 @@ const features: Feature[] = [
     title: "Hire Top Freelancers",
     description: "Browse through skilled developers, designers, and creators. Find the perfect talent for your project needs.",
     highlight: "500+ Experts",
-    color: "text-blue-400",
-    gradient: "from-blue-500/20 to-cyan-500/10",
-    bgGlow: "bg-blue-500/20",
+    color: "text-orange-400",
+    gradient: "from-orange-500/20 to-orange-600/10",
+    bgGlow: "bg-orange-500/20",
     action: "Browse Freelancers",
     page: 'browseFreelancers',
   },
@@ -39,9 +39,9 @@ const features: Feature[] = [
     title: "Place & Receive Bids",
     description: "Post your project requirements and receive competitive bids from talented freelancers. Choose the best offer.",
     highlight: "Competitive Pricing",
-    color: "text-green-400",
-    gradient: "from-green-500/20 to-emerald-500/10",
-    bgGlow: "bg-green-500/20",
+    color: "text-orange-400",
+    gradient: "from-orange-600/20 to-orange-500/10",
+    bgGlow: "bg-orange-600/20",
     action: "Post a Project",
     page: 'browseProjects',
   },
@@ -61,9 +61,9 @@ const features: Feature[] = [
     title: "Build Portfolio in Seconds",
     description: "Create a stunning professional portfolio instantly. Showcase your projects, skills, and achievements effortlessly.",
     highlight: "AI-Powered",
-    color: "text-purple-400",
-    gradient: "from-purple-500/20 to-violet-500/10",
-    bgGlow: "bg-purple-500/20",
+    color: "text-orange-400",
+    gradient: "from-orange-500/20 to-orange-600/10",
+    bgGlow: "bg-orange-500/20",
     action: "Build Now",
     page: 'buildPortfolio',
   },
@@ -117,12 +117,12 @@ const FeatureCard: React.FC<{ feature: Feature; index: number }> = ({ feature, i
 
 const PlatformFeatures: React.FC = () => {
   return (
-    <section className="relative py-24 overflow-hidden bg-gradient-to-b from-[#0f0a15] via-[#1a1025] to-[#0f0a15]">
-      {/* Background decorations */}
+    <section className="relative py-24 overflow-hidden bg-black">
+      {/* Background decorations - orange only */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute left-1/4 top-0 w-[500px] h-[500px] bg-orange-500/5 rounded-full blur-[200px]" />
-        <div className="absolute right-0 bottom-1/3 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[150px]" />
-        <div className="absolute left-0 bottom-0 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[120px]" />
+        <div className="absolute left-1/4 top-0 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[200px]" />
+        <div className="absolute right-0 bottom-1/3 w-[400px] h-[400px] bg-orange-600/8 rounded-full blur-[150px]" />
+        <div className="absolute left-0 bottom-0 w-[300px] h-[300px] bg-orange-500/5 rounded-full blur-[120px]" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -141,11 +141,11 @@ const PlatformFeatures: React.FC = () => {
           
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
             <span className="text-white">Everything You Need to </span>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-purple-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-500">
               Succeed
             </span>
           </h2>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto">
+          <p className="text-white/80 text-lg max-w-2xl mx-auto">
             From hiring talent to building your portfolio — discover all the powerful features 
             that make ProjectBazaar the ultimate platform for creators and buyers.
           </p>
@@ -164,32 +164,32 @@ const PlatformFeatures: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5 }}
           viewport={{ once: true }}
-          className="mt-16 p-6 rounded-2xl bg-gradient-to-r from-orange-500/10 via-purple-500/10 to-blue-500/10 border border-white/10 max-w-4xl mx-auto"
+          className="mt-16 p-6 rounded-2xl bg-gradient-to-r from-orange-500/10 via-orange-600/10 to-orange-500/10 border border-white/10 max-w-4xl mx-auto"
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
-              <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+              <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-500">
                 500+
               </div>
-              <div className="text-white/50 text-sm mt-1">Active Freelancers</div>
+              <div className="text-white/70 text-sm mt-1">Active Freelancers</div>
             </div>
             <div>
-              <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">
+              <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">
                 1,200+
               </div>
-              <div className="text-white/50 text-sm mt-1">Bids Placed</div>
+              <div className="text-white/70 text-sm mt-1">Bids Placed</div>
             </div>
             <div>
-              <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+              <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
                 50+
               </div>
-              <div className="text-white/50 text-sm mt-1">Live Hackathons</div>
+              <div className="text-white/70 text-sm mt-1">Live Hackathons</div>
             </div>
             <div>
-              <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-violet-400">
+              <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
                 2,000+
               </div>
-              <div className="text-white/50 text-sm mt-1">Portfolios Built</div>
+              <div className="text-white/70 text-sm mt-1">Portfolios Built</div>
             </div>
           </div>
         </motion.div>

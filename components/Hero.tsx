@@ -157,15 +157,12 @@ const Hero: React.FC = () => {
   const { navigateTo } = useNavigation();
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#1a1025] via-[#2d1f47] to-[#1a1025]">
-      {/* Background Elements */}
+    <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black">
+      {/* Background Elements - orange glows only */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* Purple glow on left */}
-        <div className="absolute -left-40 top-1/4 w-[500px] h-[500px] bg-violet-600/30 rounded-full blur-[150px]" />
-        {/* Orange/amber glow on bottom left */}
-        <div className="absolute -left-20 bottom-0 w-[400px] h-[400px] bg-amber-500/20 rounded-full blur-[120px]" />
-        {/* Subtle purple glow on right */}
-        <div className="absolute right-0 top-1/3 w-[300px] h-[300px] bg-purple-500/20 rounded-full blur-[100px]" />
+        <div className="absolute -left-40 top-1/4 w-[500px] h-[500px] bg-orange-500/20 rounded-full blur-[150px]" />
+        <div className="absolute -left-20 bottom-0 w-[400px] h-[400px] bg-orange-600/25 rounded-full blur-[120px]" />
+        <div className="absolute right-0 top-1/3 w-[300px] h-[300px] bg-orange-500/15 rounded-full blur-[100px]" />
       </div>
       
       {/* Main Content */}
@@ -181,7 +178,7 @@ const Hero: React.FC = () => {
                     </span>
                 </h1>
 
-            <p className="text-white/70 text-lg md:text-xl max-w-lg mb-10 mx-auto lg:mx-0 leading-relaxed">
+            <p className="text-white/80 text-lg md:text-xl max-w-lg mb-10 mx-auto lg:mx-0 leading-relaxed">
                     The ultimate marketplace for projects, ideas, and collaborations. Turn your academic and personal projects into real revenue.
                 </p>
 
