@@ -59,6 +59,8 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -98,6 +100,7 @@
     padding-left: 1.25rem;
     padding-right: 1.25rem;
     max-width: 1200px;
+    font-family: inherit;
   }
   .glass-panel {
     background: rgba(26, 26, 26, 0.6);
@@ -120,6 +123,7 @@
     align-items: center;
     gap: 0.5rem;
     transition: opacity 0.2s, transform 0.2s;
+    font-family: inherit;
   }
   .btn-primary-orange:hover {
     opacity: 0.95;

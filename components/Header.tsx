@@ -43,14 +43,13 @@ const Header: React.FC = () => {
     { name: 'FAQs', onClick: () => navigateTo('faq') },
   ];
 
-  const linkClass = `${linkColor} transition-colors duration-200 font-medium text-[14px]`;
-  const navFontStyle = { fontFamily: '"Inter Tight", sans-serif' };
+  const linkClass = `${linkColor} transition-colors duration-200 font-medium text-[15px] tracking-tight font-sans`;
+  const ctaClass = 'h-[42px] pl-5 pr-1.5 rounded-full bg-gradient-to-r from-[#ff7a00] to-[#ff9533] shadow-[0_4px_14px_rgba(255,122,0,0.35)] text-white text-[14px] font-semibold tracking-tight transition-all flex items-center gap-2 group hover:opacity-95 font-sans';
 
   const CtaButton: React.FC<{ children: React.ReactNode; onClick: () => void }> = ({ children, onClick }) => (
     <button
       onClick={onClick}
-      style={navFontStyle}
-      className="h-[42px] pl-5 pr-1.5 rounded-full bg-gradient-to-r from-[#ff7a00] to-[#ff9533] shadow-[0_4px_14px_rgba(255,122,0,0.35)] text-white text-[14px] font-semibold tracking-tight transition-all flex items-center gap-2 group hover:opacity-95"
+      className={ctaClass}
     >
       <span className="mr-2">{children}</span>
       <span className="w-6 h-6 rounded-full bg-white flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
@@ -78,13 +77,13 @@ const Header: React.FC = () => {
             <img src={ORCHIDS_LOGO} alt="ProjectBazaar" width={35} height={36} className="w-full h-full object-contain" />
           </button>
           <div className={`w-px h-5 ${dividerColor} hidden sm:block`} />
-          <span style={navFontStyle} className={`text-base font-semibold tracking-tight hidden sm:inline ${logoTextColor}`}>
+          <span className={`text-base font-semibold tracking-tight hidden sm:inline font-sans ${logoTextColor}`}>
             ProjectBazaar
           </span>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6 px-4" style={navFontStyle}>
+        <nav className="hidden md:flex items-center gap-6 px-4 font-sans">
           {navLinks.map((link) => (
             <button
               key={link.name}
@@ -156,7 +155,7 @@ const Header: React.FC = () => {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden mt-3 rounded-[12px] p-6 shadow-xl backdrop-blur-[12px] bg-white border border-black/5">
-          <nav className="flex flex-col items-center gap-4" style={navFontStyle}>
+          <nav className="flex flex-col items-center gap-4 font-sans">
             {navLinks.map((link) => (
               <button
                 key={link.name}

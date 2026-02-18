@@ -111,10 +111,10 @@ const Hero: React.FC = () => {
           className="mb-8 flex items-center justify-center"
         >
           <div className="flex items-center gap-0 border border-white/10 rounded-lg overflow-hidden">
-            <div className="bg-[#1a1a1a] px-4 py-2 text-[14px] font-medium text-white/80 whitespace-nowrap">
+            <div className="bg-[#1a1a1a] px-4 py-2 text-[14px] font-medium text-white/80 whitespace-nowrap font-sans">
               Limited time offer ends in
             </div>
-            <div className="bg-white px-4 py-2 text-[14px] font-bold text-black font-mono tabular-nums">
+            <div className="bg-white px-4 py-2 text-[14px] font-bold text-black font-mono tabular-nums font-sans">
               {Pad(d)} : {Pad(h)} : {Pad(m)} : {Pad(s)}
             </div>
           </div>
@@ -143,7 +143,7 @@ const Hero: React.FC = () => {
           className="w-full max-w-[680px] mb-12"
         >
           <div className="glass-panel border border-white/10 rounded-[16px] p-6 bg-[#1a1a1a]/40 shadow-2xl">
-            <div className="text-white/90 text-lg md:text-xl font-medium mb-8 min-h-[56px] flex items-start">
+            <div className="text-white/90 text-lg md:text-xl font-medium mb-8 min-h-[56px] flex items-start font-sans">
               <span>{text}</span>
               <motion.span
                 animate={{ opacity: [1, 0] }}
@@ -152,7 +152,7 @@ const Hero: React.FC = () => {
               />
             </div>
             <div className="flex items-center justify-between pt-4 border-t border-white/5">
-              <button type="button" className="flex items-center gap-2 text-white/40 hover:text-white/60 transition-colors text-sm font-medium">
+              <button type="button" className="flex items-center gap-2 text-white/40 hover:text-white/60 transition-colors text-sm font-medium font-sans">
                 <span className="text-xl">+</span>
                 <div className="flex items-center gap-1.5">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -195,7 +195,7 @@ const Hero: React.FC = () => {
             onClick={() => navigateTo('auth')}
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
-            className="btn-primary-orange group h-[60px] px-8 text-lg flex items-center justify-between min-w-[260px]"
+            className="btn-primary-orange group h-[60px] px-8 text-lg font-semibold flex items-center justify-between min-w-[260px] font-sans"
           >
             <span>Join now — it&apos;s free</span>
             <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center ml-4 group-hover:scale-110 transition-transform">
@@ -224,7 +224,7 @@ const Hero: React.FC = () => {
               ))}
             </div>
             <div className="relative">
-              <p className="text-[#a1a1a1] uppercase text-[12px] font-bold tracking-widest leading-tight w-[200px]">
+              <p className="text-[#a1a1a1] uppercase text-[12px] font-bold tracking-widest leading-tight w-[200px] font-sans">
                 2k+ creators are already ahead of you.
               </p>
               <div className="absolute top-1/2 left-[-60px] transform -translate-y-1/2 rotate-[-10deg] hidden md:block opacity-40">

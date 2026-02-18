@@ -212,9 +212,9 @@ const AppContent: React.FC = () => {
     case 'home':
     default:
       return (
-        <div className="dark bg-[#0a0a0a] text-gray-100 min-h-screen overflow-x-hidden transition-colors duration-300">
+        <div className="dark bg-[#0a0a0a] text-gray-100 min-h-screen overflow-x-hidden transition-colors duration-300 font-sans">
           <Header />
-          <main className="min-h-screen bg-[#0a0a0a]">
+          <main className="min-h-screen bg-[#0a0a0a] font-sans">
             <Hero />
             <ProblemsSection />
             <UniSystemSection />
