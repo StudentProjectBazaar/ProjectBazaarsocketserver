@@ -2,35 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigation, useAuth, useTheme } from '../App';
 import { Sun, Moon } from 'lucide-react';
 
-const LogoIcon: React.FC = () => (
-  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="3" y="3" width="18" height="18" rx="4" fill="url(#logo-gradient)" />
-    <defs>
-      <linearGradient id="logo-gradient" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#ff7a00"/>
-        <stop offset="1" stopColor="#ff9533"/>
-      </linearGradient>
-    </defs>
-  </svg>
-);
+const ORCHIDS_LOGO = 'https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/0fea2819-e0b6-4ab2-b4ab-ab4c64535352-oma-mindly-framer-website/assets/svgs/VT9XchCjHXRPw0H08BPtEicHVVs-1.svg';
+const ORCHIDS_ARROW = 'https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/0fea2819-e0b6-4ab2-b4ab-ab4c64535352-oma-mindly-framer-website/assets/svgs/U0c022TYy3iR6YjbwbyxOaDRsk-2.svg';
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
   const { navigateTo } = useNavigation();
   const { isLoggedIn, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    handleScroll();
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const isScrolled = scrollY > 20;
-  const navBg = isScrolled ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.75)';
-  const navShadow = isScrolled ? '0 8px 32px rgba(0,0,0,0.4)' : '0 4px 24px rgba(0,0,0,0.2)';
+  const navBg = 'rgba(255,255,255,0.97)';
+  const navShadow = 'rgba(0,0,0,0.18) 0px 0.6px 0.6px -1.25px, rgba(0,0,0,0.16) 0px 2.3px 2.3px -2.5px, rgba(0,0,0,0.06) 0px 10px 10px -3.75px';
+  const linkColor = 'text-black hover:text-[#ff7a00]';
+  const dividerColor = 'bg-[#E8E8E8]';
+  const logoTextColor = 'text-black';
 
   interface NavLink {
     name: string;
@@ -39,50 +24,67 @@ const Header: React.FC = () => {
   }
 
   const navLinks: NavLink[] = [
-    { name: 'Projects', onClick: () => {
-      const element = document.getElementById('projects');
+    { name: 'Curriculum', onClick: () => {
+      const element = document.getElementById('curriculum');
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     }},
-    { name: 'Browse', onClick: () => navigateTo('browseFreelancers') },
-    { name: 'Solutions', onClick: () => {
-      const element = document.getElementById('how-it-works');
+    { name: 'Reviews', onClick: () => {
+      const element = document.getElementById('reviews');
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     }},
     { name: 'Pricing', onClick: () => {
       const element = document.getElementById('pricing');
       if (element) element.scrollIntoView({ behavior: 'smooth' });
     }},
+    { name: 'Why us', onClick: () => {
+      const element = document.getElementById('why-choose-us');
+      if (element) element.scrollIntoView({ behavior: 'smooth' });
+    }},
     { name: 'FAQs', onClick: () => navigateTo('faq') },
   ];
 
-  const linkClass = 'text-white/90 hover:text-[#ff7a00] transition-colors duration-200 font-medium text-[14px]';
+  const linkClass = `${linkColor} transition-colors duration-200 font-medium text-[14px]`;
+  const navFontStyle = { fontFamily: '"Inter Tight", sans-serif' };
+
+  const CtaButton: React.FC<{ children: React.ReactNode; onClick: () => void }> = ({ children, onClick }) => (
+    <button
+      onClick={onClick}
+      style={navFontStyle}
+      className="h-[42px] pl-5 pr-1.5 rounded-full bg-gradient-to-r from-[#ff7a00] to-[#ff9533] shadow-[0_4px_14px_rgba(255,122,0,0.35)] text-white text-[14px] font-semibold tracking-tight transition-all flex items-center gap-2 group hover:opacity-95"
+    >
+      <span className="mr-2">{children}</span>
+      <span className="w-6 h-6 rounded-full bg-white flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+        <img src={ORCHIDS_ARROW} alt="" width={16} height={14} className="w-3 h-[10px] object-contain" />
+      </span>
+    </button>
+  );
 
   return (
-    <header className="fixed top-0 left-1/2 -translate-x-1/2 z-[100] w-full max-w-[900px] px-4 pt-6 pointer-events-none">
+    <header className="fixed top-0 left-1/2 -translate-x-1/2 z-[100] w-full max-w-[800px] px-4 pt-6 pointer-events-none">
       <div
-        className="pointer-events-auto flex items-center justify-between w-full h-[68px] px-4 rounded-[12px] backdrop-blur-[12px] border border-white/10 transition-all duration-350"
+        className="pointer-events-auto flex items-center justify-between w-full h-[68px] px-4 rounded-[12px] backdrop-blur-[12px] transition-all duration-350"
         style={{
           backgroundColor: navBg,
           boxShadow: navShadow,
         }}
       >
-        {/* Logo + divider */}
+        {/* Logo */}
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigateTo('home')}
             className="flex items-center justify-center w-9 h-9 shrink-0"
             aria-label="Go to homepage"
           >
-            <LogoIcon />
+            <img src={ORCHIDS_LOGO} alt="ProjectBazaar" width={35} height={36} className="w-full h-full object-contain" />
           </button>
-          <div className="w-px h-5 bg-white/20 hidden sm:block" />
-          <span className="text-lg font-bold text-white tracking-tight hidden sm:inline">
+          <div className={`w-px h-5 ${dividerColor} hidden sm:block`} />
+          <span style={navFontStyle} className={`text-base font-semibold tracking-tight hidden sm:inline ${logoTextColor}`}>
             ProjectBazaar
           </span>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6 px-4">
+        <nav className="hidden md:flex items-center gap-6 px-4" style={navFontStyle}>
           {navLinks.map((link) => (
             <button
               key={link.name}
@@ -98,41 +100,29 @@ const Header: React.FC = () => {
         <div className="hidden md:flex items-center gap-3">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className={`p-2 rounded-full transition-colors ${isScrolled ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-black/60 hover:text-black hover:bg-black/5'}`}
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           {isLoggedIn ? (
             <>
-              <button
-                onClick={() => navigateTo('dashboard')}
-                className={linkClass}
-              >
+              <button onClick={() => navigateTo('dashboard')} className={linkClass}>
                 Dashboard
               </button>
               <button
                 onClick={logout}
-                className="h-[42px] px-5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition-all"
+                className={`h-[42px] px-5 rounded-full text-sm font-semibold transition-all ${isScrolled ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-black/5 hover:bg-black/10 text-black'}`}
               >
                 Logout
               </button>
             </>
           ) : (
             <>
-              <button
-                onClick={() => navigateTo('auth')}
-                className={linkClass}
-              >
+              <button onClick={() => navigateTo('auth')} className={linkClass}>
                 Log In
               </button>
-              <button
-                onClick={() => navigateTo('auth')}
-                className="h-[42px] px-5 rounded-full bg-gradient-to-r from-[#ff7a00] to-[#ff9533] text-white text-sm font-semibold shadow-[0_4px_14px_rgba(255,122,0,0.35)] hover:opacity-95 transition-all flex items-center gap-2"
-              >
-                Join Now
-                <svg width="14" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </button>
+              <CtaButton onClick={() => navigateTo('auth')}>Join Now</CtaButton>
             </>
           )}
         </div>
@@ -141,14 +131,14 @@ const Header: React.FC = () => {
         <div className="md:hidden flex items-center gap-1">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full text-white/80"
+            className={`p-2 rounded-full ${isScrolled ? 'text-white/80' : 'text-black/70'}`}
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-lg focus:outline-none text-white"
+            className={`p-2 rounded-lg focus:outline-none ${isScrolled ? 'text-white' : 'text-black'}`}
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,8 +155,8 @@ const Header: React.FC = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden mt-3 rounded-[12px] p-6 border border-white/10 backdrop-blur-[12px] bg-black/90">
-          <nav className="flex flex-col items-center gap-4">
+        <div className={`md:hidden mt-3 rounded-[12px] p-6 shadow-xl backdrop-blur-[12px] ${isScrolled ? 'bg-black/90 border border-white/10' : 'bg-white border border-black/5'}`}>
+          <nav className="flex flex-col items-center gap-4" style={navFontStyle}>
             {navLinks.map((link) => (
               <button
                 key={link.name}
@@ -179,7 +169,7 @@ const Header: React.FC = () => {
                 {link.name}
               </button>
             ))}
-            <div className="w-full h-px my-2 bg-white/10" />
+            <div className={`w-full h-px my-2 ${isScrolled ? 'bg-white/10' : 'bg-black/10'}`} />
             {isLoggedIn ? (
               <>
                 <button
@@ -190,7 +180,7 @@ const Header: React.FC = () => {
                 </button>
                 <button
                   onClick={() => { logout(); setIsOpen(false); }}
-                  className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-6 rounded-full"
+                  className={`w-full font-semibold py-3 px-6 rounded-full ${isScrolled ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-black/5 hover:bg-black/10 text-black'}`}
                 >
                   Logout
                 </button>
@@ -205,9 +195,12 @@ const Header: React.FC = () => {
                 </button>
                 <button
                   onClick={() => { navigateTo('auth'); setIsOpen(false); }}
-                  className="w-full bg-gradient-to-r from-[#ff7a00] to-[#ff9533] text-white font-semibold py-3 px-6 rounded-full"
+                  className="w-full h-12 rounded-full bg-gradient-to-r from-[#ff7a00] to-[#ff9533] text-white font-semibold flex items-center justify-center gap-2"
                 >
                   Join Now
+                  <span className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
+                    <img src={ORCHIDS_ARROW} alt="" width={12} height={10} className="w-3 h-[10px] object-contain" />
+                  </span>
                 </button>
               </>
             )}

@@ -11,29 +11,31 @@ const fadeUp = {
   }),
 };
 
+const iconClass = 'w-11 h-11 text-[#FF8C00] stroke-[1.5]';
+
 const problems = [
   {
-    icon: <Search className="w-10 h-10 text-[#1a1a1a]" />,
+    icon: <Search className={iconClass} strokeWidth={2} />,
     text: 'Spending hours searching for the right project or freelancer with no clear results?',
   },
   {
-    icon: <FolderOpen className="w-10 h-10 text-[#1a1a1a]" />,
+    icon: <FolderOpen className={iconClass} strokeWidth={2} />,
     text: 'Your best projects sit in a folder after graduation—never seen, never sold?',
   },
   {
-    icon: <Clock className="w-10 h-10 text-[#1a1a1a]" />,
+    icon: <Clock className={iconClass} strokeWidth={2} />,
     text: 'Worrying that your skills are underused while others monetize theirs?',
   },
   {
-    icon: <Package className="w-10 h-10 text-[#1a1a1a]" />,
+    icon: <Package className={iconClass} strokeWidth={2} />,
     text: 'Do you have a growing fear of buying a project that doesn’t match the description?',
   },
   {
-    icon: <Users className="w-10 h-10 text-[#1a1a1a]" />,
+    icon: <Users className={iconClass} strokeWidth={2} />,
     text: 'Are you overwhelmed by too many platforms and no single place to build, buy, and sell?',
   },
   {
-    icon: <Sparkles className="w-10 h-10 text-[#1a1a1a]" />,
+    icon: <Sparkles className={iconClass} strokeWidth={2} />,
     text: 'Do you waste time juggling portfolios, bids, and payments across different tools?',
   },
 ];
@@ -49,16 +51,16 @@ const ProblemCard: React.FC<{ icon: React.ReactNode; text: string; index: number
       initial="hidden"
       animate={inView ? 'visible' : 'hidden'}
       custom={index}
-      whileHover={{ y: -6, transition: { duration: 0.25 } }}
-      className="flex flex-col items-center text-center p-6 bg-transparent"
+      whileHover={{ y: -4, transition: { duration: 0.25 } }}
+      className="flex flex-col items-start text-left p-6 md:p-8 bg-transparent"
     >
       <motion.div
-        className="mb-4 flex items-center justify-center"
-        whileHover={{ rotate: [0, -8, 8, 0], transition: { duration: 0.4 } }}
+        className="mb-5 flex items-center justify-center text-[#FF8C00]"
+        whileHover={{ scale: 1.05 }}
       >
         {icon}
       </motion.div>
-      <p className="text-base leading-relaxed font-medium text-[#1a1a1a] max-w-[280px]">{text}</p>
+      <p className="text-[15px] md:text-base leading-relaxed font-normal text-[#1a1a1a] max-w-[320px]">{text}</p>
     </motion.div>
   );
 };
@@ -68,33 +70,37 @@ const ProblemsSection: React.FC = () => {
   const headInView = useInView(headRef, { once: true, margin: '-80px' });
 
   return (
-    <section id="why-choose-us" className="bg-[#f2f1ee] py-24 md:py-32 px-5 overflow-hidden">
+    <section id="why-choose-us" className="bg-[#F9F8F6] py-20 md:py-28 px-5 overflow-hidden">
       <div className="max-w-[1200px] mx-auto">
         <motion.div
           ref={headRef}
           initial={{ opacity: 0, y: 30 }}
           animate={headInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="text-center mb-16 md:mb-20"
+          transition={{ duration: 0.7 }}
+          className="text-center mb-14 md:mb-20 relative"
         >
-          <p className="text-[#a1a1a1] uppercase tracking-[0.1em] text-sm font-bold mb-4">Is this you?</p>
-          <h2 className="text-4xl md:text-5xl lg:text-[56px] leading-[1.1] font-bold text-[#1a1a1a] max-w-[800px] mx-auto tracking-tight">
+          <p className="text-[#6b7280] text-sm font-medium mb-4">Is this you?</p>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-[56px] leading-[1.15] font-bold text-[#1a1a1a] max-w-[900px] mx-auto tracking-tight">
             Does Your Experience with Project Marketplaces Feel More{' '}
-            <span className="block text-[#1a1a1a]">Frustrating Than Futuristic?</span>
+            <span className="text-[#FF8C00]">Frustrating</span> Than Futuristic?
           </h2>
+
+          {/* Hand-drawn style annotation */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden lg:flex flex-col items-end translate-x-4">
+            <p className="text-[#1a1a1a] text-sm font-semibold uppercase tracking-[0.2em] whitespace-nowrap" style={{ fontFamily: 'cursive' }}>
+              Sounds familiar?
+            </p>
+            <svg className="w-12 h-8 mt-1 text-[#1a1a1a] opacity-80 -rotate-[20deg]" viewBox="0 0 50 30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M5 25 Q25 5 45 8" />
+              <path d="M38 5 L45 8 L42 12" />
+            </svg>
+          </div>
         </motion.div>
 
-        <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-            {problems.map((problem, index) => (
-              <ProblemCard key={index} icon={problem.icon} text={problem.text} index={index % 3} />
-            ))}
-          </div>
-          <div className="absolute right-[5%] top-[-40px] md:right-[15%] lg:right-[20%] hidden sm:block">
-            <p className="font-sans italic text-sm text-[#1a1a1a] font-medium absolute top-[-25px] right-[-20px] whitespace-nowrap uppercase tracking-wider opacity-70">
-              sounds familiar?
-            </p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 lg:gap-x-10 lg:gap-y-14">
+          {problems.map((problem, index) => (
+            <ProblemCard key={index} icon={problem.icon} text={problem.text} index={index % 3} />
+          ))}
         </div>
       </div>
     </section>

@@ -82,28 +82,27 @@ const Hero: React.FC = () => {
   const bgY = useTransform(scrollYProgress, [0, 1], [0, -40]);
 
   return (
-    <section
+    <header
       ref={ref}
       className="relative w-full overflow-hidden bg-[#0a0a0a] pt-32 pb-20 md:pt-40 md:pb-32"
     >
-      {/* Background grid + glows */}
-      <motion.div
-        style={{ y: bgY }}
-        className="absolute inset-0 z-0 pointer-events-none"
-      >
+      {/* Background grid parallax */}
+      <motion.div style={{ y: bgY }} className="absolute inset-0 z-0 pointer-events-none">
         <div
           className="absolute inset-0 opacity-10"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundSize: '60px 60px',
+            backgroundPosition: 'center top',
           }}
         />
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[#ff7a001a] blur-[120px]" />
-        <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-white/[0.05] blur-[100px]" />
+        <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#ffffff05] blur-[100px]" />
         <div className="absolute bottom-[-20%] left-[20%] w-[70%] h-[50%] bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent z-10" />
       </motion.div>
 
       <div className="landing-container relative z-10 flex flex-col items-center">
-        {/* Countdown badge */}
+        {/* Countdown */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -112,10 +111,10 @@ const Hero: React.FC = () => {
           className="mb-8 flex items-center justify-center"
         >
           <div className="flex items-center gap-0 border border-white/10 rounded-lg overflow-hidden">
-            <div className="bg-[#1a1a1a] px-4 py-2 text-sm font-medium text-white/80 whitespace-nowrap">
-              New projects added weekly — join now
+            <div className="bg-[#1a1a1a] px-4 py-2 text-[14px] font-medium text-white/80 whitespace-nowrap">
+              Limited time offer ends in
             </div>
-            <div className="bg-white px-4 py-2 text-sm font-bold text-black font-mono tabular-nums">
+            <div className="bg-white px-4 py-2 text-[14px] font-bold text-black font-mono tabular-nums">
               {Pad(d)} : {Pad(h)} : {Pad(m)} : {Pad(s)}
             </div>
           </div>
@@ -129,41 +128,57 @@ const Hero: React.FC = () => {
           custom={1}
           className="max-w-[1000px] text-center mb-10"
         >
-          <h1 className="text-[44px] md:text-[72px] font-extrabold leading-[1.08] tracking-tight text-white">
-            Discover. Build.{' '}
+          <h1 className="text-[44px] md:text-[72px] lg:text-[80px] font-extrabold leading-[1.08] tracking-tight text-white">
+            Discover. Build. &{' '}
             <span className="orange-gradient-text italic">Earn.</span>
           </h1>
         </motion.div>
 
-        <motion.p
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-          custom={2}
-          className="text-white/80 text-lg md:text-xl max-w-[640px] text-center mb-10"
-        >
-          The ultimate marketplace for projects, ideas, and collaborations. Turn your academic and personal projects into real revenue.
-        </motion.p>
-
-        {/* Typewriter card */}
+        {/* Typewriter prompt box */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          custom={3}
+          custom={2}
           className="w-full max-w-[680px] mb-12"
         >
-          <div className="glass-panel border border-white/10 rounded-2xl p-6 bg-[#1a1a1a]/40 shadow-2xl">
-            <div className="text-white/90 text-lg md:text-xl font-medium mb-6 min-h-[56px] flex items-start">
+          <div className="glass-panel border border-white/10 rounded-[16px] p-6 bg-[#1a1a1a]/40 shadow-2xl">
+            <div className="text-white/90 text-lg md:text-xl font-medium mb-8 min-h-[56px] flex items-start">
               <span>{text}</span>
               <motion.span
                 animate={{ opacity: [1, 0] }}
                 transition={{ duration: 0.6, repeat: Infinity, repeatType: 'reverse' }}
-                className="inline-block w-[3px] h-6 bg-[#ff7a00] ml-1 mt-1 flex-shrink-0"
+                className="inline-block w-[3px] h-[24px] bg-[#ff7a00] ml-1 mt-1 flex-shrink-0"
               />
             </div>
             <div className="flex items-center justify-between pt-4 border-t border-white/5">
-              <span className="text-white/40 text-sm font-medium">Projects · Freelancers · Hackathons</span>
+              <button type="button" className="flex items-center gap-2 text-white/40 hover:text-white/60 transition-colors text-sm font-medium">
+                <span className="text-xl">+</span>
+                <div className="flex items-center gap-1.5">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                  </svg>
+                  Tools
+                </div>
+              </button>
+              <div className="flex items-center gap-3">
+                <button type="button" className="p-2 rounded-full hover:bg-white/5 transition-colors cursor-pointer text-white/40">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="22" />
+                  </svg>
+                </button>
+                <button type="button" className="p-2 rounded-full bg-white/5 text-white/60">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
+                    <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+                    <path d="M12 2v2M12 20v2M20 12h2M2 12h2" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -173,84 +188,98 @@ const Hero: React.FC = () => {
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          custom={4}
-          className="flex flex-col md:flex-row items-center gap-8 mb-16"
+          custom={3}
+          className="flex flex-col md:flex-row items-center gap-8 mb-20"
         >
           <motion.button
             onClick={() => navigateTo('auth')}
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
-            className="btn-primary-orange group h-[60px] px-8 text-lg flex items-center justify-center min-w-[260px]"
+            className="btn-primary-orange group h-[60px] px-8 text-lg flex items-center justify-between min-w-[260px]"
           >
-            <span>Explore Projects</span>
-            <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center ml-4 group-hover:scale-110 transition-transform">
-              <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </span>
+            <span>Join now — it&apos;s free</span>
+            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center ml-4 group-hover:scale-110 transition-transform">
+              <img
+                src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/0fea2819-e0b6-4ab2-b4ab-ab4c64535352-oma-mindly-framer-website/assets/svgs/U0c022TYy3iR6YjbwbyxOaDRsk-2.svg"
+                alt=""
+                width={16}
+                height={14}
+                className="w-4 h-[14px] object-contain"
+              />
+            </div>
           </motion.button>
-          <button
-            onClick={() => {
-              const el = document.getElementById('how-it-works');
-              el?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="h-[60px] px-8 text-lg font-semibold text-white/90 hover:text-white border border-white/20 rounded-full transition-colors"
-          >
-            Become a Seller
-          </button>
-          <div className="flex items-center gap-8">
+
+          <div className="flex items-center gap-12 relative">
             <div className="flex -space-x-3">
               {AVATARS.map((src, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + i * 0.08 }}
-                  className="w-10 h-10 rounded-full border-2 border-[#1a1a1a] overflow-hidden bg-gray-700"
+                  transition={{ delay: 0.7 + i * 0.08 }}
+                  className="w-10 h-10 rounded-full border-2 border-[#1a1a1a] overflow-hidden relative"
                 >
                   <img src={src} alt="" className="w-full h-full object-cover" />
                 </motion.div>
               ))}
             </div>
-            <p className="text-white/60 uppercase text-xs font-bold tracking-widest max-w-[180px]">
-              Join thousands building and earning.
-            </p>
+            <div className="relative">
+              <p className="text-[#a1a1a1] uppercase text-[12px] font-bold tracking-widest leading-tight w-[200px]">
+                2k+ creators are already ahead of you.
+              </p>
+              <div className="absolute top-1/2 left-[-60px] transform -translate-y-1/2 rotate-[-10deg] hidden md:block opacity-40">
+                <svg width="45" height="32" viewBox="0 0 45 32" fill="none">
+                  <path d="M1 31C5 25 10 10 44 1" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M38 6L44 1L37 1.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
           </div>
         </motion.div>
 
-        {/* Hero visual */}
+        {/* Video / Hero visual */}
         <motion.div
           style={{ y: videoY }}
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          custom={5}
-          className="w-full max-w-[1000px] relative"
+          custom={4}
+          className="w-full max-w-[1140px] relative mt-10"
         >
           <motion.div
             animate={{
               boxShadow: [
                 '0 0 60px rgba(255,122,0,0.1)',
-                '0 0 100px rgba(255,122,0,0.2)',
+                '0 0 100px rgba(255,122,0,0.25)',
                 '0 0 60px rgba(255,122,0,0.1)',
               ],
             }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 bg-[#1a1a1a]"
+            className="relative aspect-video rounded-[24px] overflow-hidden border border-white/10 group"
           >
-            <div className="absolute inset-0 flex items-center justify-center gap-4 flex-wrap p-8">
-              {['Projects', 'Freelancers', 'Hackathons', 'Portfolio', 'Resume'].map((label, i) => (
-                <div
-                  key={i}
-                  className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/90 font-medium"
-                >
-                  {label}
-                </div>
-              ))}
+            <img
+              src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=675&fit=crop"
+              alt="Project Bazaar"
+              className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay transition-transform duration-700 group-hover:scale-[1.02]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div
+                whileHover={{ scale: 1.12 }}
+                whileTap={{ scale: 0.95 }}
+                animate={{ scale: [1, 1.06, 1] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                className="w-20 h-20 rounded-full bg-[#ff7a00] flex items-center justify-center cursor-pointer shadow-[0_0_30px_rgba(255,122,0,0.4)]"
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </motion.div>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           </motion.div>
         </motion.div>
       </div>
-    </section>
+    </header>
   );
 };
 
