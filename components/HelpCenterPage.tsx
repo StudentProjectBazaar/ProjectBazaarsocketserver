@@ -25,7 +25,7 @@ const tutorials = [
   { id: 6, title: "Security Best Practices", duration: "15:10" },
 ];
 
-const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ toggleSidebar, userEmail }) => {
+const HelpCenterPage: React.FC<HelpCenterPageProps> = ({ userEmail }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showBugReport, setShowBugReport] = useState(false);
