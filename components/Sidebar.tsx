@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import type { DashboardView } from './DashboardPage';
 import { useCart } from './DashboardPage';
+import { useDashboard } from '../context/DashboardContext';
 
 const GET_USER_ENDPOINT = 'https://6omszxa58g.execute-api.ap-south-2.amazonaws.com/default/Get_user_Details_by_his_Id';
 
@@ -63,9 +64,9 @@ const sellerNavItems = [
 ];
 
 interface SidebarProps {
-    dashboardMode: 'buyer' | 'seller';
-    activeView: DashboardView;
-    setActiveView: (view: DashboardView) => void;
+    dashboardMode?: 'buyer' | 'seller';
+    activeView?: DashboardView;
+    setActiveView?: (view: DashboardView) => void;
     isOpen: boolean;
     isCollapsed: boolean;
     onClose: () => void;
@@ -73,8 +74,11 @@ interface SidebarProps {
     onCollapseToggle: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ dashboardMode, activeView, setActiveView, isOpen, isCollapsed, onCollapseToggle }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onCollapseToggle, onClose }) => {
     const { userEmail, userId, logout } = useAuth();
+    // Use global state
+    const { dashboardMode, activeView, setActiveView } = useDashboard();
+
     const [isHovered, setIsHovered] = useState(false);
     const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
     const [userFullName, setUserFullName] = useState<string>('');
@@ -152,6 +156,10 @@ const Sidebar: React.FC<SidebarProps> = ({ dashboardMode, activeView, setActiveV
                             key={item.name}
                             onClick={() => {
                                 setActiveView(item.view);
+                                // Close sidebar on mobile
+                                if (window.innerWidth < 1024) {
+                                    onClose();
+                                }
                                 // If collapsed and not hovered, expand on click
                                 if (isCollapsed && !isHovered) {
                                     onCollapseToggle();

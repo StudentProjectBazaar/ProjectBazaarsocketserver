@@ -67,6 +67,13 @@ const viewTitles: Record<DashboardView, string> = {
   'mock-assessment': 'Mock Assessments',
   'coding-questions': 'Coding Interview Questions',
   'post-project': 'Post Project Bid',
+  projects: 'Projects',
+  messages: 'Messages',
+  freelancers: 'Freelancers',
+  'profile-settings': 'Profile Settings',
+  'edit-project': 'Edit Project',
+  notifications: 'Notifications',
+  'freelancer-profile': 'Freelancer Profile',
 };
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -407,14 +414,23 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             />
           </div>
 
-          {/* Hide search bar when Projects tab is active (BrowseProjectsContent has its own search bar) */}
           {browseView !== 'projects' && (
-            <input
-              className="border px-4 py-2 rounded-lg"
-              placeholder="Search projects..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <div className="relative">
+              <input
+                className="border px-4 py-2 pl-10 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
           )}
         </div>
       )}

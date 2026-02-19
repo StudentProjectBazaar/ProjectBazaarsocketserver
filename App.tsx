@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { DashboardProvider } from './context/DashboardContext';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FlickeringFooter from './components/ui/flickering-footer';
@@ -30,10 +31,10 @@ type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browse
 type UserRole = 'user' | 'admin';
 
 interface PremiumContextType {
-    isPremium: boolean;
-    credits: number;
-    setCredits: (credits: number) => void;
-    setIsPremium: (isPremium: boolean) => void;
+  isPremium: boolean;
+  credits: number;
+  setCredits: (credits: number) => void;
+  setIsPremium: (isPremium: boolean) => void;
 }
 
 interface ThemeContextType {
@@ -62,11 +63,11 @@ export const NavigationContext = createContext<NavigationContextType | undefined
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const usePremium = (): PremiumContextType => {
-    const context = useContext(PremiumContext);
-    if (!context) {
-        throw new Error('usePremium must be used within a PremiumProvider');
-    }
-    return context;
+  const context = useContext(PremiumContext);
+  if (!context) {
+    throw new Error('usePremium must be used within a PremiumProvider');
+  }
+  return context;
 };
 
 export const useTheme = (): ThemeContextType => {
@@ -94,35 +95,35 @@ export const useAuth = (): AuthContextType => {
 };
 
 const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [isPremium, setIsPremiumState] = useState<boolean>(() => {
-        const stored = localStorage.getItem('isPremium');
-        return stored === 'true';
-    });
-    
-    const [credits, setCreditsState] = useState<number>(() => {
-        const stored = localStorage.getItem('premiumCredits');
-        return stored ? parseInt(stored, 10) : 0;
-    });
+  const [isPremium, setIsPremiumState] = useState<boolean>(() => {
+    const stored = localStorage.getItem('isPremium');
+    return stored === 'true';
+  });
 
-    const setIsPremium = (premium: boolean) => {
-        setIsPremiumState(premium);
-        localStorage.setItem('isPremium', premium.toString());
-        if (premium && credits === 0) {
-            setCreditsState(100);
-            localStorage.setItem('premiumCredits', '100');
-        }
-    };
+  const [credits, setCreditsState] = useState<number>(() => {
+    const stored = localStorage.getItem('premiumCredits');
+    return stored ? parseInt(stored, 10) : 0;
+  });
 
-    const setCredits = (newCredits: number) => {
-        setCreditsState(newCredits);
-        localStorage.setItem('premiumCredits', newCredits.toString());
-    };
+  const setIsPremium = (premium: boolean) => {
+    setIsPremiumState(premium);
+    localStorage.setItem('isPremium', premium.toString());
+    if (premium && credits === 0) {
+      setCreditsState(100);
+      localStorage.setItem('premiumCredits', '100');
+    }
+  };
 
-    return (
-        <PremiumContext.Provider value={{ isPremium, credits, setCredits, setIsPremium }}>
-            {children}
-        </PremiumContext.Provider>
-    );
+  const setCredits = (newCredits: number) => {
+    setCreditsState(newCredits);
+    localStorage.setItem('premiumCredits', newCredits.toString());
+  };
+
+  return (
+    <PremiumContext.Provider value={{ isPremium, credits, setCredits, setIsPremium }}>
+      {children}
+    </PremiumContext.Provider>
+  );
 };
 
 const LANDING_THEME_KEY = 'landingTheme';
@@ -261,7 +262,7 @@ const App: React.FC = () => {
       const hash = window.location.hash.replace('#', '');
       const searchParams = new URLSearchParams(window.location.search);
       const route = searchParams.get('page') || hash || path;
-      
+
       // Define valid routes (exact matches only)
       const validRoutes: Record<string, Page> = {
         '/': 'home',
@@ -307,26 +308,26 @@ const App: React.FC = () => {
         'codingQuestions': 'codingQuestions',
         'notFound': 'notFound',
       };
-      
+
       // Extract base path (remove query params, hash, and trailing slashes)
       const normalizedPath = path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
       const normalizedRoute = route.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-      
+
       // Check if it's a static asset (should be handled by server, but check anyway)
       const isStaticAsset = normalizedPath.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|map)$/i) ||
-                           normalizedPath.startsWith('/static') ||
-                           normalizedPath.startsWith('/assets') ||
-                           normalizedPath.startsWith('/_next') ||
-                           normalizedPath.startsWith('/api');
-      
+        normalizedPath.startsWith('/static') ||
+        normalizedPath.startsWith('/assets') ||
+        normalizedPath.startsWith('/_next') ||
+        normalizedPath.startsWith('/api');
+
       // Don't interfere with static assets
       if (isStaticAsset) {
         return;
       }
-      
+
       // Check if route is valid (exact match)
       const targetPage = validRoutes[normalizedRoute] || validRoutes[normalizedPath];
-      
+
       if (targetPage) {
         // Special handling for 404 page - always show it regardless of auth
         if (targetPage === 'notFound') {
@@ -334,16 +335,16 @@ const App: React.FC = () => {
           localStorage.setItem('currentPage', 'notFound');
           return;
         }
-        
+
         // Check auth requirements for protected routes
         const storedAuth = localStorage.getItem('authSession');
-        
+
         if ((targetPage === 'admin' || targetPage === 'dashboard' || targetPage === 'seller') && storedAuth !== 'true') {
           setPage('auth');
           localStorage.setItem('currentPage', 'auth');
           return;
         }
-        
+
         setPage(targetPage);
         localStorage.setItem('currentPage', targetPage);
       } else {
@@ -356,14 +357,14 @@ const App: React.FC = () => {
         }
       }
     };
-    
+
     // Initial route check
     handleRoute();
-    
+
     // Listen for URL changes
     window.addEventListener('popstate', handleRoute);
     window.addEventListener('hashchange', handleRoute);
-    
+
     return () => {
       window.removeEventListener('popstate', handleRoute);
       window.removeEventListener('hashchange', handleRoute);
@@ -374,7 +375,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const storedUserData = localStorage.getItem('userData');
     const storedAuth = localStorage.getItem('authSession');
-    
+
     if (storedAuth === 'true' && storedUserData) {
       try {
         const userData = JSON.parse(storedUserData);
@@ -384,7 +385,7 @@ const App: React.FC = () => {
           setUserEmail(userData.email);
           setUserRole(role);
           setIsLoggedIn(true);
-          
+
           // Only auto-navigate if we're on home page or auth page
           // Don't override 404 pages - they should stay as 404
           if (page === 'home' || page === 'auth') {
@@ -407,7 +408,7 @@ const App: React.FC = () => {
   const navigateTo = (targetPage: Page) => {
     setPage(targetPage);
     localStorage.setItem('currentPage', targetPage);
-    
+
     // Update URL without full page reload
     const pageMap: Record<Page, string> = {
       'home': '/',
@@ -429,7 +430,7 @@ const App: React.FC = () => {
       'codingQuestions': '/coding-questions',
       'notFound': '/404'
     };
-    
+
     const url = pageMap[targetPage] || '/';
     // Use replaceState for 404 to avoid cluttering history, pushState for others
     if (targetPage === 'notFound') {
@@ -439,16 +440,16 @@ const App: React.FC = () => {
     }
     window.scrollTo(0, 0);
   };
-  
+
   const login = (id: string, email: string, role: UserRole = 'user') => {
     setUserId(id);
     setUserEmail(email);
     setUserRole(role);
     setIsLoggedIn(true);
-    
+
     // Store auth session in localStorage
     localStorage.setItem('authSession', 'true');
-    
+
     if (role === 'admin') {
       navigateTo('admin');
     } else {
@@ -461,23 +462,25 @@ const App: React.FC = () => {
     setUserEmail(null);
     setUserRole(null);
     setIsLoggedIn(false);
-    
+
     // Clear auth data from localStorage
     localStorage.removeItem('userData');
     localStorage.removeItem('authSession');
     localStorage.removeItem('currentPage');
-    
+
     navigateTo('home');
   };
 
   return (
     <ThemeProvider page={page}>
       <PremiumProvider>
-        <AuthContext.Provider value={{ isLoggedIn, userId, userEmail, userRole, login, logout }}>
-          <NavigationContext.Provider value={{ page, navigateTo }}>
-            <AppContent />
-          </NavigationContext.Provider>
-        </AuthContext.Provider>
+        <DashboardProvider>
+          <AuthContext.Provider value={{ isLoggedIn, userId, userEmail, userRole, login, logout }}>
+            <NavigationContext.Provider value={{ page, navigateTo }}>
+              <AppContent />
+            </NavigationContext.Provider>
+          </AuthContext.Provider>
+        </DashboardProvider>
       </PremiumProvider>
     </ThemeProvider>
   );

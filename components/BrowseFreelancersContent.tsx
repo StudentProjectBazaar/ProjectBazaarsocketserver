@@ -32,9 +32,9 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    hourlyRate: true,
-    skills: true,
-    country: true
+    hourlyRate: false,
+    skills: false,
+    country: false
   });
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -88,10 +88,10 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
             prev.map((f) =>
               f.id === id
                 ? {
-                    ...f,
-                    ...(profile!.profileImage && { profileImage: profile.profileImage }),
-                    ...(profile!.name && { name: profile!.name }),
-                  }
+                  ...f,
+                  ...(profile!.profileImage && { profileImage: profile.profileImage }),
+                  ...(profile!.name && { name: profile!.name }),
+                }
                 : f
             )
           );
@@ -314,11 +314,11 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
 
       setSendSuccess(`Invitation sent to ${selectedFreelancer.name}!`);
       setTimeout(() => {
-setShowInviteModal(false);
-                  setSelectedFreelancer(null);
-                  setSelectedInviteProjectId('');
-                  setInviteMessage('');
-                  setSendSuccess(null);
+        setShowInviteModal(false);
+        setSelectedFreelancer(null);
+        setSelectedInviteProjectId('');
+        setInviteMessage('');
+        setSendSuccess(null);
       }, 2000);
     } catch (err) {
       console.error('Error sending invite:', err);
@@ -458,7 +458,8 @@ setShowInviteModal(false);
           </button>
 
           {/* Filter Sidebar - same content as BrowseFreelancers but without Header/Footer wrapper */}
-          <div className={`${isFilterOpen ? 'block' : 'hidden'} lg:block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg h-fit lg:sticky lg:top-4 z-10 transition-all duration-300`}>
+          {/* Filter Sidebar - same content as BrowseFreelancers but without Header/Footer wrapper */}
+          <div className={`${isFilterOpen ? 'block' : 'hidden'} lg:block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg h-fit lg:sticky lg:top-4 z-10 transition-all duration-300 max-h-[calc(100vh-2rem)] overflow-y-auto`}>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Filters</h3>
               {hasActiveFilters && (
@@ -788,7 +789,7 @@ setShowInviteModal(false);
                         </button>
                         <button
                           onClick={() => handleContact(freelancer)}
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                         >
                           Contact
                         </button>

@@ -55,10 +55,10 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
   const [sortOption, setSortOption] = useState<SortOption>('latest');
   const [receiveAlerts, setReceiveAlerts] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    projectType: true,
-    budget: true,
-    skills: true,
-    category: true,
+    projectType: false,
+    budget: false,
+    skills: false,
+    category: false,
   });
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
@@ -473,7 +473,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Filters Sidebar */}
         <div className="lg:w-80">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg h-fit lg:sticky lg:top-4 z-10 transition-all duration-300">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg h-fit lg:sticky lg:top-4 z-10 transition-all duration-300 max-h-[calc(100vh-2rem)] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Filters</h3>
               {hasActiveFilters && (

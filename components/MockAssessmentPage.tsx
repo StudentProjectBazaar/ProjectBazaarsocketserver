@@ -519,6 +519,9 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   const [testStartTime, setTestStartTime] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<'assessment' | 'interview' | 'history'>(initialView === 'history' ? 'history' : 'assessment');
   const [historyViewMode, setHistoryViewMode] = useState<'list' | 'grid'>('grid');
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'passed' | 'failed'>('all');
+  const [historySort, setHistorySort] = useState<'date_desc' | 'date_asc' | 'score_desc' | 'score_asc'>('date_desc');
 
   // Track failed badge images
   const [failedBadgeImages, setFailedBadgeImages] = useState<Record<string, boolean>>({});
@@ -2214,6 +2217,25 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   );
 
   const renderHistorySection = () => {
+    const filteredHistory = testHistory
+      .filter((result) => {
+        const matchesSearch = result.assessmentTitle.toLowerCase().includes(historySearch.toLowerCase());
+        const matchesStatus =
+          historyStatusFilter === 'all'
+            ? true
+            : historyStatusFilter === 'passed'
+              ? Math.round(result.score) >= 60
+              : Math.round(result.score) < 60;
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) => {
+        if (historySort === 'date_desc') return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
+        if (historySort === 'date_asc') return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+        if (historySort === 'score_desc') return b.score - a.score;
+        if (historySort === 'score_asc') return a.score - b.score;
+        return 0;
+      });
+
     const renderHistoryCard = (result: TestResult, index: number) => {
       // Note: result.score is already a percentage (0-100), not the number of correct answers
       const percentage = Math.round(result.score);
@@ -2373,36 +2395,75 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header with View Toggle */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Your Assessment History</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">View your attempted assessments, scores, and download certificates</p>
+        <div className="flex flex-col gap-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Your Assessment History</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">View your attempted assessments, scores, and download certificates</p>
+            </div>
+
+            {testHistory.length > 0 && (
+              <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                <button
+                  onClick={() => setHistoryViewMode('list')}
+                  className={`px-3 py-1.5 rounded text-xs transition ${historyViewMode === 'list'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setHistoryViewMode('grid')}
+                  className={`px-3 py-1.5 rounded text-xs transition ${historyViewMode === 'grid'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
 
+          {/* Filters */}
           {testHistory.length > 0 && (
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-              <button
-                onClick={() => setHistoryViewMode('list')}
-                className={`px-3 py-1.5 rounded text-xs transition ${historyViewMode === 'list'
-                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Search assessments..."
+                  value={historySearch}
+                  onChange={(e) => setHistorySearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-              </button>
-              <button
-                onClick={() => setHistoryViewMode('grid')}
-                className={`px-3 py-1.5 rounded text-xs transition ${historyViewMode === 'grid'
-                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
+              </div>
+              <select
+                value={historyStatusFilter}
+                onChange={(e) => setHistoryStatusFilter(e.target.value as any)}
+                className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-              </button>
+                <option value="all">All Status</option>
+                <option value="passed">Passed</option>
+                <option value="failed">Failed</option>
+              </select>
+              <select
+                value={historySort}
+                onChange={(e) => setHistorySort(e.target.value as any)}
+                className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="date_desc">Newest First</option>
+                <option value="date_asc">Oldest First</option>
+                <option value="score_desc">Highest Score</option>
+                <option value="score_asc">Lowest Score</option>
+              </select>
             </div>
           )}
         </div>
@@ -2423,64 +2484,70 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
               </div>
             ))}
           </div>
-        ) : testHistory.length === 0 ? (
+        ) : filteredHistory.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-10 text-center">
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No Assessments Attempted Yet</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Start taking mock assessments to build your history!</p>
-            <button
-              onClick={() => setActiveTab('assessment')}
-              className="px-5 py-2 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 transition"
-            >
-              Take Your First Assessment
-            </button>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+              {testHistory.length === 0 ? 'No Assessments Attempted Yet' : 'No matches found'}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+              {testHistory.length === 0 ? 'Start taking mock assessments to build your history!' : 'Try adjusting your filters.'}
+            </p>
+            {testHistory.length === 0 && (
+              <button
+                onClick={() => setActiveTab('assessment')}
+                className="px-5 py-2 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 transition"
+              >
+                Take Your First Assessment
+              </button>
+            )}
           </div>
         ) : (
           <>
             {/* List View */}
             {historyViewMode === 'list' && (
               <div className="space-y-3">
-                {testHistory.map(renderHistoryList)}
+                {filteredHistory.map(renderHistoryList)}
               </div>
             )}
 
             {/* Grid View */}
             {historyViewMode === 'grid' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {testHistory.map(renderHistoryCard)}
+                {filteredHistory.map(renderHistoryCard)}
               </div>
             )}
           </>
         )}
 
         {/* Summary Stats */}
-        {testHistory.length > 0 && (
+        {filteredHistory.length > 0 && (
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{testHistory.length}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Tests Attempted</p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">{filteredHistory.length}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Tests Found</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
               <p className="text-2xl font-semibold text-emerald-600">
-                {testHistory.filter(r => Math.round(r.score) >= 60).length}
+                {filteredHistory.filter(r => Math.round(r.score) >= 60).length}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Tests Passed</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
               <p className="text-2xl font-semibold text-orange-600">
-                {Math.min(100, Math.max(0, Math.round(testHistory.reduce((acc, r) => acc + Math.min(100, Math.max(0, r.score)), 0) / testHistory.length)))}%
+                {Math.min(100, Math.max(0, Math.round(filteredHistory.reduce((acc, r) => acc + Math.min(100, Math.max(0, r.score)), 0) / filteredHistory.length)))}%
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Avg. Score</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
               <p className="text-2xl font-semibold text-amber-600">
-                {testHistory.filter(r => Math.round(r.score) >= 60).length}
+                {filteredHistory.filter(r => Math.round(r.score) >= 60).length}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Certificates</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Certificates Earned</p>
             </div>
           </div>
         )}
@@ -2792,7 +2859,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
         <div
           className="bg-white dark:bg-[#1c1c1e] rounded-[20px] w-full max-w-[380px] overflow-hidden shadow-2xl"
           onClick={(e) => e.stopPropagation()}
-          style={{ 
+          style={{
             animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)'
           }}
@@ -2801,7 +2868,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
           <div className="relative pt-8 pb-6 px-6">
             {/* Background decoration */}
             <div className="absolute inset-0 bg-gradient-to-b from-orange-50 to-transparent dark:from-orange-950/20 dark:to-transparent" />
-            
+
             {/* Icon */}
             <div className="relative flex justify-center mb-4">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
@@ -2810,7 +2877,7 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
                 </svg>
               </div>
             </div>
-            
+
             {/* Title */}
             <h3 className="relative text-lg font-semibold text-gray-900 dark:text-white text-center">
               Before You Submit

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Lottie from 'lottie-react';
 import SkeletonDashboard from './ui/skeleton-dashboard';
 import { useAuth } from '../App';
+import { useDashboard } from '../context/DashboardContext';
 import noProjectAnimation from '../lottiefiles/no_project_animation.json';
 import { fetchUserData } from '../services/buyerApi';
 import DashboardHeader from './DashboardHeader';
@@ -192,16 +193,18 @@ const activatedProjects = [
 
 
 interface DashboardContentProps {
-    dashboardMode: 'buyer' | 'seller';
-    setDashboardMode: (mode: 'buyer' | 'seller') => void;
-    activeView: DashboardView;
+    dashboardMode?: 'buyer' | 'seller';
+    setDashboardMode?: (mode: 'buyer' | 'seller') => void;
+    activeView?: DashboardView;
     isSidebarOpen: boolean;
     toggleSidebar: () => void;
-    setActiveView: (view: DashboardView) => void;
+    setActiveView?: (view: DashboardView) => void;
 }
 
-const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setDashboardMode, activeView, isSidebarOpen, toggleSidebar, setActiveView }) => {
+const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, toggleSidebar }) => {
     const { userId, userEmail } = useAuth();
+    // Use global state
+    const { dashboardMode, setDashboardMode, activeView, setActiveView } = useDashboard();
     const mainScrollRef = useRef<HTMLElement>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
