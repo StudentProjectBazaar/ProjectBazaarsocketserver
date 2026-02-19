@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { motion, useInView } from 'motion/react';
-import { Package, FileCode, Users, ArrowRight } from 'lucide-react';
+import { Package, FileCode, Users } from 'lucide-react';
 import { useNavigation } from '../../App';
+import { CTAArrowIcon } from '../CTAArrowIcon';
 
 const roleTagVariants = {
   hidden: { opacity: 0, scale: 0.8, y: 20 },
@@ -98,7 +99,7 @@ const UniSystemSection: React.FC = () => {
               >
                 Join for free
                 <span className="ml-3 flex items-center justify-center w-6 h-6 bg-white rounded-full">
-                  <ArrowRight className="w-4 h-4 text-[#ff7a00]" />
+                  <CTAArrowIcon className="w-4 h-4 object-contain" />
                 </span>
               </motion.button>
             </div>

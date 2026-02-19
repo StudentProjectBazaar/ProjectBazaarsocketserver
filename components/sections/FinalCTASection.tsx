@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { motion, useInView } from 'motion/react';
-import { FolderOpen, Handshake, Rocket, Code2, ArrowRight, BookOpen, Clock, Users } from 'lucide-react';
+import { FolderOpen, Handshake, Rocket, Code2, BookOpen, Clock, Users } from 'lucide-react';
 import { useNavigation } from '../../App';
+import { CTAArrowIcon } from '../CTAArrowIcon';
 
 const AVATARS = [
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop',
@@ -110,7 +111,7 @@ const FinalCTASection: React.FC = () => {
           >
             Get started free
             <span className="w-8 h-8 bg-white rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1">
-              <ArrowRight className="w-4 h-4 text-[#ff7a00]" />
+              <CTAArrowIcon className="w-4 h-4 object-contain" />
             </span>
           </motion.button>
 

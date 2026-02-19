@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { useNavigation } from '../App';
+import { CTAArrowIcon } from './CTAArrowIcon';
 
 const TYPEWRITER_PHRASES = [
   'Sell your capstone project and earn real revenue',
@@ -199,13 +200,7 @@ const Hero: React.FC = () => {
           >
             <span>Join now — it&apos;s free</span>
             <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center ml-4 group-hover:scale-110 transition-transform">
-              <img
-                src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/0fea2819-e0b6-4ab2-b4ab-ab4c64535352-oma-mindly-framer-website/assets/svgs/U0c022TYy3iR6YjbwbyxOaDRsk-2.svg"
-                alt=""
-                width={16}
-                height={14}
-                className="w-4 h-[14px] object-contain"
-              />
+              <CTAArrowIcon className="w-4 h-[14px] object-contain" />
             </div>
           </motion.button>
 

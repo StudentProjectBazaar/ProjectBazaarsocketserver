@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'motion/react';
-import { Plus, Check, ArrowRight } from 'lucide-react';
+import { Plus, Check } from 'lucide-react';
 import { useNavigation } from '../../App';
+import { CTAArrowIcon } from '../CTAArrowIcon';
 
 interface Step {
   id: string;
@@ -144,7 +145,7 @@ const CurriculumSection: React.FC = () => {
                 >
                   <span className="ml-4">Get started free</span>
                   <span className="w-10 h-10 rounded-full bg-white flex items-center justify-center transition-transform group-hover:translate-x-1">
-                    <ArrowRight className="w-5 h-5 text-[#ff7a00]" />
+                    <CTAArrowIcon className="w-5 h-5 object-contain" />
                   </span>
                 </motion.button>
               </div>

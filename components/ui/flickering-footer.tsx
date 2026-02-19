@@ -1,5 +1,5 @@
-import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { ClassValue, clsx } from "clsx";
+import { CTAArrowIcon } from "../CTAArrowIcon";
 import * as Color from "color-bits";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
@@ -423,7 +423,7 @@ export const FlickeringFooter: React.FC = () => {
                       {link.title}
                     </a>
                     <div className="flex size-4 items-center justify-center border border-white/30 rounded translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100 group-hover:border-[#ff7a00]">
-                      <ChevronRightIcon className="h-4 w-4 text-[#ff7a00]" />
+                      <CTAArrowIcon className="h-4 w-4 object-contain" />
                     </div>
                   </li>
                 ))}

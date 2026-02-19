@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'motion/react';
-import { Plus, ArrowRight } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useNavigation } from '../../App';
+import { CTAArrowIcon } from '../CTAArrowIcon';
 
 const faqData = [
   {
@@ -116,7 +117,7 @@ const FAQSection: React.FC = () => {
           >
             Visit Help Center
             <span className="bg-white rounded-full p-1 ml-1 group-hover:translate-x-1 transition-transform inline-flex">
-              <ArrowRight className="w-4 h-4 text-[#ff7a00]" />
+              <CTAArrowIcon className="w-4 h-4 object-contain" />
             </span>
           </motion.button>
         </motion.div>

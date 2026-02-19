@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigation, useAuth, useTheme } from '../App';
 import { Sun, Moon } from 'lucide-react';
+import { CTAArrowIcon } from './CTAArrowIcon';
 
 const ORCHIDS_LOGO = 'https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/0fea2819-e0b6-4ab2-b4ab-ab4c64535352-oma-mindly-framer-website/assets/svgs/VT9XchCjHXRPw0H08BPtEicHVVs-1.svg';
-const ORCHIDS_ARROW = 'https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/0fea2819-e0b6-4ab2-b4ab-ab4c64535352-oma-mindly-framer-website/assets/svgs/U0c022TYy3iR6YjbwbyxOaDRsk-2.svg';
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,7 +53,7 @@ const Header: React.FC = () => {
     >
       <span className="mr-2">{children}</span>
       <span className="w-6 h-6 rounded-full bg-white flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-        <img src={ORCHIDS_ARROW} alt="" width={16} height={14} className="w-3 h-[10px] object-contain" />
+        <CTAArrowIcon className="w-3 h-[10px] object-contain" />
       </span>
     </button>
   );
@@ -198,7 +198,7 @@ const Header: React.FC = () => {
                 >
                   Join Now
                   <span className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
-                    <img src={ORCHIDS_ARROW} alt="" width={12} height={10} className="w-3 h-[10px] object-contain" />
+                    <CTAArrowIcon className="w-3 h-[10px] object-contain" />
                   </span>
                 </button>
               </>
