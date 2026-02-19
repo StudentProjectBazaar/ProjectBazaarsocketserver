@@ -38,12 +38,10 @@ const FAQSection: React.FC = () => {
       id="faqs"
       ref={ref}
       className="bg-gray-100 dark:bg-[#0a0a0a] text-gray-900 dark:text-white py-24 md:py-32 px-5 relative overflow-hidden transition-colors duration-300"
-      style={{
-        backgroundImage: 'radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}
     >
-      <div className="max-w-[800px] mx-auto flex flex-col items-center">
+      <div className="absolute inset-0 pointer-events-none opacity-100 dark:opacity-0 transition-opacity duration-300" style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      <div className="absolute inset-0 pointer-events-none opacity-0 dark:opacity-100 transition-opacity duration-300" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      <div className="max-w-[800px] mx-auto flex flex-col items-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}

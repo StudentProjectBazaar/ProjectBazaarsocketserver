@@ -379,14 +379,14 @@ export const FlickeringFooter: React.FC = () => {
   const tablet = useMediaQuery("(max-width: 1024px)");
 
   return (
-    <footer id="footer" className="w-full pb-0 bg-[#0a0a0a]">
+    <footer id="footer" className="w-full pb-0 bg-gray-100 dark:bg-[#0a0a0a] transition-colors duration-300">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between p-10">
         <div className="flex flex-col items-start justify-start gap-y-5 max-w-xs mx-0">
           <a href="#" className="flex items-center gap-2 group" onClick={(e) => { e.preventDefault(); scrollToId(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
             <Icons.logo className="size-8 [&_path]:fill-[#ff7a00]" />
-            <p className="text-xl font-semibold text-white group-hover:text-[#ff7a00] transition-colors">ProjectBazaar</p>
+            <p className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-[#ff7a00] transition-colors">ProjectBazaar</p>
           </a>
-          <p className="tracking-tight text-white/70 font-medium">
+          <p className="tracking-tight text-gray-600 dark:text-white/70 font-medium">
             {siteConfig.hero.description}
           </p>
         </div>
@@ -398,7 +398,7 @@ export const FlickeringFooter: React.FC = () => {
                 {column.links.map((link) => (
                   <li
                     key={link.id}
-                    className="group inline-flex cursor-pointer items-center justify-start gap-1 text-[15px]/snug text-white/80 hover:text-white transition-colors"
+                    className="group inline-flex cursor-pointer items-center justify-start gap-1 text-[15px]/snug text-gray-700 dark:text-white/80 hover:text-gray-900 dark:hover:text-white transition-colors"
                   >
                     <a
                       href={link.url}
@@ -412,7 +412,7 @@ export const FlickeringFooter: React.FC = () => {
                     >
                       {link.title}
                     </a>
-                    <div className="flex size-4 items-center justify-center border border-white/30 rounded translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100 group-hover:border-[#ff7a00]">
+                    <div className="flex size-4 items-center justify-center border border-gray-400 dark:border-white/30 rounded translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100 group-hover:border-[#ff7a00]">
                       <CTAArrowIcon className="h-4 w-4 object-contain" />
                     </div>
                   </li>
@@ -423,7 +423,7 @@ export const FlickeringFooter: React.FC = () => {
         </div>
       </div>
       <div className="w-full h-48 md:h-64 relative mt-24 z-0">
-        <div className="absolute inset-0 z-10 bg-gradient-to-t from-transparent from-[40%] to-[#0a0a0a]" />
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-transparent from-[40%] to-gray-100 dark:to-[#0a0a0a]" />
         <div className="absolute inset-0 mx-6">
           <FlickeringGrid
             text={tablet ? "Footer" : "Discover. Build. Earn."}

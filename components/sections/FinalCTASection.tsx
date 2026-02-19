@@ -116,16 +116,15 @@ const FinalCTASection: React.FC = () => {
           </motion.button>
 
           <div className="flex items-center gap-3">
-            <svg width="45" height="25" viewBox="0 0 45 25" fill="none" className="rotate-[-10deg]">
+            <svg width="45" height="25" viewBox="0 0 45 25" fill="none" className="rotate-[-10deg] stroke-current text-gray-600 dark:text-white">
               <path
                 d="M1 24C6.5 18 15 2 44 1M44 1L38 4M44 1L41 7"
-                stroke="white"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
-            <span className="text-white font-normal text-sm italic opacity-80 uppercase tracking-tight max-w-[150px] leading-tight">
+            <span className="text-gray-700 dark:text-white font-normal text-sm italic opacity-80 uppercase tracking-tight max-w-[150px] leading-tight">
               Join creators already earning
             </span>
           </div>
@@ -135,20 +134,20 @@ const FinalCTASection: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.65, delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-10 border-t border-white/10 pt-16 w-full max-w-[900px]"
+          className="grid grid-cols-1 md:grid-cols-3 gap-10 border-t border-gray-200 dark:border-white/10 pt-16 w-full max-w-[900px]"
         >
           {perks.map(({ Icon, label }, i) => (
             <div key={i} className="flex flex-col items-center text-center">
               <div className="mb-4 text-[#ff7a00]">
                 <Icon className="w-6 h-6" />
               </div>
-              <h4 className="text-white font-semibold text-lg">{label}</h4>
+              <h4 className="text-gray-900 dark:text-white font-semibold text-lg">{label}</h4>
             </div>
           ))}
         </motion.div>
       </div>
 
-      <div className="mt-24 border-t border-white/5 pt-12 overflow-hidden bg-white/[0.02]">
+      <div className="mt-24 border-t border-gray-200 dark:border-white/5 pt-12 overflow-hidden bg-gray-200/30 dark:bg-white/[0.02]">
         <motion.div
           animate={{ x: ['0%', '-50%'] }}
           transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
@@ -157,7 +156,7 @@ const FinalCTASection: React.FC = () => {
           {[...companies, ...companies, ...companies, ...companies].map((name, i) => (
             <div
               key={i}
-              className="flex items-center gap-2 mx-12 text-white/50 hover:text-white transition-all cursor-default font-bold text-xl tracking-tight"
+              className="flex items-center gap-2 mx-12 text-gray-500 dark:text-white/50 hover:text-gray-700 dark:hover:text-white transition-all cursor-default font-bold text-xl tracking-tight"
             >
               {name}
             </div>
