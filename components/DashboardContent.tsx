@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Lottie from 'lottie-react';
+import Skeleton from './ui/skeleton';
 import { useAuth } from '../App';
 import noProjectAnimation from '../lottiefiles/no_project_animation.json';
 import { fetchUserData } from '../services/buyerApi';
@@ -412,35 +413,35 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
                                     {isLoadingProjects && (
                                         <>
                                             <div className="mb-4">
-                                                <div className="h-5 bg-gray-200 rounded w-40 animate-pulse"></div>
+                                                <Skeleton className="h-5 w-40 rounded" />
                                             </div>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                                                 {[...Array(6)].map((_, i) => (
-                                                    <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 animate-pulse">
+                                                    <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100">
                                                         {/* Image Skeleton */}
-                                                        <div className="h-52 bg-gray-200"></div>
+                                                        <Skeleton className="h-52 w-full rounded-none" />
                                                         {/* Content */}
                                                         <div className="p-5">
                                                             {/* Category */}
-                                                            <div className="h-4 bg-gray-200 rounded-lg w-28 mb-2"></div>
+                                                            <Skeleton className="h-4 w-28 rounded-lg mb-2" />
                                                             {/* Title */}
-                                                            <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                                                            <Skeleton className="h-6 w-3/4 rounded mb-3" />
                                                             {/* Description */}
                                                             <div className="space-y-2 mb-4">
-                                                                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                                                                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                                                                <Skeleton className="h-4 w-full rounded" />
+                                                                <Skeleton className="h-4 w-5/6 rounded" />
                                                             </div>
                                                             {/* Tags */}
                                                             <div className="flex gap-2 mb-4">
-                                                                <div className="h-7 bg-gray-200 rounded-lg w-16"></div>
-                                                                <div className="h-7 bg-gray-200 rounded-lg w-20"></div>
+                                                                <Skeleton className="h-7 w-16 rounded-lg" />
+                                                                <Skeleton className="h-7 w-20 rounded-lg" />
                                                             </div>
                                                             {/* Footer */}
                                                             <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                                                                <div className="h-7 bg-gray-200 rounded w-16"></div>
+                                                                <Skeleton className="h-7 w-16 rounded" />
                                                                 <div className="flex gap-2">
-                                                                    <div className="h-10 w-10 bg-gray-200 rounded-xl"></div>
-                                                                    <div className="h-10 bg-gray-200 rounded-xl w-20"></div>
+                                                                    <Skeleton className="h-10 w-10 rounded-xl" />
+                                                                    <Skeleton className="h-10 w-20 rounded-xl" />
                                                                 </div>
                                                             </div>
                                                         </div>

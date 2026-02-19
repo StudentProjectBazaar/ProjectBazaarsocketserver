@@ -39,6 +39,7 @@ interface PremiumContextType {
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
+  isLanding: boolean;
 }
 
 interface NavigationContextType {
@@ -124,27 +125,44 @@ const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     );
 };
 
-const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
+const LANDING_THEME_KEY = 'landingTheme';
+
+/** Pages that use the landing page theme (dark/light). All other pages (dashboard, auth, etc.) always use light. */
+const LANDING_PAGES: Page[] = ['home', 'faq'];
+
+const ThemeProvider: React.FC<{ children: ReactNode; page: Page }> = ({ children, page }) => {
+  const isLanding = LANDING_PAGES.includes(page);
+  const [landingTheme, setLandingTheme] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'light';
-    return (localStorage.getItem('theme') as Theme) || 'light';
+    return (localStorage.getItem(LANDING_THEME_KEY) as Theme) || 'light';
   });
 
+  // Apply theme only on landing pages; force light on dashboard/auth/admin etc.
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
+    if (isLanding) {
+      if (landingTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     } else {
       document.documentElement.classList.remove('dark');
     }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+  }, [isLanding, landingTheme]);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+    setLandingTheme((prev) => {
+      const next = prev === 'light' ? 'dark' : 'light';
+      localStorage.setItem(LANDING_THEME_KEY, next);
+      return next;
+    });
   };
 
+  // Expose effective theme: on landing use landingTheme, elsewhere always 'light'
+  const theme = isLanding ? landingTheme : 'light';
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, isLanding }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -453,7 +471,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <ThemeProvider>
+    <ThemeProvider page={page}>
       <PremiumProvider>
         <AuthContext.Provider value={{ isLoggedIn, userId, userEmail, userRole, login, logout }}>
           <NavigationContext.Provider value={{ page, navigateTo }}>

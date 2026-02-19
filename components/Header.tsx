@@ -9,7 +9,7 @@ const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { navigateTo } = useNavigation();
   const { isLoggedIn, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, isLanding } = useTheme();
 
   const navBg = theme === 'dark' ? 'rgba(26,26,26,0.95)' : 'rgba(255,255,255,0.97)';
   const navShadow = theme === 'dark'
@@ -97,15 +97,17 @@ const Header: React.FC = () => {
           ))}
         </nav>
 
-        {/* Desktop: Theme + Auth */}
+        {/* Desktop: Theme (landing only) + Auth */}
         <div className="hidden md:flex items-center gap-3">
-          <button
-            onClick={toggleTheme}
-            className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-black/60 hover:text-black hover:bg-black/5'}`}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
+          {isLanding && (
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-black/60 hover:text-black hover:bg-black/5'}`}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          )}
           {isLoggedIn ? (
             <>
               <button onClick={() => navigateTo('dashboard')} className={linkClass}>
@@ -128,15 +130,17 @@ const Header: React.FC = () => {
           )}
         </div>
 
-        {/* Mobile: Theme + Menu toggle */}
+        {/* Mobile: Theme (landing only) + Menu toggle */}
         <div className="md:hidden flex items-center gap-1">
-          <button
-            onClick={toggleTheme}
-            className={`p-2 rounded-full ${theme === 'dark' ? 'text-white/80' : 'text-black/70'}`}
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
+          {isLanding && (
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-full ${theme === 'dark' ? 'text-white/80' : 'text-black/70'}`}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          )}
           <button
             onClick={() => setIsOpen(!isOpen)}
             className={`p-2 rounded-lg focus:outline-none ${theme === 'dark' ? 'text-white' : 'text-black'}`}
