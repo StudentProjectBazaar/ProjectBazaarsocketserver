@@ -12,6 +12,44 @@ const FREELANCER_OAUTH_CALLBACK_API = 'https://0pwxlef4jj.execute-api.ap-south-2
 // Freelancer OAuth Client ID - must match the CLIENT_ID in your Lambda environment variable FREELANCER_CLIENT_ID
 const FREELANCER_CLIENT_ID = 'e7f386e4-b386-48e8-bed4-449692bc20cb';
 
+// LLM provider logos for AI & ATS section
+const OpenAILogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 260" className={className} preserveAspectRatio="xMidYMid">
+        <path fill="#10a37f" d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Z" />
+    </svg>
+);
+const GeminiLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className}>
+        <path fill="#4285F4" d="M12 2l2.5 6.5L21 9l-5.5 4 1 7-4.5-3-4.5 3 1-7L3 9l6.5-.5L12 2z" />
+    </svg>
+);
+const ClaudeLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
+    <svg fill="currentColor" fillRule="evenodd" viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg">
+        <path d="M13.827 3.52h3.603L24 20h-3.603l-6.57-16.48zm-7.258 0h3.767L16.906 20h-3.674l-1.343-3.461H5.017l-1.344 3.46H0L6.57 3.522zm4.132 9.959L8.453 7.687 6.205 13.48H10.7z" />
+    </svg>
+);
+
+// Models per provider for ATS (id = API model id, label = display name)
+const LLM_MODELS: Record<'openai' | 'gemini' | 'claude', { id: string; label: string }[]> = {
+    openai: [
+        { id: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+        { id: 'gpt-4o', label: 'GPT-4o' },
+        { id: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+        { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
+    ],
+    gemini: [
+        { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+        { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+        { id: 'gemini-1.0-pro', label: 'Gemini 1.0 Pro' },
+    ],
+    claude: [
+        { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
+        { id: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
+        { id: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
+        { id: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
+    ],
+};
+
 interface SectionCardProps {
     title: string;
     description?: string;
@@ -203,9 +241,10 @@ const SettingsPage: React.FC = () => {
     const [hasOpenAiKey, setHasOpenAiKey] = useState(false);
     const [hasGeminiKey, setHasGeminiKey] = useState(false);
     const [hasClaudeKey, setHasClaudeKey] = useState(false);
-    const [openaiKeyInput, setOpenaiKeyInput] = useState('');
-    const [geminiKeyInput, setGeminiKeyInput] = useState('');
-    const [claudeKeyInput, setClaudeKeyInput] = useState('');
+    const [selectedLlmProvider, setSelectedLlmProvider] = useState<'openai' | 'gemini' | 'claude'>('openai');
+    const [selectedLlmModel, setSelectedLlmModel] = useState<string>('gpt-4o-mini');
+    const [llmSavedModels, setLlmSavedModels] = useState<Record<string, string>>({});
+    const [llmKeyInput, setLlmKeyInput] = useState('');
     const [llmTestingProvider, setLlmTestingProvider] = useState<string | null>(null);
     const [llmSavingProvider, setLlmSavingProvider] = useState<string | null>(null);
     const [llmKeyMessage, setLlmKeyMessage] = useState<string | null>(null);
@@ -319,6 +358,9 @@ const SettingsPage: React.FC = () => {
                     setHasOpenAiKey(!!data.hasOpenAiKey);
                     setHasGeminiKey(!!data.hasGeminiKey);
                     setHasClaudeKey(!!data.hasClaudeKey);
+                    if (data.savedModels && typeof data.savedModels === 'object') {
+                        setLlmSavedModels(data.savedModels);
+                    }
                 }
             } catch (e) {
                 console.error('Failed to fetch LLM keys status', e);
@@ -326,6 +368,15 @@ const SettingsPage: React.FC = () => {
         };
         fetchLlmKeysStatus();
     }, [userId]);
+
+    // Keep selected model in sync when provider or saved models change
+    useEffect(() => {
+        const models = LLM_MODELS[selectedLlmProvider];
+        const saved = llmSavedModels[selectedLlmProvider];
+        const defaultId = models?.[0]?.id ?? 'gpt-4o-mini';
+        const validSaved = saved && models?.some((m) => m.id === saved);
+        setSelectedLlmModel(validSaved ? saved : defaultId);
+    }, [selectedLlmProvider, llmSavedModels]);
 
     const testLlmApiKey = async (provider: string, apiKey: string) => {
         const key = (apiKey || '').trim();
@@ -361,29 +412,37 @@ const SettingsPage: React.FC = () => {
             setLlmKeyError('You must be logged in.');
             return;
         }
+        const p = provider.toLowerCase() as 'openai' | 'gemini' | 'claude';
+        const hasKeyForProvider = p === 'openai' ? hasOpenAiKey : p === 'gemini' ? hasGeminiKey : hasClaudeKey;
+        const savingKey = !!key;
+        const savingModelOnly = !key && hasKeyForProvider && selectedLlmModel;
+        if (!savingKey && !savingModelOnly) {
+            setLlmKeyError(key ? 'Something went wrong.' : 'Enter a key to save, or change model and click Save to update model only.');
+            return;
+        }
         setLlmKeyError(null);
         setLlmKeyMessage(null);
         setLlmSavingProvider(provider);
         try {
-            const p = provider.toLowerCase();
+            const payload: { action: string; userId: string; llmApiKeys?: Record<string, string>; llmModels?: Record<string, string> } = {
+                action: 'updateSettings',
+                userId,
+            };
+            if (savingKey) payload.llmApiKeys = { [p]: key };
+            if (selectedLlmModel && (savingKey || savingModelOnly)) payload.llmModels = { [p]: selectedLlmModel };
             const res = await fetch(UPDATE_SETTINGS_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'updateSettings',
-                    userId,
-                    llmApiKeys: { [p]: key },
-                }),
+                body: JSON.stringify(payload),
             });
             const data = await res.json();
             if (data.success) {
-                setLlmKeyMessage(`${provider} key saved. You can use ATS Score in the Resume Builder.`);
+                setLlmKeyMessage(`${provider} key and model saved. You can use ATS Score in the Resume Builder.`);
                 if (p === 'openai') setHasOpenAiKey(!!key);
                 if (p === 'gemini') setHasGeminiKey(!!key);
                 if (p === 'claude') setHasClaudeKey(!!key);
-                if (p === 'openai') setOpenaiKeyInput('');
-                if (p === 'gemini') setGeminiKeyInput('');
-                if (p === 'claude') setClaudeKeyInput('');
+                setLlmSavedModels((prev) => ({ ...prev, [p]: selectedLlmModel }));
+                setLlmKeyInput('');
             } else {
                 setLlmKeyError(data.message || 'Failed to save key.');
             }
@@ -2298,70 +2357,101 @@ const SettingsPage: React.FC = () => {
                     {llmKeyError && (
                         <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">{llmKeyError}</div>
                     )}
-                    <div className="space-y-4">
-                        <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="font-medium text-gray-900">OpenAI (GPT)</span>
-                                {hasOpenAiKey && <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">Saved</span>}
+                    <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Select LLM provider</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    { id: 'openai' as const, name: 'OpenAI (GPT)', Logo: OpenAILogo, saved: hasOpenAiKey },
+                                    { id: 'gemini' as const, name: 'Google Gemini', Logo: GeminiLogo, saved: hasGeminiKey },
+                                    { id: 'claude' as const, name: 'Anthropic Claude', Logo: ClaudeLogo, saved: hasClaudeKey },
+                                ].map(({ id, name, Logo, saved }) => (
+                                    <button
+                                        key={id}
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedLlmProvider(id);
+                                            setLlmKeyInput('');
+                                            setLlmKeyError(null);
+                                            setLlmKeyMessage(null);
+                                        }}
+                                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                                            selectedLlmProvider === id
+                                                ? 'border-orange-500 bg-orange-50'
+                                                : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-gray-100">
+                                            <Logo className="w-6 h-6 text-gray-800" />
+                                        </div>
+                                        <span className="text-xs font-medium text-gray-700 text-center leading-tight">{name}</span>
+                                        {saved && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">Saved</span>}
+                                    </button>
+                                ))}
                             </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Model</label>
+                            <select
+                                value={selectedLlmModel}
+                                onChange={(e) => setSelectedLlmModel(e.target.value)}
+                                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
+                            >
+                                {(LLM_MODELS[selectedLlmProvider] || []).map((m) => (
+                                    <option key={m.id} value={m.id}>{m.label}</option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">Model used for ATS scoring when this provider is selected.</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">API key</label>
                             <div className="flex flex-wrap gap-2">
                                 <input
                                     type="password"
-                                    value={openaiKeyInput}
-                                    onChange={(e) => setOpenaiKeyInput(e.target.value)}
-                                    placeholder={hasOpenAiKey ? 'Enter new key to replace' : 'sk-...'}
+                                    value={llmKeyInput}
+                                    onChange={(e) => setLlmKeyInput(e.target.value)}
+                                    placeholder={
+                                        selectedLlmProvider === 'openai' ? (hasOpenAiKey ? 'Enter new key to replace' : 'sk-...') :
+                                        selectedLlmProvider === 'gemini' ? (hasGeminiKey ? 'Enter new key to replace' : 'AIza...') :
+                                        hasClaudeKey ? 'Enter new key to replace' : 'sk-ant-...'
+                                    }
                                     className="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                                 />
-                                <button type="button" onClick={() => testLlmApiKey('openai', openaiKeyInput)} disabled={llmTestingProvider !== null} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
-                                    {llmTestingProvider === 'openai' ? 'Testing...' : 'Test'}
+                                <button type="button" onClick={() => testLlmApiKey(selectedLlmProvider, llmKeyInput)} disabled={llmTestingProvider !== null} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
+                                    {llmTestingProvider !== null ? 'Testing...' : 'Test'}
                                 </button>
-                                <button type="button" onClick={() => saveLlmApiKey('openai', openaiKeyInput)} disabled={llmSavingProvider !== null || !openaiKeyInput.trim()} className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50">
-                                    {llmSavingProvider === 'openai' ? 'Saving...' : 'Save'}
+                                <button
+                                    type="button"
+                                    onClick={() => saveLlmApiKey(selectedLlmProvider, llmKeyInput)}
+                                    disabled={
+                                        llmSavingProvider !== null ||
+                                        (!llmKeyInput.trim() && !(hasOpenAiKey && selectedLlmProvider === 'openai') && !(hasGeminiKey && selectedLlmProvider === 'gemini') && !(hasClaudeKey && selectedLlmProvider === 'claude'))
+                                    }
+                                    className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50"
+                                >
+                                    {llmSavingProvider !== null ? 'Saving...' : llmKeyInput.trim() ? 'Save key & model' : 'Save model'}
                                 </button>
                             </div>
                         </div>
-                        <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="font-medium text-gray-900">Google Gemini</span>
-                                {hasGeminiKey && <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">Saved</span>}
+                        {(hasOpenAiKey || hasGeminiKey || hasClaudeKey) && (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                                {hasOpenAiKey && (
+                                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+                                        <OpenAILogo className="w-3.5 h-3.5" /> OpenAI ✓
+                                    </span>
+                                )}
+                                {hasGeminiKey && (
+                                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+                                        <GeminiLogo className="w-3.5 h-3.5" /> Gemini ✓
+                                    </span>
+                                )}
+                                {hasClaudeKey && (
+                                    <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+                                        <ClaudeLogo className="w-3.5 h-3.5 text-green-700" /> Claude ✓
+                                    </span>
+                                )}
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                                <input
-                                    type="password"
-                                    value={geminiKeyInput}
-                                    onChange={(e) => setGeminiKeyInput(e.target.value)}
-                                    placeholder={hasGeminiKey ? 'Enter new key to replace' : 'AIza...'}
-                                    className="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
-                                />
-                                <button type="button" onClick={() => testLlmApiKey('gemini', geminiKeyInput)} disabled={llmTestingProvider !== null} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
-                                    {llmTestingProvider === 'gemini' ? 'Testing...' : 'Test'}
-                                </button>
-                                <button type="button" onClick={() => saveLlmApiKey('gemini', geminiKeyInput)} disabled={llmSavingProvider !== null || !geminiKeyInput.trim()} className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50">
-                                    {llmSavingProvider === 'gemini' ? 'Saving...' : 'Save'}
-                                </button>
-                            </div>
-                        </div>
-                        <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="font-medium text-gray-900">Anthropic Claude</span>
-                                {hasClaudeKey && <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">Saved</span>}
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                <input
-                                    type="password"
-                                    value={claudeKeyInput}
-                                    onChange={(e) => setClaudeKeyInput(e.target.value)}
-                                    placeholder={hasClaudeKey ? 'Enter new key to replace' : 'sk-ant-...'}
-                                    className="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
-                                />
-                                <button type="button" onClick={() => testLlmApiKey('claude', claudeKeyInput)} disabled={llmTestingProvider !== null} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
-                                    {llmTestingProvider === 'claude' ? 'Testing...' : 'Test'}
-                                </button>
-                                <button type="button" onClick={() => saveLlmApiKey('claude', claudeKeyInput)} disabled={llmSavingProvider !== null || !claudeKeyInput.trim()} className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50">
-                                    {llmSavingProvider === 'claude' ? 'Saving...' : 'Save'}
-                                </button>
-                            </div>
-                        </div>
+                        )}
                     </div>
                     <p className="text-xs text-gray-500">Get keys from OpenAI, Google AI Studio, or Anthropic. Your keys are stored securely and used only for ATS scoring.</p>
                 </div>

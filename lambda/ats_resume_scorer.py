@@ -38,24 +38,30 @@ def response(status, body):
     }
 
 
-def get_user_llm_keys(user_id):
+def get_user_llm_config(user_id):
+    """Returns (keys_dict, models_dict). keys: { openai: 'sk-...', ... }, models: { openai: 'gpt-4o-mini', ... }."""
     try:
         r = users_table.get_item(Key={"userId": user_id})
         item = r.get("Item")
         if not item:
-            return None
+            return None, None
         keys = item.get("llmApiKeys") or {}
-        if isinstance(keys, dict):
-            return {k: (v or "").strip() for k, v in keys.items() if (v or "").strip()}
-        return None
+        if not isinstance(keys, dict):
+            keys = {}
+        keys = {k: (v or "").strip() for k, v in keys.items() if (v or "").strip()}
+        models = item.get("llmModels") or {}
+        if not isinstance(models, dict):
+            models = {}
+        return keys, models
     except Exception as e:
-        print(f"get_user_llm_keys error: {e}")
-        return None
+        print(f"get_user_llm_config error: {e}")
+        return None, None
 
 
-def _call_openai(api_key, prompt):
+def _call_openai(api_key, prompt, model=None):
+    model = model or "gpt-4o-mini"
     data = json.dumps({
-        "model": "gpt-4o-mini",
+        "model": model,
         "messages": [
             {"role": "system", "content": "You are an ATS (Applicant Tracking System) scorer for engineering and tech architect roles. Respond only with valid JSON, no markdown or extra text."},
             {"role": "user", "content": prompt},
@@ -78,9 +84,10 @@ def _call_openai(api_key, prompt):
     return text.strip()
 
 
-def _call_claude(api_key, prompt):
+def _call_claude(api_key, prompt, model=None):
+    model = model or "claude-3-haiku-20240307"
     data = json.dumps({
-        "model": "claude-3-haiku-20240307",
+        "model": model,
         "max_tokens": 2000,
         "messages": [
             {"role": "user", "content": prompt},
@@ -104,8 +111,9 @@ def _call_claude(api_key, prompt):
     return ""
 
 
-def _call_gemini(api_key, prompt):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+def _call_gemini(api_key, prompt, model=None):
+    model = model or "gemini-1.5-flash"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     data = json.dumps({
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2000},
@@ -186,9 +194,10 @@ def lambda_handler(event, context):
         if not job_description:
             return response(400, {"success": False, "message": "jobDescription is required"})
 
-        keys = get_user_llm_keys(user_id)
+        keys, models = get_user_llm_config(user_id)
         if not keys:
             return response(403, {"success": False, "message": "No LLM API key found. Add at least one key in Settings to use ATS Score."})
+        models = models or {}
 
         prompt = build_ats_prompt(resume_text, job_description)
         raw = None
@@ -196,15 +205,16 @@ def lambda_handler(event, context):
             api_key = keys.get(provider)
             if not api_key:
                 continue
+            model = models.get(provider)
             try:
                 if provider == "openai":
-                    raw = _call_openai(api_key, prompt)
+                    raw = _call_openai(api_key, prompt, model)
                 elif provider == "claude":
                     sys_prompt = "You are an ATS scorer for engineering roles. Respond only with valid JSON, no markdown."
                     full_prompt = f"{sys_prompt}\n\n{prompt}"
-                    raw = _call_claude(api_key, full_prompt)
+                    raw = _call_claude(api_key, full_prompt, model)
                 else:
-                    raw = _call_gemini(api_key, prompt)
+                    raw = _call_gemini(api_key, prompt, model)
                 if raw:
                     break
             except Exception as e:

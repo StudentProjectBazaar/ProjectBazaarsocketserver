@@ -197,11 +197,15 @@ def handle_get_llm_keys_status(body):
             "hasGeminiKey": False,
             "hasClaudeKey": False,
             "providers": providers,
+            "savedModels": {},
         })
 
     keys = existing["Item"].get("llmApiKeys") or {}
     if not isinstance(keys, dict):
         keys = {}
+    models = existing["Item"].get("llmModels") or {}
+    if not isinstance(models, dict):
+        models = {}
     has_openai = bool(keys.get("openai"))
     has_gemini = bool(keys.get("gemini"))
     has_claude = bool(keys.get("claude"))
@@ -210,6 +214,7 @@ def handle_get_llm_keys_status(body):
         {"id": p["id"], "name": p["name"], "hasKey": by_id.get(p["id"], False)}
         for p in LLM_PROVIDERS
     ]
+    saved_models = {k: v for k, v in models.items() if v}
 
     return response(200, {
         "success": True,
@@ -217,6 +222,7 @@ def handle_get_llm_keys_status(body):
         "hasGeminiKey": has_gemini,
         "hasClaudeKey": has_claude,
         "providers": providers,
+        "savedModels": saved_models,
     })
 
 
@@ -289,6 +295,8 @@ def handle_update_settings(body):
         "paymentVerified",
         # LLM API keys for ATS / Resume Builder (stored server-side only)
         "llmApiKeys",
+        # Preferred model per provider for ATS (e.g. gpt-4o-mini, gemini-1.5-flash)
+        "llmModels",
     ]
 
     updates = {k: v for k, v in body.items() if k in allowed_fields}
@@ -341,6 +349,18 @@ def handle_update_settings(body):
         merged = {**current_keys, **new_keys}
         merged = {k: v for k, v in merged.items() if v}
         updates["llmApiKeys"] = merged if merged else None  # remove attribute if all cleared
+
+    # Merge llmModels so saving one provider's model does not wipe others
+    if "llmModels" in updates:
+        current_models = current_user.get("llmModels") or {}
+        if not isinstance(current_models, dict):
+            current_models = {}
+        new_models = updates["llmModels"] or {}
+        if not isinstance(new_models, dict):
+            new_models = {}
+        merged_models = {**current_models, **new_models}
+        merged_models = {k: v for k, v in merged_models.items() if v}
+        updates["llmModels"] = merged_models if merged_models else None
 
     # Delete old image if replaced (don't let this crash the update)
     if "profilePictureUrl" in updates:
