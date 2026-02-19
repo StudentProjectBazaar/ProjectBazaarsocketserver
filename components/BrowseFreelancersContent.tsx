@@ -8,6 +8,7 @@ import { getBidRequestProjectsByBuyer } from '../services/bidRequestProjectsApi'
 import { GET_USER_DETAILS_ENDPOINT } from '../services/buyerApi';
 import { useAuth } from '../App';
 import verifiedFreelanceSvg from '../lottiefiles/verified_freelance.svg';
+import SkeletonDashboard from './ui/skeleton-dashboard';
 
 type SortOption = 'most-relevant' | 'highest-rated' | 'lowest-price';
 
@@ -387,69 +388,11 @@ setShowInviteModal(false);
     );
   };
 
-  // Loading state - Skeleton cards
+  // Loading state - Skeleton dashboard
   if (isLoading) {
     return (
-      <div>
-        {/* Search Bar Skeleton */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
-            <div className="w-full h-[42px] bg-gray-200 rounded-lg animate-pulse"></div>
-          </div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Filter Sidebar Skeleton */}
-          <div className="lg:w-80">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
-              <div className="h-6 bg-gray-200 rounded w-24 mb-6 animate-pulse"></div>
-              <div className="space-y-4">
-                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
-                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
-                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Skeleton Grid */}
-          <div className="flex-1">
-            <div className="h-5 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 animate-pulse">
-                  {/* Header */}
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="w-16 h-16 rounded-full bg-gray-200"></div>
-                    <div className="flex-1">
-                      <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-16"></div>
-                    </div>
-                  </div>
-                  {/* Rating */}
-                  <div className="flex gap-2 mb-3 pb-3 border-b border-gray-100">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    <div className="h-4 bg-gray-200 rounded w-16"></div>
-                  </div>
-                  {/* Rate */}
-                  <div className="h-6 bg-gray-200 rounded w-20 mb-3"></div>
-                  {/* Location */}
-                  <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
-                  {/* Skills */}
-                  <div className="flex gap-2 mb-4">
-                    <div className="h-6 bg-gray-200 rounded-md w-16"></div>
-                    <div className="h-6 bg-gray-200 rounded-md w-20"></div>
-                    <div className="h-6 bg-gray-200 rounded-md w-14"></div>
-                  </div>
-                  {/* Buttons */}
-                  <div className="flex gap-2">
-                    <div className="flex-1 h-9 bg-gray-200 rounded-lg"></div>
-                    <div className="flex-1 h-9 bg-gray-200 rounded-lg"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="space-y-8">
+        <SkeletonDashboard />
       </div>
     );
   }

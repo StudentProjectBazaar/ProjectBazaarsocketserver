@@ -133,8 +133,8 @@ const LANDING_PAGES: Page[] = ['home', 'faq'];
 const ThemeProvider: React.FC<{ children: ReactNode; page: Page }> = ({ children, page }) => {
   const isLanding = LANDING_PAGES.includes(page);
   const [landingTheme, setLandingTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'light';
-    return (localStorage.getItem(LANDING_THEME_KEY) as Theme) || 'light';
+    if (typeof window === 'undefined') return 'dark';
+    return (localStorage.getItem(LANDING_THEME_KEY) as Theme) || 'dark';
   });
 
   // Apply theme only on landing pages; force light on dashboard/auth/admin etc.

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../App';
 import { fetchUserData, Purchase } from '../services/buyerApi';
+import SkeletonDashboard from './ui/skeleton-dashboard';
 
 const GET_ALL_PROJECTS_ENDPOINT = 'https://vwqfgtwerj.execute-api.ap-south-2.amazonaws.com/default/Get_All_Projects_for_Admin_Buyer';
 
@@ -229,11 +230,8 @@ const BuyerAnalyticsPage: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="mt-8 flex items-center justify-center py-16">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading analytics...</p>
-                </div>
+            <div className="mt-8 space-y-8">
+                <SkeletonDashboard />
             </div>
         );
     }

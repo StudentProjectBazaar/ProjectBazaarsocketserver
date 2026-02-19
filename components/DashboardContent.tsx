@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Lottie from 'lottie-react';
-import Skeleton from './ui/skeleton';
+import SkeletonDashboard from './ui/skeleton-dashboard';
 import { useAuth } from '../App';
 import noProjectAnimation from '../lottiefiles/no_project_animation.json';
 import { fetchUserData } from '../services/buyerApi';
@@ -409,46 +409,11 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ dashboardMode, setD
 
                                 {/* Projects Grid */}
                                 <div className="flex-1 overflow-y-auto pb-20 custom-scrollbar pr-2">
-                                    {/* Loading State - Skeleton Cards */}
+                                    {/* Loading State - Skeleton Dashboard */}
                                     {isLoadingProjects && (
-                                        <>
-                                            <div className="mb-4">
-                                                <Skeleton className="h-5 w-40 rounded" />
-                                            </div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                                                {[...Array(6)].map((_, i) => (
-                                                    <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100">
-                                                        {/* Image Skeleton */}
-                                                        <Skeleton className="h-52 w-full rounded-none" />
-                                                        {/* Content */}
-                                                        <div className="p-5">
-                                                            {/* Category */}
-                                                            <Skeleton className="h-4 w-28 rounded-lg mb-2" />
-                                                            {/* Title */}
-                                                            <Skeleton className="h-6 w-3/4 rounded mb-3" />
-                                                            {/* Description */}
-                                                            <div className="space-y-2 mb-4">
-                                                                <Skeleton className="h-4 w-full rounded" />
-                                                                <Skeleton className="h-4 w-5/6 rounded" />
-                                                            </div>
-                                                            {/* Tags */}
-                                                            <div className="flex gap-2 mb-4">
-                                                                <Skeleton className="h-7 w-16 rounded-lg" />
-                                                                <Skeleton className="h-7 w-20 rounded-lg" />
-                                                            </div>
-                                                            {/* Footer */}
-                                                            <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                                                                <Skeleton className="h-7 w-16 rounded" />
-                                                                <div className="flex gap-2">
-                                                                    <Skeleton className="h-10 w-10 rounded-xl" />
-                                                                    <Skeleton className="h-10 w-20 rounded-xl" />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </>
+                                        <div className="space-y-8">
+                                            <SkeletonDashboard />
+                                        </div>
                                     )}
 
                                     {/* Error State */}

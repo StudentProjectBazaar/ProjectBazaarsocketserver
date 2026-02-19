@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Skeleton from './ui/skeleton';
+import SkeletonDashboard from './ui/skeleton-dashboard';
 import { useAuth, useNavigation, usePremium } from '../App';
 import GitHubContributionHeatmap from './GitHubContributionHeatmap';
 import verifiedFreelanceSvg from '../lottiefiles/verified_freelance.svg';
@@ -1091,58 +1091,7 @@ const SettingsPage: React.FC = () => {
     if (loading) {
         return (
             <div className="mt-8 space-y-8 max-w-4xl mx-auto">
-                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
-                    <div className="p-6 border-b border-gray-200">
-                        <Skeleton className="h-6 w-48" />
-                        <Skeleton className="h-4 w-96 mt-2" />
-                    </div>
-                    <div className="p-6 space-y-6">
-                        {/* Toggle Switch Skeleton */}
-                        <div className="py-4 flex justify-between items-center">
-                            <div>
-                                <Skeleton className="h-5 w-40 mb-1" />
-                                <Skeleton className="h-4 w-64" />
-                            </div>
-                            <Skeleton className="w-11 h-6 rounded-full" />
-                        </div>
-
-                        {/* Profile Picture Skeleton */}
-                        <div className="flex items-center gap-6">
-                            <Skeleton className="w-24 h-24 rounded-full" />
-                            <div>
-                                <Skeleton className="h-5 w-32 mb-2" />
-                                <Skeleton className="h-4 w-24" />
-                            </div>
-                        </div>
-
-                        {/* Form Fields Skeleton */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div key={i}>
-                                    <Skeleton className="h-4 w-24 mb-2" />
-                                    <Skeleton className="h-10 w-full rounded-lg" />
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Verifications Skeleton */}
-                        <div className="border-t border-gray-200 pt-6">
-                            <Skeleton className="h-5 w-32 mb-4" />
-                            <div className="space-y-3">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-gray-50">
-                                        <Skeleton className="w-10 h-10 rounded-lg" />
-                                        <div className="flex-1">
-                                            <Skeleton className="h-4 w-24 mb-1" />
-                                            <Skeleton className="h-3 w-32" />
-                                        </div>
-                                        <Skeleton className="w-20 h-8 rounded-lg" />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <SkeletonDashboard />
             </div>
         );
     }

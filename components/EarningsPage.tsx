@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Lottie from 'lottie-react';
-import Skeleton from './ui/skeleton';
+import SkeletonDashboard from './ui/skeleton-dashboard';
 import { useAuth } from '../App';
 import { fetchProjectDetails, ProjectDetails } from '../services/buyerApi';
 import noEarningAnimation from '../lottiefiles/no_earning_animation.json';
@@ -197,66 +197,7 @@ const EarningsPage: React.FC = () => {
     if (isLoading) {
         return (
             <div className="mt-8 space-y-8">
-                {/* Stats Cards Skeleton */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="bg-white border border-gray-200 rounded-xl p-6 flex items-center gap-5">
-                            <Skeleton className="w-12 h-12 rounded-lg" />
-                            <div className="space-y-2">
-                                <Skeleton className="h-4 w-24" />
-                                <Skeleton className="h-8 w-32" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Chart Skeleton */}
-                    <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6">
-                        <Skeleton className="h-6 w-48 mb-6" />
-                        <div className="grid grid-cols-6 gap-4 h-40 items-end">
-                            {[1, 2, 3, 4, 5, 6].map((i) => (
-                                <Skeleton key={i} className={`w-full rounded-lg h-${Math.floor(Math.random() * 20 + 20)}`} />
-                            ))}
-                        </div>
-                    </div>
-                    {/* Top Projects Skeleton */}
-                    <div className="bg-white border border-gray-200 rounded-xl p-6">
-                        <Skeleton className="h-6 w-40 mb-6" />
-                        <div className="flex items-center justify-center gap-8">
-                            <Skeleton className="w-32 h-32 rounded-full" />
-                            <div className="space-y-3">
-                                {[1, 2, 3, 4].map((i) => (
-                                    <Skeleton key={i} className="h-4 w-24" />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Project List Skeleton */}
-                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                    <div className="p-6 border-b border-gray-200">
-                        <Skeleton className="h-6 w-48" />
-                    </div>
-                    <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="bg-white border-2 border-gray-100 rounded-xl p-4">
-                                    <div className="flex justify-between mb-4">
-                                        <Skeleton className="h-5 w-3/4" />
-                                        <Skeleton className="h-5 w-5 rounded-full" />
-                                    </div>
-                                    <div className="space-y-3">
-                                        <Skeleton className="h-4 w-full" />
-                                        <Skeleton className="h-4 w-2/3" />
-                                        <Skeleton className="h-4 w-1/2" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                <SkeletonDashboard />
             </div>
         );
     }

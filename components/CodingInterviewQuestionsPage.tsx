@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import Lottie from 'lottie-react';
 import Editor from '@monaco-editor/react';
 import noCodingQuestionAnimation from '../lottiefiles/no_coding_question_animation.json';
+import SkeletonDashboard from './ui/skeleton-dashboard';
 
 // Lambda API endpoints
 const CODING_QUESTIONS_API = 'https://6918395pal.execute-api.ap-south-2.amazonaws.com/default/coding-questions-service';
@@ -2421,113 +2422,8 @@ const CodingInterviewQuestionsPage: React.FC<CodingInterviewQuestionsPageProps> 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Loading Skeleton State */}
         {isLoading && (
-          <div className="animate-pulse">
-            {/* Progress & Banner Skeleton */}
-            <div className="flex flex-col lg:flex-row gap-6 mb-8">
-              {/* Progress Card Skeleton */}
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 sm:gap-6">
-                {/* Progress Ring Skeleton */}
-                <div className="w-[120px] h-[120px] rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0"></div>
-                <div className="space-y-3 min-w-0 flex-1">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                  <div className="flex gap-6">
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
-                      <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                      <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-14"></div>
-                      <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Banner Skeleton */}
-              <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-2xl p-4 sm:p-6 h-32"></div>
-            </div>
-
-            {/* Table Section Skeleton */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              {/* Tabs Skeleton */}
-              <div className="border-b border-gray-200 dark:border-gray-700 p-4">
-                <div className="flex gap-4">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-24"></div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Filters Skeleton */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex flex-wrap gap-3">
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-48 sm:w-64"></div>
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-24"></div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Table Header Skeleton */}
-              <div className="bg-gray-50 dark:bg-gray-700/50 px-6 py-4">
-                <div className="flex gap-4">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-8"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-32"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-20 hidden sm:block"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-20 hidden sm:block"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-20 hidden md:block"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-24 hidden lg:block"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-28 hidden lg:block"></div>
-                </div>
-              </div>
-
-              {/* Table Rows Skeleton */}
-              <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      {/* Bookmark */}
-                      <div className="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                      {/* Title */}
-                      <div className="flex-1">
-                        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 max-w-[300px]"></div>
-                      </div>
-                      {/* Topic */}
-                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20 hidden sm:block"></div>
-                      {/* Difficulty */}
-                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16 hidden sm:block"></div>
-                      {/* Avg Time */}
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 hidden md:block"></div>
-                      {/* Submissions */}
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-14 hidden lg:block"></div>
-                      {/* Asked In */}
-                      <div className="flex items-center gap-1 hidden lg:flex">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-14"></div>
-                        <div className="flex -space-x-1">
-                          {[...Array(3)].map((_, j) => (
-                            <div key={j} className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded-full border-2 border-white dark:border-gray-800"></div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination Skeleton */}
-              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
-                <div className="flex items-center gap-2">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="w-9 h-9 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                  ))}
-                </div>
-              </div>
-            </div>
+          <div className="space-y-8">
+            <SkeletonDashboard />
           </div>
         )}
 

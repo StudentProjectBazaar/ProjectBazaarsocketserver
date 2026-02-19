@@ -6,6 +6,7 @@ import careerGuidanceAnimation from '../lottiefiles/career_guidance_animation.js
 import guidanceIconAnimation from '../lottiefiles/guidance.json';
 import noProjectAnimation from '../lottiefiles/no_project_animation.json';
 import robotLoadingAnimation from '../lottiefiles/Robot Futuristic Ai animated.json';
+import SkeletonDashboard from './ui/skeleton-dashboard';
 
 // ============================================
 // TYPES & INTERFACES
@@ -1605,51 +1606,8 @@ const RoadmapFeature: React.FC<RoadmapFeatureProps> = ({
         if (isGeneratingRoadmap) {
             return (
                 <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 -m-6 -mt-8 -mb-8 p-8 w-full">
-                    <div className="w-full max-w-7xl mx-auto">
-                        {/* Skeleton Header */}
-                        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mb-6 animate-pulse">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <div className="h-8 bg-gray-200 rounded-lg w-64 mb-2"></div>
-                                    <div className="h-4 bg-gray-100 rounded w-48"></div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="h-8 bg-orange-100 rounded w-16 mb-1 ml-auto"></div>
-                                    <div className="h-3 bg-gray-100 rounded w-24"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Skeleton Weeks */}
-                        <div className="grid gap-4">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="bg-white border-2 border-gray-100 rounded-xl p-6 animate-pulse">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-full bg-gray-200"></div>
-                                            <div>
-                                                <div className="h-6 bg-gray-200 rounded w-32 mb-2"></div>
-                                                <div className="h-4 bg-gray-100 rounded w-24"></div>
-                                            </div>
-                                        </div>
-                                        <div className="w-24 h-10 bg-gray-200 rounded-lg"></div>
-                                    </div>
-                                    <div className="ml-16 space-y-6">
-                                        <div className="h-4 bg-gray-100 rounded w-1/3 mb-4"></div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-4">
-                                                <div className="p-4 bg-gray-50 rounded-2xl h-32"></div>
-                                                <div className="p-4 bg-gray-50 rounded-2xl h-32"></div>
-                                            </div>
-                                            <div className="space-y-4">
-                                                <div className="p-4 bg-gray-50 rounded-2xl h-24"></div>
-                                                <div className="p-4 bg-gray-50 rounded-2xl h-40"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                    <div className="w-full max-w-7xl mx-auto space-y-8">
+                        <SkeletonDashboard />
                     </div>
                 </div>
             );
@@ -3536,11 +3494,8 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
                     {activeTab === 'trending' && (
                         <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
                             {isLoadingData ? (
-                                <div className="flex items-center justify-center py-12">
-                                    <div className="text-center">
-                                        <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
-                                        <p className="text-sm text-gray-600">Loading trending careers...</p>
-                                    </div>
+                                <div className="space-y-8">
+                                    <SkeletonDashboard />
                                 </div>
                             ) : (
                                 <TrendingCareersSection
@@ -3557,11 +3512,8 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
                     {activeTab === 'placement' && (
                         <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
                             {isLoadingData ? (
-                                <div className="flex items-center justify-center py-12">
-                                    <div className="text-center">
-                                        <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
-                                        <p className="text-sm text-gray-600">Loading placement preparation data...</p>
-                                    </div>
+                                <div className="space-y-8">
+                                    <SkeletonDashboard />
                                 </div>
                             ) : placementPhasesData.length === 0 ? (
                                 <div className="text-center py-12">
@@ -3579,11 +3531,8 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
                     {activeTab === 'projects' && (
                         <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
                             {isLoadingData ? (
-                                <div className="flex items-center justify-center py-12">
-                                    <div className="text-center">
-                                        <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
-                                        <p className="text-sm text-gray-600">Loading project ideas...</p>
-                                    </div>
+                                <div className="space-y-8">
+                                    <SkeletonDashboard />
                                 </div>
                             ) : (
                                 <ProjectIdeasSection ideas={projectIdeasData} />

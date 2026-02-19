@@ -7,6 +7,7 @@ import { getAllBidRequestProjects } from '../services/bidRequestProjectsApi';
 import { GET_USER_DETAILS_ENDPOINT } from '../services/buyerApi';
 import type { BidFormData } from '../types/bids';
 import noProjectBidsAnimation from '../lottiefiles/no_project_bids_animation.json';
+import SkeletonDashboard from './ui/skeleton-dashboard';
 
 type SortOption = 'latest' | 'budget-high-low' | 'most-bids';
 type ProjectTypeFilter = 'all' | 'fixed' | 'hourly';
@@ -416,81 +417,11 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
     return text.substring(0, maxLength) + '...';
   };
 
-  // Loading state - Skeleton cards
+  // Loading state - Skeleton dashboard
   if (isLoading) {
     return (
-      <div>
-        {/* Search Bar Skeleton */}
-        <div className="mb-6">
-          <div className="w-full h-14 bg-gray-200 rounded-xl animate-pulse"></div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Filter Sidebar Skeleton */}
-          <div className="lg:w-80">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
-              <div className="h-6 bg-gray-200 rounded w-24 mb-6 animate-pulse"></div>
-              <div className="space-y-4">
-                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
-                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
-                <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
-                <div className="h-24 bg-gray-200 rounded-xl animate-pulse"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Skeleton List */}
-          <div className="flex-1">
-            <div className="h-5 bg-gray-200 rounded w-40 mb-4 animate-pulse"></div>
-            <div className="space-y-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white border border-gray-200 rounded-2xl p-6 animate-pulse">
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                    {/* Left Content */}
-                    <div className="flex-1">
-                      {/* Title */}
-                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-                      {/* Description */}
-                      <div className="space-y-2 mb-4">
-                        <div className="h-4 bg-gray-200 rounded w-full"></div>
-                        <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                        <div className="h-4 bg-gray-200 rounded w-4/6"></div>
-                      </div>
-                      {/* Skills */}
-                      <div className="flex gap-2 mb-4">
-                        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-                        <div className="h-6 bg-gray-200 rounded-full w-20"></div>
-                        <div className="h-6 bg-gray-200 rounded-full w-14"></div>
-                        <div className="h-6 bg-gray-200 rounded-full w-18"></div>
-                      </div>
-                      {/* Owner Info */}
-                      <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                        <div>
-                          <div className="h-3 bg-gray-200 rounded w-16 mb-1"></div>
-                          <div className="h-4 bg-gray-200 rounded w-24"></div>
-                        </div>
-                      </div>
-                      {/* Meta Info */}
-                      <div className="flex gap-4">
-                        <div className="h-4 bg-gray-200 rounded w-16"></div>
-                        <div className="h-4 bg-gray-200 rounded w-20"></div>
-                      </div>
-                    </div>
-                    {/* Right Content */}
-                    <div className="flex flex-col items-end gap-4 md:min-w-[200px]">
-                      <div className="text-right">
-                        <div className="h-4 bg-gray-200 rounded w-16 mb-1"></div>
-                        <div className="h-7 bg-gray-200 rounded w-32"></div>
-                      </div>
-                      <div className="h-10 bg-gray-200 rounded-xl w-32"></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="space-y-8">
+        <SkeletonDashboard />
       </div>
     );
   }
