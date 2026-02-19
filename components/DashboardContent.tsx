@@ -742,27 +742,52 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
         }
     };
 
-    return (
-        <main ref={mainScrollRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-white">
-            <div className="container mx-auto px-6 py-8">
-                {/* Always show header so Buyer/Seller toggle is visible in all dashboard components */}
-                <DashboardHeader
-                    dashboardMode={dashboardMode}
-                    setDashboardMode={setDashboardMode}
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    activeView={activeView}
-                    setActiveView={setActiveView}
-                    buyerProjectView={buyerProjectView}
-                    setBuyerProjectView={setBuyerProjectView}
-                    browseView={browseView}
-                    setBrowseView={setBrowseView}
-                    isSidebarOpen={isSidebarOpen}
-                    toggleSidebar={toggleSidebar}
-                />
+    const isCodingQuestions = activeView === 'coding-questions';
 
-                {dashboardMode === 'buyer' ? renderBuyerContent() : renderSellerContent()}
-            </div>
+    return (
+        <main
+            ref={mainScrollRef}
+            className={`flex-1 flex flex-col min-h-0 overflow-x-hidden ${isCodingQuestions ? 'overflow-hidden' : 'overflow-y-auto'} bg-white`}
+        >
+            {isCodingQuestions ? (
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pt-8 px-6">
+                    <div className="flex-shrink-0">
+                        <DashboardHeader
+                            dashboardMode={dashboardMode}
+                            setDashboardMode={setDashboardMode}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            activeView={activeView}
+                            setActiveView={setActiveView}
+                            buyerProjectView={buyerProjectView}
+                            setBuyerProjectView={setBuyerProjectView}
+                            browseView={browseView}
+                            setBrowseView={setBrowseView}
+                            isSidebarOpen={isSidebarOpen}
+                            toggleSidebar={toggleSidebar}
+                        />
+                    </div>
+                    {dashboardMode === 'buyer' ? renderBuyerContent() : renderSellerContent()}
+                </div>
+            ) : (
+                <div className="container mx-auto px-6 py-8">
+                    <DashboardHeader
+                        dashboardMode={dashboardMode}
+                        setDashboardMode={setDashboardMode}
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        activeView={activeView}
+                        setActiveView={setActiveView}
+                        buyerProjectView={buyerProjectView}
+                        setBuyerProjectView={setBuyerProjectView}
+                        browseView={browseView}
+                        setBrowseView={setBrowseView}
+                        isSidebarOpen={isSidebarOpen}
+                        toggleSidebar={toggleSidebar}
+                    />
+                    {dashboardMode === 'buyer' ? renderBuyerContent() : renderSellerContent()}
+                </div>
+            )}
         </main>
     );
 };

@@ -933,6 +933,12 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
   // Handle code change
   const handleCodeChange = (questionIndex: number, code: string) => {
     setCodeAnswers(prev => ({ ...prev, [questionIndex]: code }));
+    // Invalidate test results when code changes to prevent stale passing results
+    setCodeTestResults(prev => {
+      const next = { ...prev };
+      delete next[questionIndex];
+      return next;
+    });
   };
 
   // Run code against test cases
@@ -941,6 +947,12 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     setCodeOutput('Running...');
 
     const code = getCurrentCode(questionIndex, question);
+
+    if (!code || !code.trim()) {
+      setCodeOutput('Please write some code first.');
+      setIsRunningCode(false);
+      return;
+    }
     const results: { passed: boolean; output: string; expected: string; error?: string }[] = [];
 
     // Run against visible test cases only
@@ -970,6 +982,12 @@ const MockAssessmentPage: React.FC<MockAssessmentPageProps> = ({ initialView = '
     setCodeOutput('Submitting and running all test cases...');
 
     const code = getCurrentCode(questionIndex, question);
+
+    if (!code || !code.trim()) {
+      setCodeOutput('Please write some code first.');
+      setIsRunningCode(false);
+      return;
+    }
     const results: { passed: boolean; output: string; expected: string; error?: string }[] = [];
 
     for (const testCase of question.testCases) {

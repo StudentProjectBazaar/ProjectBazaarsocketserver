@@ -115,6 +115,66 @@ const supportedLanguages = [
   { id: 'swift', name: 'Swift', monacoId: 'swift' },
 ];
 
+// Piston API language mapping for code execution
+const pistonLanguageMap: Record<string, { pistonId: string; version: string }> = {
+  python: { pistonId: 'python', version: '3.10.0' },
+  javascript: { pistonId: 'javascript', version: '18.15.0' },
+  java: { pistonId: 'java', version: '15.0.2' },
+  cpp: { pistonId: 'cpp', version: '10.2.0' },
+  c: { pistonId: 'c', version: '10.2.0' },
+  typescript: { pistonId: 'typescript', version: '5.0.3' },
+  go: { pistonId: 'go', version: '1.16.2' },
+  rust: { pistonId: 'rust', version: '1.68.2' },
+  kotlin: { pistonId: 'kotlin', version: '1.8.20' },
+  swift: { pistonId: 'swift', version: '5.3.3' },
+};
+
+const executeCode = async (code: string, language: string, input: string = ''): Promise<{ output: string; error: string; success: boolean }> => {
+  const lang = pistonLanguageMap[language];
+  if (!lang) {
+    return { output: '', error: 'Unsupported language for execution', success: false };
+  }
+  try {
+    const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: lang.pistonId,
+        version: lang.version,
+        files: [{ content: code }],
+        stdin: input,
+      }),
+    });
+    const data = await response.json();
+    if (data.run) {
+      const output = (data.run.stdout || '').trim();
+      const error = (data.run.stderr || '').trim();
+      return {
+        output,
+        error,
+        success: !error && data.run.code === 0,
+      };
+    }
+    return { output: '', error: data.message || 'Execution failed', success: false };
+  } catch (err) {
+    return { output: '', error: 'Network error — please try again', success: false };
+  }
+};
+
+/** Classify execution error so we can show "Syntax Error" or "Runtime Error" instead of generic "Got: ..." */
+function formatExecutionError(error: string): string {
+  if (!error || !error.trim()) return 'Execution failed';
+  const e = error.trim();
+  const lower = e.toLowerCase();
+  if (lower.includes('syntaxerror') || lower.includes('syntax error') || lower.includes('invalid syntax') || lower.includes('indentationerror') || lower.includes('unexpected eof') || lower.includes('unexpected token')) {
+    return `Syntax Error: ${e.split('\n').slice(0, 3).join(' ').trim()}`;
+  }
+  if (lower.includes('nameerror') || lower.includes('typeerror') || lower.includes('valueerror') || lower.includes('runtimeerror') || lower.includes('indexerror') || lower.includes('keyerror') || lower.includes('attributeerror') || lower.includes('zerodivisionerror') || lower.includes('runtime error')) {
+    return `Runtime Error: ${e.split('\n').slice(0, 3).join(' ').trim()}`;
+  }
+  return e.length > 200 ? e.slice(0, 200) + '...' : e;
+}
+
 // ============================================
 // MOCK DATA
 // ============================================
@@ -503,7 +563,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
   const [customInput, setCustomInput] = useState('');
   const [showOutputPanel, setShowOutputPanel] = useState(false);
   const [timer, setTimer] = useState(0);
-  const [score, setScore] = useState(400);
+  const [score, setScore] = useState<number | null>(null);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [leftPanelWidth, setLeftPanelWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
@@ -955,45 +1015,89 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
     return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
   };
 
-  // Run code
+  // Run code (visible test cases only)
   const handleRun = async () => {
+    const trimmedCode = code.trim();
+    const starterCode = problemDetails.starterCode[selectedLanguage] || problemDetails.starterCode.python || '';
+    if (!trimmedCode || trimmedCode === starterCode.trim()) {
+      setShowOutputPanel(true);
+      setOutput('Please write your solution before running.');
+      setTestResults(null);
+      return;
+    }
+
     setIsRunning(true);
     setOutput(null);
     setTestResults(null);
     setShowOutputPanel(true);
 
-    // Simulate running code
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // If custom input is provided, run with custom input
     if (showCustomInput && customInput.trim()) {
-      // Simulate running with custom input
-      setOutput(`Running with custom input:\n${customInput}\n\nOutput: [Simulated output for custom input]`);
-    } else {
-      // Mock test results
-      const results = problemDetails.testCases.filter(tc => !tc.hidden).map(tc => ({
-        passed: Math.random() > 0.3,
-        input: tc.input,
-        expected: tc.expectedOutput,
-        actual: Math.random() > 0.3 ? tc.expectedOutput : 'Wrong output',
-      }));
-      setTestResults(results);
+      const result = await executeCode(trimmedCode, selectedLanguage, customInput.trim());
+      const msg = result.success ? (result.output || '(no output)') : formatExecutionError(result.error);
+      setOutput(`Running with custom input:\n${customInput}\n\n${result.success ? 'Output:' : 'Error:'}\n${msg}`);
+      setIsRunning(false);
+      return;
     }
 
+    const visibleTestCases = problemDetails.testCases.filter(tc => !tc.hidden);
+    const results: { passed: boolean; input: string; expected: string; actual: string }[] = [];
+
+    for (const tc of visibleTestCases) {
+      const result = await executeCode(trimmedCode, selectedLanguage, tc.input);
+      const expected = (tc.expectedOutput || '').trim();
+      const actual = result.success ? (result.output || '').trim() : formatExecutionError(result.error);
+      const passed = result.success && actual === expected;
+      results.push({ passed, input: tc.input, expected, actual });
+    }
+
+    setTestResults(results);
+    const passedCount = results.filter(r => r.passed).length;
+    setOutput(
+      passedCount === results.length
+        ? `All ${results.length} test case(s) passed.`
+        : `${passedCount}/${results.length} test case(s) passed.\n\n` +
+          results.map((r, i) => `Test ${i + 1}: ${r.passed ? '✅ Passed' : '❌ Failed'}\nExpected: ${r.expected}\nGot: ${r.actual}`).join('\n\n')
+    );
     setIsRunning(false);
   };
 
-  // Submit code
+  // Submit code (runs against all test cases including hidden)
   const handleSubmit = async () => {
+    const trimmedCode = code.trim();
+    const starterCode = problemDetails.starterCode[selectedLanguage] || problemDetails.starterCode.python || '';
+    if (!trimmedCode || trimmedCode === starterCode.trim()) {
+      setShowOutputPanel(true);
+      setOutput('Please write your solution before submitting.');
+      setTestResults(null);
+      return;
+    }
+
     setIsSubmitting(true);
     setOutput(null);
     setTestResults(null);
     setShowOutputPanel(true);
+    setOutput('Submitting and running all test cases...');
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    const testCases = problemDetails.testCases;
+    const results: { passed: boolean; input: string; expected: string; actual: string }[] = [];
 
-    const allPassed = Math.random() > 0.5;
-    const runtime = `${Math.floor(Math.random() * 100) + 20} ms`;
+    for (const tc of testCases) {
+      const result = await executeCode(trimmedCode, selectedLanguage, tc.input);
+      const expected = (tc.expectedOutput || '').trim();
+      const actual = result.success ? (result.output || '').trim() : formatExecutionError(result.error);
+      const passed = result.success && actual === expected;
+      results.push({ passed, input: tc.input, expected, actual });
+    }
+
+    const passedCount = results.filter(r => r.passed).length;
+    const allPassed = passedCount === results.length;
+    const totalTests = testCases.length;
+    const scoreValue = totalTests > 0 ? Math.round((passedCount / totalTests) * 400) : 0;
+
+    setScore(scoreValue);
+    setTestResults(results);
+
+    const runtime = `${Math.floor(Math.random() * 80) + 20} ms`;
     const memory = `${(Math.random() * 20 + 35).toFixed(1)} MB`;
     const timestamp = new Date().toISOString();
     const submissionId = `sub-${Date.now()}`;
@@ -1008,18 +1112,16 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
       memory,
       language: languageName,
       timestamp,
-      code
+      code: trimmedCode
     };
 
     if (allPassed) {
-      setOutput(`✅ Accepted! All test cases passed.\n\nRuntime: ${runtime} (beats ${Math.floor(Math.random() * 30) + 60}% of submissions)\nMemory: ${memory} (beats ${Math.floor(Math.random() * 30) + 50}% of submissions)`);
-      setScore(400);
+      setOutput(`✅ Accepted! All test cases passed.\n\nRuntime: ${runtime} (Score: ${scoreValue}/400)\nMemory: ${memory} `);
       // Update status to solved
       onStatusUpdate(question.id, 'solved', true);
     } else {
-      const failedTestCase = Math.floor(Math.random() * 3) + 1;
-      setOutput(`❌ Wrong Answer\n\nTest case ${failedTestCase} failed.\nInput: ${problemDetails.testCases[0]?.input || '[1,2,3]'}\nExpected: ${problemDetails.testCases[0]?.expectedOutput || '6'}\nGot: Different output`);
-      setScore(Math.floor(Math.random() * 300));
+      const visibleResults = results.map((r, i) => `Test ${i + 1}${testCases[i].hidden ? ' (hidden)' : ''}: ${r.passed ? '✅ Passed' : '❌ Failed'}${!testCases[i].hidden ? `\nExpected: ${r.expected}\nGot: ${r.actual}` : ''}`);
+      setOutput(`❌ Wrong Answer\n\nScore: ${scoreValue} / 400\n${passedCount}/${totalTests} test cases passed.\n\n` + visibleResults.join('\n\n'));
       // Update status to attempted
       onStatusUpdate(question.id, 'attempted', false);
     }
@@ -1043,8 +1145,8 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
             memory: newSubmission.memory,
             language: selectedLanguage,
             code: newSubmission.code,
-            testsPassed: allPassed ? problemDetails.testCases.length : Math.floor(Math.random() * problemDetails.testCases.length),
-            testsTotal: problemDetails.testCases.length
+            testsPassed: passedCount,
+            testsTotal: totalTests
           })
         });
       } catch (error) {
@@ -1055,8 +1157,29 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
     setIsSubmitting(false);
   };
 
+  // Keyboard shortcuts: Ctrl+' Run, Ctrl+Enter Submit (capture phase so they work when editor is focused)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      if (isRunning || isSubmitting) return;
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleSubmit();
+        return;
+      }
+      if (e.key === "'" || e.key === '"') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleRun();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [isRunning, isSubmitting, handleRun, handleSubmit]);
+
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-full min-h-0 flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Top Bar */}
       <div className="h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6">
         {/* Left: Back Button + Tabs */}
@@ -1114,7 +1237,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
             <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
-            <span className="font-medium">Score: {score} / 400</span>
+            <span className="font-medium">Score: {score !== null ? score : 0} / 400</span>
             <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -1171,10 +1294,10 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
       </div>
 
       {/* Main Content */}
-      <div ref={containerRef} className="flex-1 flex overflow-hidden">
+      <div ref={containerRef} className="flex-1 min-h-0 flex overflow-hidden">
         {/* Left Panel - Problem Description */}
-        <div style={{ width: `${leftPanelWidth}%` }} className="flex flex-col bg-white dark:bg-gray-800 overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-6">
+        <div style={{ width: `${leftPanelWidth}%` }} className="flex flex-col min-h-0 bg-white dark:bg-gray-800 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto p-6">
             {activeTab === 'description' && (
               <div className="space-y-6">
                 {/* Title & Meta */}
@@ -1594,7 +1717,7 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
         </div>
 
         {/* Right Panel - Code Editor */}
-        <div ref={rightPanelRef} style={{ width: `${100 - leftPanelWidth}%` }} className="flex flex-col bg-[#1e1e1e] overflow-hidden relative">
+        <div ref={rightPanelRef} style={{ width: `${100 - leftPanelWidth}%` }} className="flex flex-col min-h-0 bg-[#1e1e1e] overflow-hidden relative">
           {/* Top Action Bar - LeetCode Style */}
           <div className="h-10 bg-[#303030] border-b border-[#404040] flex items-center justify-end px-3 gap-1 shrink-0">
             {/* Run Button */}
@@ -1878,7 +2001,9 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
                               </div>
                               {!result.passed && (
                                 <div className="flex gap-2">
-                                  <span className="text-gray-500 w-16">Output:</span>
+                                  <span className="text-gray-500 w-16">
+                                    {result.actual.startsWith('Syntax Error:') || result.actual.startsWith('Runtime Error:') ? 'Error:' : 'Output:'}
+                                  </span>
                                   <span className="text-red-400">{result.actual}</span>
                                 </div>
                               )}
