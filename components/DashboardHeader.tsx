@@ -191,7 +191,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   };
 
   return (
-    <div>
+    <div className="mb-8">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
           <button
