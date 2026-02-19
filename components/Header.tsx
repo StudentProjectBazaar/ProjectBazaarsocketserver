@@ -11,11 +11,13 @@ const Header: React.FC = () => {
   const { isLoggedIn, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  const navBg = 'rgba(255,255,255,0.97)';
-  const navShadow = 'rgba(0,0,0,0.18) 0px 0.6px 0.6px -1.25px, rgba(0,0,0,0.16) 0px 2.3px 2.3px -2.5px, rgba(0,0,0,0.06) 0px 10px 10px -3.75px';
-  const linkColor = 'text-black hover:text-[#ff7a00]';
-  const dividerColor = 'bg-[#E8E8E8]';
-  const logoTextColor = 'text-black';
+  const navBg = theme === 'dark' ? 'rgba(26,26,26,0.95)' : 'rgba(255,255,255,0.97)';
+  const navShadow = theme === 'dark'
+    ? '0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06)'
+    : 'rgba(0,0,0,0.18) 0px 0.6px 0.6px -1.25px, rgba(0,0,0,0.16) 0px 2.3px 2.3px -2.5px, rgba(0,0,0,0.06) 0px 10px 10px -3.75px';
+  const linkColor = theme === 'dark' ? 'text-white/90 hover:text-[#ff7a00]' : 'text-black hover:text-[#ff7a00]';
+  const dividerColor = theme === 'dark' ? 'bg-white/20' : 'bg-[#E8E8E8]';
+  const logoTextColor = theme === 'dark' ? 'text-white' : 'text-black';
 
   interface NavLink {
     name: string;
@@ -99,7 +101,7 @@ const Header: React.FC = () => {
         <div className="hidden md:flex items-center gap-3">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full transition-colors text-black/60 hover:text-black hover:bg-black/5"
+            className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-black/60 hover:text-black hover:bg-black/5'}`}
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -111,7 +113,7 @@ const Header: React.FC = () => {
               </button>
               <button
                 onClick={logout}
-                className="h-[42px] px-5 rounded-full text-sm font-semibold transition-all bg-black/5 hover:bg-black/10 text-black"
+                className={`h-[42px] px-5 rounded-full text-sm font-semibold transition-all ${theme === 'dark' ? 'bg-white/10 hover:bg-white/15 text-white' : 'bg-black/5 hover:bg-black/10 text-black'}`}
               >
                 Logout
               </button>
@@ -130,14 +132,14 @@ const Header: React.FC = () => {
         <div className="md:hidden flex items-center gap-1">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full text-black/70"
+            className={`p-2 rounded-full ${theme === 'dark' ? 'text-white/80' : 'text-black/70'}`}
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-lg focus:outline-none text-black"
+            className={`p-2 rounded-lg focus:outline-none ${theme === 'dark' ? 'text-white' : 'text-black'}`}
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +156,7 @@ const Header: React.FC = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden mt-3 rounded-[12px] p-6 shadow-xl backdrop-blur-[12px] bg-white border border-black/5">
+        <div className={`md:hidden mt-3 rounded-[12px] p-6 shadow-xl backdrop-blur-[12px] border ${theme === 'dark' ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-black/5'}`}>
           <nav className="flex flex-col items-center gap-4 font-sans">
             {navLinks.map((link) => (
               <button
@@ -168,7 +170,7 @@ const Header: React.FC = () => {
                 {link.name}
               </button>
             ))}
-            <div className="w-full h-px my-2 bg-black/10" />
+            <div className={`w-full h-px my-2 ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`} />
             {isLoggedIn ? (
               <>
                 <button
@@ -179,7 +181,7 @@ const Header: React.FC = () => {
                 </button>
                 <button
                   onClick={() => { logout(); setIsOpen(false); }}
-                  className="w-full font-semibold py-3 px-6 rounded-full bg-black/5 hover:bg-black/10 text-black"
+                  className={`w-full font-semibold py-3 px-6 rounded-full ${theme === 'dark' ? 'bg-white/10 hover:bg-white/15 text-white' : 'bg-black/5 hover:bg-black/10 text-black'}`}
                 >
                   Logout
                 </button>

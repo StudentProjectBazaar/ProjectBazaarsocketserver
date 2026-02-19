@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Skeleton from './ui/skeleton';
 import { useAuth, useNavigation, usePremium } from '../App';
 import GitHubContributionHeatmap from './GitHubContributionHeatmap';
 import verifiedFreelanceSvg from '../lottiefiles/verified_freelance.svg';
@@ -50,8 +51,8 @@ const InputField: React.FC<InputFieldProps> = ({ id, label, type = 'text', value
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                     {icon}
                 </span>
-                <input 
-                    type={type} 
+                <input
+                    type={type}
                     id={id}
                     name={name || id}
                     value={value}
@@ -95,7 +96,7 @@ const SettingsPage: React.FC = () => {
     const { isPremium, credits, setIsPremium } = usePremium();
     const { navigateTo } = useNavigation();
     const [profileImg, setProfileImg] = useState<string | null>(null);
-    
+
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [pushNotifications, setPushNotifications] = useState(false);
 
@@ -115,7 +116,7 @@ const SettingsPage: React.FC = () => {
     const [freelancerSkills, setFreelancerSkills] = useState<string[]>([]);
     const [freelancerSkillInput, setFreelancerSkillInput] = useState('');
     const [profileProjects, setProfileProjects] = useState<Array<{ id: string; title: string; url?: string; description?: string; images?: string[] }>>([]);
-    
+
     // GitHub OAuth state
     const [githubData, setGithubData] = useState<{
         id?: number;
@@ -135,7 +136,7 @@ const SettingsPage: React.FC = () => {
     const [connectingGithub, setConnectingGithub] = useState(false);
     const githubCallbackProcessed = useRef(false);
     const [selectedHeatmapYear, setSelectedHeatmapYear] = useState<number>(new Date().getFullYear());
-    
+
     // GitHub repositories state
     interface GitHubRepo {
         id: number;
@@ -163,7 +164,7 @@ const SettingsPage: React.FC = () => {
     } | null>(null);
     const [connectingFreelancer, setConnectingFreelancer] = useState(false);
     const freelancerCallbackProcessed = useRef(false);
-    
+
     // Freelancer projects state
     interface FreelancerProject {
         id: number;
@@ -223,7 +224,7 @@ const SettingsPage: React.FC = () => {
 
                 // Handle response - check for user data in different formats
                 const user = data.data || data.user || data;
-                
+
                 if (user && (data.success !== false)) {
                     // Profile fields
                     setFullName(user.fullName || user.name || '');
@@ -241,12 +242,12 @@ const SettingsPage: React.FC = () => {
                     setEmailVerified(user.emailVerified === true);
                     setPhoneVerified(user.phoneVerified === true);
                     setPaymentVerified(user.paymentVerified === true);
-                    
+
                     // GitHub data
                     if (user.githubData) {
                         // Restore access token from localStorage if available
                         const storedToken = localStorage.getItem('github_access_token');
-                        const githubDataWithToken = storedToken 
+                        const githubDataWithToken = storedToken
                             ? { ...user.githubData, accessToken: storedToken }
                             : user.githubData;
                         setGithubData(githubDataWithToken);
@@ -258,12 +259,12 @@ const SettingsPage: React.FC = () => {
                             fetchGitHubUserInfo(storedToken);
                         }
                     }
-                    
+
                     // Freelancer data
                     if (user.freelancerData) {
                         // Restore access token from localStorage if available
                         const storedToken = localStorage.getItem('freelancer_access_token');
-                        const freelancerDataWithToken = storedToken 
+                        const freelancerDataWithToken = storedToken
                             ? { ...user.freelancerData, accessToken: storedToken }
                             : user.freelancerData;
                         setFreelancerData(freelancerDataWithToken);
@@ -275,7 +276,7 @@ const SettingsPage: React.FC = () => {
                             console.log('Freelancer token found but no profile data');
                         }
                     }
-                    
+
                     // Sync premium status and credits
                     if (typeof user.isPremium === 'boolean') {
                         setIsPremium(user.isPremium);
@@ -298,30 +299,30 @@ const SettingsPage: React.FC = () => {
             const githubDataParam = urlParams.get('github_data');
             const error = urlParams.get('error');
             const message = urlParams.get('message');
-            
+
             // Check if this is a redirect from Lambda with GitHub data
             if (githubDataParam && userId && !githubCallbackProcessed.current) {
                 githubCallbackProcessed.current = true;
                 setConnectingGithub(true);
                 setSaveError(null);
-                
+
                 try {
                     // Decode GitHub data from URL parameter
                     const decodedData = JSON.parse(decodeURIComponent(githubDataParam));
-                    
+
                     if (decodedData.success && decodedData.github) {
                         // Store access token in localStorage (temporary solution - should be encrypted in production)
                         if (decodedData.github.accessToken) {
                             localStorage.setItem('github_access_token', decodedData.github.accessToken);
                         }
-                        
+
                         setGithubData(decodedData.github);
                         setGithubUrl(decodedData.github.profileUrl || '');
-                        
+
                         // Save GitHub data to user profile (without access token for security)
                         const githubDataToSave = { ...decodedData.github };
                         delete githubDataToSave.accessToken; // Don't save token to database
-                        
+
                         const saveResponse = await fetch(UPDATE_SETTINGS_ENDPOINT, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -332,7 +333,7 @@ const SettingsPage: React.FC = () => {
                                 githubData: githubDataToSave,
                             }),
                         });
-                        
+
                         const saveData = await saveResponse.json();
                         if (saveData.success) {
                             setSaveMessage('GitHub account connected successfully!');
@@ -366,7 +367,7 @@ const SettingsPage: React.FC = () => {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         };
-        
+
         handleGithubCallback();
     }, [userId]);
 
@@ -377,45 +378,45 @@ const SettingsPage: React.FC = () => {
             const freelancerDataParam = urlParams.get('freelancer_data');
             const error = urlParams.get('error');
             const message = urlParams.get('message');
-            
+
             // Check if this is a redirect from Lambda with Freelancer profile data
             if (freelancerDataParam && userId && !freelancerCallbackProcessed.current) {
                 freelancerCallbackProcessed.current = true;
                 setConnectingFreelancer(true);
                 setSaveError(null);
-                
+
                 try {
                     // Decode Freelancer data from URL parameter (Lambda redirects back with data)
                     const decodedData = JSON.parse(decodeURIComponent(freelancerDataParam));
-                    
+
                     console.log('Decoded Freelancer data:', decodedData);
-                    
+
                     // Handle the actual API response structure: { access_token, profile: { status: "success", result: {...} } }
                     // The profile data is nested in profile.result
                     const profileResult = decodedData.profile?.result || decodedData.result || null;
                     const profileStatus = decodedData.profile?.status || decodedData.status;
-                    
+
                     if (profileStatus === 'success' && profileResult) {
                         // Extract profile information from the actual Freelancer API response structure
                         const username = profileResult.username || profileResult.display_name || profileResult.public_name || profileResult.id?.toString();
                         const profileLink = `https://www.freelancer.com/u/${username}`;
                         const accessToken = decodedData.access_token; // Store access token to fetch projects
-                        
+
                         // Calculate rating if available (employer_reputation or other reputation fields)
                         const rating = profileResult.employer_reputation || profileResult.reputation || profileResult.freelancer_reputation || null;
-                        
+
                         // Extract location information
                         const location = profileResult.location ? {
                             city: profileResult.location.city,
                             country: profileResult.location.country?.name,
                             countryCode: profileResult.location.country?.code,
                         } : null;
-                        
+
                         // Extract registration date
-                        const registrationDate = profileResult.registration_date 
+                        const registrationDate = profileResult.registration_date
                             ? new Date(profileResult.registration_date * 1000).toLocaleDateString()
                             : null;
-                        
+
                         // Normalize profile data for storage and display
                         const normalizedProfile = {
                             username: username,
@@ -440,19 +441,19 @@ const SettingsPage: React.FC = () => {
                             // Store access token temporarily in state (will be stored in localStorage)
                             accessToken: accessToken,
                         };
-                        
+
                         console.log('Normalized Freelancer profile:', normalizedProfile);
-                        
+
                         // Store access token in localStorage for fetching projects
                         if (accessToken) {
                             localStorage.setItem('freelancer_access_token', accessToken);
                         }
-                        
+
                         setFreelancerData(normalizedProfile);
-                        
+
                         // Save Freelancer data to user profile (without accessToken)
                         const { accessToken: _, ...profileToSave } = normalizedProfile;
-                        
+
                         const saveResponse = await fetch(UPDATE_SETTINGS_ENDPOINT, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -462,16 +463,16 @@ const SettingsPage: React.FC = () => {
                                 freelancerData: profileToSave,
                             }),
                         });
-                        
+
                         const saveData = await saveResponse.json();
                         if (saveData.success !== false) {
                             setSaveMessage('Freelancer account connected successfully!');
-                            
+
                             // Fetch projects after successful connection
                             if (accessToken && profileResult.id) {
                                 fetchFreelancerProjects(accessToken, profileResult.id);
                             }
-                            
+
                             // Clean URL - remove parameters
                             window.history.replaceState({}, document.title, window.location.pathname);
                         } else {
@@ -496,7 +497,7 @@ const SettingsPage: React.FC = () => {
                 }
             }
         };
-        
+
         handleFreelancerCallback();
     }, [userId]);
 
@@ -506,13 +507,13 @@ const SettingsPage: React.FC = () => {
             setSaveError('You must be logged in to connect GitHub');
             return;
         }
-        
+
         // Use Lambda function URL as redirect_uri (already registered in GitHub)
         // Pass frontend return URL in state parameter
         const frontendReturnUrl = `${window.location.origin}${window.location.pathname}`;
         const state = btoa(JSON.stringify({ userId, returnUrl: frontendReturnUrl }));
         const redirectUri = GITHUB_OAUTH_CALLBACK;
-        
+
         const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=read:user&state=${encodeURIComponent(state)}`;
         window.location.href = githubAuthUrl;
     };
@@ -521,12 +522,12 @@ const SettingsPage: React.FC = () => {
     // Flow: Frontend redirects to Freelancer OAuth -> Freelancer redirects back to frontend with code -> Frontend calls Lambda with code
     const connectFreelancer = () => {
         console.log('Connect Freelancer button clicked');
-        
+
         if (!userId) {
             setSaveError('You must be logged in to connect Freelancer');
             return;
         }
-        
+
         try {
             // Verify CLIENT_ID is configured
             if (!FREELANCER_CLIENT_ID || FREELANCER_CLIENT_ID.trim() === '') {
@@ -535,26 +536,26 @@ const SettingsPage: React.FC = () => {
                 alert(errorMsg);
                 return;
             }
-            
+
             // Use Lambda callback API as redirect_uri (must be registered in Freelancer OAuth app settings)
             // Pass frontend return URL in state parameter so Lambda can redirect back
             const frontendReturnUrl = `${window.location.origin}${window.location.pathname}`;
             const state = btoa(JSON.stringify({ userId, returnUrl: frontendReturnUrl }));
             const redirectUri = FREELANCER_OAUTH_CALLBACK_API;
             const scope = 'basic';
-            
+
             // Use correct Freelancer OAuth authorize URL (accounts.freelancer.com, not www.freelancer.com)
             const freelancerAuthUrl = `https://accounts.freelancer.com/oauth/authorize?response_type=code&client_id=${FREELANCER_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${encodeURIComponent(state)}`;
-            
+
             console.log('Redirecting to Freelancer OAuth');
             console.log('Redirect URI (Lambda callback):', redirectUri);
             console.log('Frontend return URL (in state):', frontendReturnUrl);
             console.log('Full OAuth URL:', freelancerAuthUrl);
-            
+
             setConnectingFreelancer(true);
             setSaveError(null);
             setSaveMessage(null);
-            
+
             window.location.href = freelancerAuthUrl;
         } catch (error) {
             console.error('Error initiating Freelancer OAuth:', error);
@@ -568,19 +569,19 @@ const SettingsPage: React.FC = () => {
     const fetchFreelancerProjects = async (accessToken?: string, userId?: number) => {
         const token = accessToken || freelancerData?.accessToken || localStorage.getItem('freelancer_access_token');
         const freelancerUserId = userId || freelancerData?.userId;
-        
+
         if (!token || !freelancerUserId) {
             setFreelancerProjectsError('Access token or user ID not available. Please reconnect your Freelancer account.');
             return;
         }
-        
+
         setLoadingFreelancerProjects(true);
         setFreelancerProjectsError(null);
-        
+
         try {
             // Fetch projects owned by the user
             const projectsUrl = `https://www.freelancer.com/api/projects/0.1/projects/?owners[]=${freelancerUserId}&limit=20`;
-            
+
             const response = await fetch(projectsUrl, {
                 method: 'GET',
                 headers: {
@@ -588,17 +589,17 @@ const SettingsPage: React.FC = () => {
                     'Accept': 'application/json',
                 },
             });
-            
+
             if (!response.ok) {
                 throw new Error(`Failed to fetch projects: ${response.statusText}`);
             }
-            
+
             const data = await response.json();
             console.log('Freelancer projects response:', data);
-            
+
             // Handle different response structures
             const projects = data.result?.projects || data.projects || data.data || [];
-            
+
             if (Array.isArray(projects)) {
                 setFreelancerProjects(projects);
             } else {
@@ -618,7 +619,7 @@ const SettingsPage: React.FC = () => {
             setSaveError('You must be logged in to disconnect Freelancer');
             return;
         }
-        
+
         setConnectingFreelancer(true);
         setSaveError(null);
         try {
@@ -632,14 +633,14 @@ const SettingsPage: React.FC = () => {
                     freelancerUrl: null,
                 }),
             });
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             const data = await response.json();
             console.log('Disconnect Freelancer response:', data);
-            
+
             if (data.success) {
                 setFreelancerData(null);
                 setFreelancerProjects([]);
@@ -668,15 +669,15 @@ const SettingsPage: React.FC = () => {
                     'Accept': 'application/vnd.github.v3+json',
                 },
             });
-            
+
             if (response.ok) {
                 const user = await response.json();
                 const username = user.login;
                 const created_at = user.created_at;
-                
+
                 // Generate heatmap URL
                 const heatmap_url = `https://ghchart.rshah.org/${username}`;
-                
+
                 // Calculate account creation year
                 let account_creation_year = null;
                 if (created_at) {
@@ -686,12 +687,12 @@ const SettingsPage: React.FC = () => {
                         // Ignore
                     }
                 }
-                
+
                 const currentYear = new Date().getFullYear();
                 const minYear = account_creation_year && account_creation_year > 2010
                     ? account_creation_year
                     : Math.max(2014, currentYear - 10);
-                
+
                 // Restore GitHub data
                 const restoredGithubData = {
                     id: user.id,
@@ -708,13 +709,13 @@ const SettingsPage: React.FC = () => {
                     minYear: minYear,
                     accessToken: accessToken,
                 };
-                
+
                 setGithubData(restoredGithubData);
                 setGithubUrl(user.html_url);
-                
+
                 // Save to database (without token)
                 const { accessToken: _, ...githubDataToSave } = restoredGithubData;
-                
+
                 if (userId) {
                     await fetch(UPDATE_SETTINGS_ENDPOINT, {
                         method: 'POST',
@@ -743,16 +744,16 @@ const SettingsPage: React.FC = () => {
             setReposError('GitHub access token not available. Please reconnect your GitHub account.');
             return;
         }
-        
+
         setLoadingRepos(true);
         setReposError(null);
-        
+
         try {
             // Fetch all public repositories
             const repos: GitHubRepo[] = [];
             let page = 1;
             let hasMore = true;
-            
+
             while (hasMore && page <= 10) { // Limit to 10 pages (300 repos max)
                 const response = await fetch(
                     `https://api.github.com/user/repos?type=public&per_page=30&page=${page}&sort=updated`,
@@ -763,11 +764,11 @@ const SettingsPage: React.FC = () => {
                         },
                     }
                 );
-                
+
                 if (!response.ok) {
                     throw new Error(`Failed to fetch repositories: ${response.statusText}`);
                 }
-                
+
                 const pageRepos: GitHubRepo[] = await response.json();
                 if (pageRepos.length === 0) {
                     hasMore = false;
@@ -776,7 +777,7 @@ const SettingsPage: React.FC = () => {
                     page++;
                 }
             }
-            
+
             setRepositories(repos);
         } catch (err) {
             console.error('Error fetching repositories:', err);
@@ -785,7 +786,7 @@ const SettingsPage: React.FC = () => {
             setLoadingRepos(false);
         }
     };
-    
+
     // Load repositories when GitHub is connected
     useEffect(() => {
         const token = githubData?.accessToken || localStorage.getItem('github_access_token');
@@ -801,11 +802,11 @@ const SettingsPage: React.FC = () => {
             fetchFreelancerProjects(token, freelancerData.userId);
         }
     }, [freelancerData]);
-    
+
     // Disconnect GitHub
     const disconnectGithub = async () => {
         if (!userId) return;
-        
+
         setConnectingGithub(true);
         try {
             const response = await fetch(UPDATE_SETTINGS_ENDPOINT, {
@@ -818,7 +819,7 @@ const SettingsPage: React.FC = () => {
                     githubData: null,
                 }),
             });
-            
+
             const data = await response.json();
             if (data.success) {
                 setGithubData(null);
@@ -837,7 +838,7 @@ const SettingsPage: React.FC = () => {
             setConnectingGithub(false);
         }
     };
-    
+
     // Select repository (only one at a time)
     const selectRepo = (repoId: number) => {
         // If clicking the same repo, deselect it
@@ -861,9 +862,9 @@ const SettingsPage: React.FC = () => {
     // Upload selected repository
     const uploadSelectedRepo = () => {
         if (!selectedRepoId) return;
-        
+
         const selectedRepo = repositories.find(repo => repo.id === selectedRepoId);
-        
+
         if (selectedRepo) {
             uploadToProjectBazaar(selectedRepo.html_url, selectedRepo.name);
             // Clear selection after upload
@@ -871,7 +872,7 @@ const SettingsPage: React.FC = () => {
         }
     };
 
-    
+
 
     const uploadFile = async (file: File) => {
         if (!userId) return;
@@ -880,10 +881,10 @@ const SettingsPage: React.FC = () => {
             setSaveError('Image must be less than 10MB');
             return;
         }
-        
+
         setUploading(true);
         setSaveError(null);
-        
+
         try {
             // 1️⃣ Ask SAME Lambda for presigned URL
             const presignRes = await fetch(UPDATE_SETTINGS_ENDPOINT, {
@@ -896,16 +897,16 @@ const SettingsPage: React.FC = () => {
                     fileType: file.type,
                 }),
             });
-    
+
             const presignData = await presignRes.json();
             console.log('Presign response:', presignData);
-    
+
             if (!presignData.success) {
                 throw new Error('Failed to get upload URL');
             }
-    
+
             const { uploadUrl, fileUrl, contentType } = presignData;
-    
+
             // 2️⃣ Upload image directly to S3 using fetch
             const uploadResponse = await fetch(uploadUrl, {
                 method: 'PUT',
@@ -918,11 +919,11 @@ const SettingsPage: React.FC = () => {
                 console.error('S3 upload failed:', uploadResponse.status, await uploadResponse.text());
                 throw new Error(`Upload failed with status ${uploadResponse.status}`);
             }
-    
+
             // 3️⃣ Save S3 URL to state (will be saved to DB when user clicks Save Changes)
             setPendingImageUrl(fileUrl);
             setProfileImg(fileUrl);
-    
+
         } catch (err) {
             console.error('Image upload failed', err);
             setSaveError('Failed to upload image');
@@ -995,7 +996,7 @@ const SettingsPage: React.FC = () => {
             }
         }
     };
-    
+
 
     const handleProfileSubmit = async (e?: React.FormEvent) => {
         console.log('Save button clicked!'); // Debug: confirm button works
@@ -1046,12 +1047,12 @@ const SettingsPage: React.FC = () => {
             if (githubData) {
                 requestBody.githubData = githubData;
             }
-            
+
             // Include Freelancer data if available
             if (freelancerData) {
                 requestBody.freelancerData = freelancerData;
             }
-            
+
             // Include profile picture URL if available
             const imageUrlToSave = pendingImageUrl || profileImg;
             if (imageUrlToSave) {
@@ -1065,7 +1066,7 @@ const SettingsPage: React.FC = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(requestBody),                
+                body: JSON.stringify(requestBody),
             });
 
             const data = await response.json();
@@ -1085,17 +1086,62 @@ const SettingsPage: React.FC = () => {
             setSaving(false);
         }
     };
-    
-    // Show loading spinner while fetching user data
+
+    // Show loading skeleton while fetching user data
     if (loading) {
         return (
-            <div className="mt-8 flex items-center justify-center min-h-[400px]">
-                <div className="flex flex-col items-center gap-4">
-                    <svg className="animate-spin h-10 w-10 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p className="text-gray-500">Loading your profile...</p>
+            <div className="mt-8 space-y-8 max-w-4xl mx-auto">
+                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+                    <div className="p-6 border-b border-gray-200">
+                        <Skeleton className="h-6 w-48" />
+                        <Skeleton className="h-4 w-96 mt-2" />
+                    </div>
+                    <div className="p-6 space-y-6">
+                        {/* Toggle Switch Skeleton */}
+                        <div className="py-4 flex justify-between items-center">
+                            <div>
+                                <Skeleton className="h-5 w-40 mb-1" />
+                                <Skeleton className="h-4 w-64" />
+                            </div>
+                            <Skeleton className="w-11 h-6 rounded-full" />
+                        </div>
+
+                        {/* Profile Picture Skeleton */}
+                        <div className="flex items-center gap-6">
+                            <Skeleton className="w-24 h-24 rounded-full" />
+                            <div>
+                                <Skeleton className="h-5 w-32 mb-2" />
+                                <Skeleton className="h-4 w-24" />
+                            </div>
+                        </div>
+
+                        {/* Form Fields Skeleton */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[1, 2, 3, 4].map((i) => (
+                                <div key={i}>
+                                    <Skeleton className="h-4 w-24 mb-2" />
+                                    <Skeleton className="h-10 w-full rounded-lg" />
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Verifications Skeleton */}
+                        <div className="border-t border-gray-200 pt-6">
+                            <Skeleton className="h-5 w-32 mb-4" />
+                            <div className="space-y-3">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-gray-50">
+                                        <Skeleton className="w-10 h-10 rounded-lg" />
+                                        <div className="flex-1">
+                                            <Skeleton className="h-4 w-24 mb-1" />
+                                            <Skeleton className="h-3 w-32" />
+                                        </div>
+                                        <Skeleton className="w-20 h-8 rounded-lg" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -1155,17 +1201,16 @@ const SettingsPage: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        
+
                         {isEditingProfile ? (
                             <div
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
-                                className={`flex-1 border-2 border-dashed rounded-xl p-4 text-center transition-all cursor-pointer ${
-                                    isDragging 
-                                        ? 'border-orange-500 bg-orange-50' 
-                                        : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50/50'
-                                }`}
+                                className={`flex-1 border-2 border-dashed rounded-xl p-4 text-center transition-all cursor-pointer ${isDragging
+                                    ? 'border-orange-500 bg-orange-50'
+                                    : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50/50'
+                                    }`}
                             >
                                 <input type="file" id="file-upload" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
                                 <label htmlFor="file-upload" className={`cursor-pointer ${uploading ? 'pointer-events-none' : ''}`}>
@@ -1215,7 +1260,7 @@ const SettingsPage: React.FC = () => {
                             }}
                         />
                     </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputField
                             id="phoneNumber"
                             label="Phone Number"
@@ -1237,7 +1282,7 @@ const SettingsPage: React.FC = () => {
                                 value={linkedinUrl}
                                 onChange={(e) => setLinkedinUrl(e.target.value)}
                                 isEditing={isEditingProfile}
-                                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>}
+                                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>}
                             />
                             <InputField
                                 id="github"
@@ -1247,7 +1292,7 @@ const SettingsPage: React.FC = () => {
                                 value={githubUrl}
                                 onChange={(e) => setGithubUrl(e.target.value)}
                                 isEditing={isEditingProfile}
-                                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>}
+                                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" /></svg>}
                             />
                         </div>
                     </div>
@@ -1553,7 +1598,7 @@ const SettingsPage: React.FC = () => {
                                 <p className="text-sm text-gray-500">Connect your GitHub account to showcase your contributions and activity</p>
                             </div>
                         </div>
-                        
+
                         {/* Setup Instructions */}
                         {!githubData && (
                             <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -1573,16 +1618,16 @@ const SettingsPage: React.FC = () => {
                                 </div>
                             </div>
                         )}
-                        
+
                         {githubData ? (
                             <div className="space-y-4">
                                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             {githubData.avatar && (
-                                                <img 
-                                                    src={githubData.avatar} 
-                                                    alt={githubData.username || 'GitHub'} 
+                                                <img
+                                                    src={githubData.avatar}
+                                                    alt={githubData.username || 'GitHub'}
                                                     className="w-12 h-12 rounded-full"
                                                 />
                                             )}
@@ -1618,14 +1663,14 @@ const SettingsPage: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 {/* GitHub Contribution Heatmap */}
                                 {githubData.heatmapUrl && githubData.username && (
                                     <div className="bg-white border border-gray-200 rounded-xl p-4">
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-2">
                                                 <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                                                 </svg>
                                                 <h4 className="text-lg font-semibold text-gray-900">Contribution Heatmap</h4>
                                             </div>
@@ -1651,8 +1696,8 @@ const SettingsPage: React.FC = () => {
                                             </select>
                                         </div>
                                         <div className="overflow-x-auto p-4 bg-gray-50 rounded-lg">
-                                            <GitHubContributionHeatmap 
-                                                username={githubData.username} 
+                                            <GitHubContributionHeatmap
+                                                username={githubData.username}
                                                 selectedYear={selectedHeatmapYear}
                                             />
                                         </div>
@@ -1671,13 +1716,13 @@ const SettingsPage: React.FC = () => {
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* GitHub Repositories Section */}
                                 <div className="bg-white border border-gray-200 rounded-xl p-4">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
                                             <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                                             </svg>
                                             <div>
                                                 <h4 className="text-lg font-semibold text-gray-900">Upload</h4>
@@ -1696,7 +1741,7 @@ const SettingsPage: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                    
+
                                     {/* Upload Selected Button - shown when a repository is selected */}
                                     {selectedRepoId && (
                                         <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center justify-between">
@@ -1716,7 +1761,7 @@ const SettingsPage: React.FC = () => {
                                             </button>
                                         </div>
                                     )}
-                                    
+
                                     {loadingRepos && repositories.length === 0 ? (
                                         <div className="flex items-center justify-center py-8">
                                             <svg className="animate-spin h-6 w-6 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -1752,11 +1797,10 @@ const SettingsPage: React.FC = () => {
                                                 return (
                                                     <div
                                                         key={repo.id}
-                                                        className={`flex items-center gap-3 p-3 border rounded-lg transition-colors cursor-pointer ${
-                                                            isSelected
-                                                                ? 'bg-orange-50 border-orange-300 hover:bg-orange-100'
-                                                                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                                                        }`}
+                                                        className={`flex items-center gap-3 p-3 border rounded-lg transition-colors cursor-pointer ${isSelected
+                                                            ? 'bg-orange-50 border-orange-300 hover:bg-orange-100'
+                                                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                                                            }`}
                                                         onClick={() => selectRepo(repo.id)}
                                                     >
                                                         <input
@@ -1770,7 +1814,7 @@ const SettingsPage: React.FC = () => {
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1">
                                                                 <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                                                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                                                                 </svg>
                                                                 <a
                                                                     href={repo.html_url}
@@ -1825,7 +1869,7 @@ const SettingsPage: React.FC = () => {
                                 ) : (
                                     <>
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                                         </svg>
                                         Connect GitHub
                                     </>
@@ -1833,7 +1877,7 @@ const SettingsPage: React.FC = () => {
                             </button>
                         )}
                     </div>
-                    
+
                     {/* Freelancer Integration Section */}
                     <div className="border-t border-gray-200 pt-6 mt-6">
                         <div className="flex items-center justify-between mb-4">
@@ -1842,16 +1886,16 @@ const SettingsPage: React.FC = () => {
                                 <p className="text-sm text-gray-500">Connect your Freelancer account to showcase your profile and ratings</p>
                             </div>
                         </div>
-                        
+
                         {freelancerData ? (
                             <div className="space-y-4">
                                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-4 flex-1">
                                             {freelancerData.avatar ? (
-                                                <img 
-                                                    src={freelancerData.avatar} 
-                                                    alt={freelancerData.username || 'Freelancer'} 
+                                                <img
+                                                    src={freelancerData.avatar}
+                                                    alt={freelancerData.username || 'Freelancer'}
                                                     className="w-16 h-16 rounded-full border-2 border-gray-200"
                                                 />
                                             ) : (
@@ -1878,7 +1922,7 @@ const SettingsPage: React.FC = () => {
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                         </svg>
                                                         <span>
-                                                            {freelancerData.location.city && freelancerData.location.country 
+                                                            {freelancerData.location.city && freelancerData.location.country
                                                                 ? `${freelancerData.location.city}, ${freelancerData.location.country}`
                                                                 : freelancerData.location.city || freelancerData.location.country || 'Location not set'}
                                                         </span>
@@ -1894,7 +1938,7 @@ const SettingsPage: React.FC = () => {
                                             {connectingFreelancer ? 'Disconnecting...' : 'Disconnect'}
                                         </button>
                                     </div>
-                                    
+
                                     {/* Additional Profile Details */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
                                         {freelancerData.rating !== undefined && freelancerData.rating !== null && (
@@ -1915,21 +1959,21 @@ const SettingsPage: React.FC = () => {
                                                 </div>
                                             </div>
                                         )}
-                                        
+
                                         {freelancerData.registrationDate && (
                                             <div>
                                                 <span className="text-sm font-medium text-gray-700">Member since: </span>
                                                 <span className="text-sm text-gray-600">{freelancerData.registrationDate}</span>
                                             </div>
                                         )}
-                                        
+
                                         {freelancerData.primaryCurrency && (
                                             <div>
                                                 <span className="text-sm font-medium text-gray-700">Currency: </span>
                                                 <span className="text-sm text-gray-600">{freelancerData.primaryCurrency}</span>
                                             </div>
                                         )}
-                                        
+
                                         {freelancerData.hourlyRate !== null && freelancerData.hourlyRate !== undefined && (
                                             <div>
                                                 <span className="text-sm font-medium text-gray-700">Hourly Rate: </span>
@@ -1938,21 +1982,21 @@ const SettingsPage: React.FC = () => {
                                                 </span>
                                             </div>
                                         )}
-                                        
+
                                         {freelancerData.portfolioCount !== undefined && freelancerData.portfolioCount > 0 && (
                                             <div>
                                                 <span className="text-sm font-medium text-gray-700">Portfolio Items: </span>
                                                 <span className="text-sm text-gray-600">{freelancerData.portfolioCount}</span>
                                             </div>
                                         )}
-                                        
+
                                         {freelancerData.jobsCount !== null && freelancerData.jobsCount !== undefined && (
                                             <div>
                                                 <span className="text-sm font-medium text-gray-700">Jobs: </span>
                                                 <span className="text-sm text-gray-600">{freelancerData.jobsCount}</span>
                                             </div>
                                         )}
-                                        
+
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm font-medium text-gray-700">Status:</span>
                                             <div className="flex items-center gap-2 flex-wrap">
@@ -1968,7 +2012,7 @@ const SettingsPage: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Tagline and Profile Description */}
                                     {(freelancerData.tagline || freelancerData.profileDescription) && (
                                         <div className="mt-4 pt-4 border-t border-gray-200">
@@ -1980,7 +2024,7 @@ const SettingsPage: React.FC = () => {
                                             )}
                                         </div>
                                     )}
-                                    
+
                                     {freelancerData.profileLink && (
                                         <div className="mt-4 pt-4 border-t border-gray-200">
                                             <a
@@ -1997,7 +2041,7 @@ const SettingsPage: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 {/* Freelancer Projects Section */}
                                 <div className="bg-white border border-gray-200 rounded-xl p-4">
                                     <div className="flex items-center justify-between mb-4">
@@ -2019,7 +2063,7 @@ const SettingsPage: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                    
+
                                     {loadingFreelancerProjects && freelancerProjects.length === 0 ? (
                                         <div className="flex items-center justify-center py-8">
                                             <svg className="animate-spin h-6 w-6 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -2062,7 +2106,7 @@ const SettingsPage: React.FC = () => {
                                                 } else if (project.currency?.sign) {
                                                     budgetDisplay = `${project.currency.sign}N/A`;
                                                 }
-                                                
+
                                                 return (
                                                     <div
                                                         key={project.id}
@@ -2080,8 +2124,8 @@ const SettingsPage: React.FC = () => {
                                                                 </a>
                                                                 {project.description && (
                                                                     <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                                                                        {project.description.length > 150 
-                                                                            ? `${project.description.substring(0, 150)}...` 
+                                                                        {project.description.length > 150
+                                                                            ? `${project.description.substring(0, 150)}...`
                                                                             : project.description}
                                                                     </p>
                                                                 )}
@@ -2155,7 +2199,7 @@ const SettingsPage: React.FC = () => {
                             </button>
                         )}
                     </div>
-                    
+
                     {isEditingProfile && (
                         <div className="flex items-center justify-end gap-3">
                             {saveError && (
@@ -2254,7 +2298,7 @@ const SettingsPage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                                     <div className="flex items-center gap-2 mb-2">
@@ -2305,7 +2349,7 @@ const SettingsPage: React.FC = () => {
                     )}
                 </div>
             </SectionCard>
-            
+
             <SectionCard title="Danger Zone">
                 <button className="bg-red-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-red-700 transition-colors">
                     Delete Account

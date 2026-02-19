@@ -89,7 +89,7 @@ function ResultCard({
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.55, delay: index * 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
       whileHover={{ backgroundColor: 'rgba(255,122,0,0.03)', transition: { duration: 0.2 } }}
-      className={`p-10 flex flex-col items-center text-center border-[#E8E8E8] font-sans
+      className={`p-10 flex flex-col items-center text-center border-[#E8E8E8] dark:border-[#262626] font-sans transition-colors duration-300
         ${index < 3 ? 'border-b' : ''}
         ${(index + 1) % 3 !== 0 ? 'border-r' : ''}
       `}
@@ -100,10 +100,10 @@ function ResultCard({
       >
         <img src={item.icon} alt={item.metric} width={44} height={44} className="object-contain" />
       </motion.div>
-      <h3 className="text-[20px] font-bold text-[#1A1A1A] mb-4 tabular-nums">
+      <h3 className="text-[20px] font-bold text-[#1A1A1A] dark:text-white mb-4 tabular-nums">
         {display}{symbol}{titleSpace}{suffixText}
       </h3>
-      <p className="text-[14px] leading-[1.6] text-[#A1A1A1] max-w-[280px]">{item.description}</p>
+      <p className="text-[14px] leading-[1.6] text-[#A1A1A1] dark:text-gray-400 max-w-[280px]">{item.description}</p>
     </motion.div>
   );
 }
@@ -113,7 +113,7 @@ const ResultsGridSection: React.FC = () => {
   const inView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section className="bg-[#F2F1EE] py-16 md:py-24 lg:py-[120px] px-5 flex flex-col items-center font-sans">
+    <section className="bg-[#F2F1EE] dark:bg-[#0a0a0a] py-16 md:py-24 lg:py-[120px] px-5 flex flex-col items-center font-sans transition-colors duration-300">
       <div ref={ref} className="max-w-[1200px] w-full">
         {/* Header */}
         <motion.div
@@ -122,15 +122,15 @@ const ResultsGridSection: React.FC = () => {
           transition={{ duration: 0.65 }}
           className="text-center mb-12 md:mb-[60px] relative"
         >
-          <p className="text-[14px] font-medium text-[#1A1A1A] mb-4 uppercase tracking-wider">
+          <p className="text-[14px] font-medium text-[#1A1A1A] dark:text-gray-300 mb-4 uppercase tracking-wider">
             Why choose us?
           </p>
-          <h2 className="text-[40px] md:text-[48px] font-bold leading-[1.2] text-[#1A1A1A] max-w-[600px] mx-auto">
+          <h2 className="text-[40px] md:text-[48px] font-bold leading-[1.2] text-[#1A1A1A] dark:text-white max-w-[600px] mx-auto">
             The <span className="text-[#FF7A00]">Results</span> Speak for Themselves
           </h2>
           <div className="absolute right-[10%] top-[70%] hidden lg:block">
             <div className="flex flex-col items-center -rotate-12 translate-y-4 translate-x-12">
-              <span className="font-sans text-[14px] text-[#1A1A1A] opacity-70 mb-1 leading-none uppercase italic">
+              <span className="font-sans text-[14px] text-[#1A1A1A] dark:text-gray-300 opacity-70 mb-1 leading-none uppercase italic">
                 This can be you
               </span>
               <svg
@@ -160,7 +160,7 @@ const ResultsGridSection: React.FC = () => {
         </motion.div>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 bg-white/40 rounded-[24px] overflow-hidden border border-[#E8E8E8]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 bg-white/40 dark:bg-[#141414]/60 rounded-[24px] overflow-hidden border border-[#E8E8E8] dark:border-[#262626] transition-colors duration-300">
           {resultsData.map((item, index) => (
             <ResultCard key={index} item={item} index={index} inView={inView} />
           ))}

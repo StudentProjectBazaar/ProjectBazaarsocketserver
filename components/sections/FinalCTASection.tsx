@@ -31,7 +31,7 @@ const FinalCTASection: React.FC = () => {
   const { navigateTo } = useNavigation();
 
   return (
-    <section id="pricing" ref={ref} className="relative w-full bg-[#0a0a0a] overflow-hidden py-24 md:py-32">
+    <section id="pricing" ref={ref} className="relative w-full bg-gray-100 dark:bg-[#0a0a0a] overflow-hidden py-24 md:py-32 transition-colors duration-300">
       <div
         className="absolute inset-x-0 top-0 h-full pointer-events-none opacity-[0.4]"
         style={{
@@ -48,7 +48,7 @@ const FinalCTASection: React.FC = () => {
           {floatingIcons.map(({ Icon, style, delay }, i) => (
             <motion.div
               key={i}
-              className={`absolute text-white/20 ${style}`}
+              className={`absolute text-gray-400 dark:text-white/20 ${style}`}
               animate={{ y: [0, -14, 0], rotate: [0, i % 2 === 0 ? 5 : -5, 0] }}
               transition={{ duration: 3.5 + i * 0.5, delay, repeat: Infinity, ease: 'easeInOut' }}
             >
@@ -61,7 +61,7 @@ const FinalCTASection: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
-          className="text-[#a1a1a1] uppercase tracking-[0.1em] text-sm font-medium mb-6"
+          className="text-gray-500 dark:text-[#a1a1a1] uppercase tracking-[0.1em] text-sm font-medium mb-6"
         >
           Join thousands of makers
         </motion.p>
@@ -73,7 +73,7 @@ const FinalCTASection: React.FC = () => {
           className="flex -space-x-3 mb-8"
         >
           {AVATARS.map((src, i) => (
-            <div key={i} className="w-12 h-12 rounded-full border-2 border-[#1a1a1a] overflow-hidden bg-gray-700">
+            <div key={i} className="w-12 h-12 rounded-full border-2 border-gray-200 dark:border-[#1a1a1a] overflow-hidden bg-gray-300 dark:bg-gray-700">
               <img src={src} alt="" className="w-full h-full object-cover" />
             </div>
           ))}
@@ -83,7 +83,7 @@ const FinalCTASection: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.15 }}
-          className="text-center text-white text-4xl md:text-5xl lg:text-[64px] font-extrabold leading-[1.1] mb-6 max-w-[900px]"
+          className="text-center text-gray-900 dark:text-white text-4xl md:text-5xl lg:text-[64px] font-extrabold leading-[1.1] mb-6 max-w-[900px]"
         >
           Join Now & Get <span className="text-[#ff7a00]">Instant Access</span> for Free
         </motion.h2>
@@ -92,7 +92,7 @@ const FinalCTASection: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.25 }}
-          className="text-[#a1a1a1] text-center text-lg max-w-[600px] mb-12"
+          className="text-gray-600 dark:text-[#a1a1a1] text-center text-lg max-w-[600px] mb-12"
         >
           List your first project or find your next opportunity in minutes.
         </motion.p>

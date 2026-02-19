@@ -125,16 +125,10 @@ const PremiumProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light');
-
-  useEffect(() => {
-    const storedTheme = localStorage.getItem('theme') as Theme | null;
-    if (storedTheme) {
-      setTheme(storedTheme);
-    } else {
-      setTheme('light');
-    }
-  }, []);
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'light';
+    return (localStorage.getItem('theme') as Theme) || 'light';
+  });
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -212,9 +206,9 @@ const AppContent: React.FC = () => {
     case 'home':
     default:
       return (
-        <div className="dark bg-[#0a0a0a] text-gray-100 min-h-screen overflow-x-hidden transition-colors duration-300 font-sans">
+        <div className="min-h-screen overflow-x-hidden transition-colors duration-300 font-sans bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100">
           <Header />
-          <main className="min-h-screen bg-[#0a0a0a] font-sans">
+          <main className="min-h-screen bg-white dark:bg-[#0a0a0a] font-sans">
             <Hero />
             <ProblemsSection />
             <UniSystemSection />
