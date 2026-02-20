@@ -4,8 +4,10 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import FlickeringFooter from './components/ui/flickering-footer';
 import ProblemsSection from './components/ProblemsSection';
+import PlatformCardsSection from './components/sections/PlatformCardsSection';
 import UniSystemSection from './components/sections/UniSystemSection';
 import CurriculumSection from './components/sections/CurriculumSection';
+import LanguagesSkillsSection from './components/sections/LanguagesSkillsSection';
 import ResultsGridSection from './components/sections/ResultsGridSection';
 import TestimonialsSection from './components/sections/TestimonialsSection';
 import InstructorSection from './components/sections/InstructorSection';
@@ -230,8 +232,10 @@ const AppContent: React.FC = () => {
           <main className="min-h-screen bg-white dark:bg-[#0a0a0a] font-sans">
             <Hero />
             <ProblemsSection />
+            <PlatformCardsSection />
             <UniSystemSection />
             <CurriculumSection />
+            <LanguagesSkillsSection />
             <ResultsGridSection />
             <TestimonialsSection />
             <InstructorSection />
