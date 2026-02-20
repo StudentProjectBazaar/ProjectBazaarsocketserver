@@ -2,10 +2,22 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchHackathons } from '../../services/buyerApi';
 import type { Hackathon } from '../HackathonCard';
 import { useAuth, useNavigation } from '../../App';
+import { useDashboard } from '../../context/DashboardContext';
 
 const HackathonCarouselSection: React.FC = () => {
     const { isLoggedIn } = useAuth();
     const { navigateTo } = useNavigation();
+    const { setDashboardMode, setActiveView } = useDashboard();
+
+    const handleExploreAllHackathons = () => {
+        if (!isLoggedIn) {
+            navigateTo('auth');
+        } else {
+            setDashboardMode('buyer');
+            setActiveView('hackathons');
+            navigateTo('dashboard');
+        }
+    };
 
     const handleCardClick = (hackathon: Hackathon) => {
         if (!isLoggedIn) {
@@ -258,8 +270,9 @@ const HackathonCarouselSection: React.FC = () => {
 
                 {/* Our Initiatives CTA */}
                 <div className="flex justify-center mt-10">
-                    <a
-                        href="/dashboard/hackathons"
+                    <button
+                        type="button"
+                        onClick={handleExploreAllHackathons}
                         className="inline-flex items-center gap-2 px-6 py-3 rounded-full border-2 border-[#1a1a1a] dark:border-white text-[#1a1a1a] dark:text-white font-semibold text-sm hover:bg-[#1a1a1a] hover:text-white dark:hover:bg-white dark:hover:text-[#1a1a1a] transition-all duration-300"
                     >
                         Explore All Hackathons
@@ -268,7 +281,7 @@ const HackathonCarouselSection: React.FC = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
                             </svg>
                         </span>
-                    </a>
+                    </button>
                 </div>
             </div>
         </section>

@@ -69,7 +69,7 @@ const getCardVariants = (alignment: 'left' | 'right') => ({
     x: 0,
     transition: {
       duration: 0.8,
-      ease: [0.22, 1, 0.36, 1],
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   },
 });
@@ -88,7 +88,7 @@ const getImageVariants = (imagePosition: 'left' | 'right') => ({
     transition: {
       duration: 1,
       delay: 0.25,
-      ease: [0.22, 1, 0.36, 1],
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   },
 });
