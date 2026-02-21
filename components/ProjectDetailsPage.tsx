@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { BuyerProject } from './BuyerProjectCard';
-import { useWishlist } from './DashboardPage';
+import { useWishlist, useCart } from './DashboardPage';
 import { useAuth } from '../App';
 import { fetchUserData } from '../services/buyerApi';
 import ReportProjectModal from './ReportProjectModal';
@@ -34,6 +34,7 @@ interface ProjectDetailsPageProps {
 
 const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack, onViewSeller, toggleSidebar }) => {
     const { isInWishlist, toggleWishlist } = useWishlist();
+    const { addToCart, isInCart } = useCart();
     const { userId } = useAuth();
     const [activeTab, setActiveTab] = useState<'description' | 'features' | 'support'>('description');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -41,7 +42,24 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
     const [appliedPromo, setAppliedPromo] = useState(false);
     const [reportModalOpen, setReportModalOpen] = useState(false);
     const [isPurchased, setIsPurchased] = useState(false);
-    
+    const [cartAnimating, setCartAnimating] = useState(false);
+    const [cartAdded, setCartAdded] = useState(false);
+
+    // Sync cartAdded state with actual cart
+    useEffect(() => {
+        setCartAdded(isInCart(project.id));
+    }, [isInCart, project.id]);
+
+    const handleAddToCart = () => {
+        if (cartAdded || cartAnimating) return;
+        setCartAnimating(true);
+        addToCart(project.id);
+        setTimeout(() => {
+            setCartAnimating(false);
+            setCartAdded(true);
+        }, 1200);
+    };
+
     const liked = isInWishlist(project.id);
 
     // Check if project is purchased
@@ -51,7 +69,7 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                 setIsPurchased(false);
                 return;
             }
-            
+
             try {
                 const userData = await fetchUserData(userId);
                 if (userData && userData.purchases) {
@@ -158,7 +176,7 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                             <p className="text-xs text-gray-600 mt-1">Code, Chat and Collaborate</p>
                         </div>
                     </div>
-                    
+
                     {/* Thumbnail Navigation */}
                     {images.length > 1 && (
                         <div className="flex gap-2 overflow-x-auto pb-2">
@@ -166,11 +184,10 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                                 <button
                                     key={index}
                                     onClick={() => setCurrentImageIndex(index)}
-                                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                                        currentImageIndex === index
-                                            ? 'border-orange-500 ring-2 ring-orange-200'
-                                            : 'border-gray-200 hover:border-orange-300'
-                                    }`}
+                                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${currentImageIndex === index
+                                        ? 'border-orange-500 ring-2 ring-orange-200'
+                                        : 'border-gray-200 hover:border-orange-300'
+                                        }`}
                                 >
                                     <img src={img} alt={`${project.title} ${index + 1}`} className="w-full h-full object-cover" />
                                 </button>
@@ -184,17 +201,16 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                     {/* Title */}
                     <div>
                         <h1 className="text-4xl font-bold text-gray-900 mb-4">{project.title}</h1>
-                        
+
                         {/* Stats */}
                         <div className="flex items-center gap-6 mb-4">
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleLikeClick}
-                                    className={`p-2 rounded-lg transition-all ${
-                                        liked
-                                            ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-500'
-                                    }`}
+                                    className={`p-2 rounded-lg transition-all ${liked
+                                        ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-500'
+                                        }`}
                                 >
                                     <svg className="w-5 h-5" fill={liked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={liked ? 0 : 2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 20.25l-7.682-7.682a4.5 4.5 0 010-6.364z" />
@@ -266,11 +282,77 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
 
                         {/* Action Buttons */}
                         <div className="space-y-3">
-                            <button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-4 px-6 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] flex items-center justify-center gap-2">
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                Buy Now
+                            {/* Add to Cart Animation Styles */}
+                            <style>{`
+                                @keyframes cartSlide {
+                                    0% { left: -10%; }
+                                    45% { left: 42%; }
+                                    55% { left: 42%; }
+                                    100% { left: 110%; }
+                                }
+                                @keyframes itemDrop {
+                                    0% { transform: translateY(-18px) scale(0.4); opacity: 0; }
+                                    50% { transform: translateY(2px) scale(1.1); opacity: 1; }
+                                    70% { transform: translateY(-3px) scale(0.95); opacity: 1; }
+                                    100% { transform: translateY(0) scale(1); opacity: 0; }
+                                }
+                                @keyframes checkPop {
+                                    0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+                                    50% { transform: scale(1.3) rotate(0deg); opacity: 1; }
+                                    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+                                }
+                                @keyframes slideTextIn {
+                                    0% { transform: translateY(10px); opacity: 0; }
+                                    100% { transform: translateY(0); opacity: 1; }
+                                }
+                                .cart-slide { animation: cartSlide 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+                                .item-drop { animation: itemDrop 0.4s ease-out 0.35s both; }
+                                .check-pop { animation: checkPop 0.4s ease-out 0.7s both; }
+                                .slide-text { animation: slideTextIn 0.3s ease-out 0.8s both; }
+                            `}</style>
+                            <button
+                                onClick={handleAddToCart}
+                                disabled={cartAdded}
+                                className={`w-full relative overflow-hidden font-semibold py-4 px-6 rounded-xl transition-all duration-500 shadow-lg flex items-center justify-center gap-3 ${cartAdded
+                                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white cursor-default shadow-green-200'
+                                    : cartAnimating
+                                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white scale-[0.98]'
+                                        : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.97]'
+                                    }`}
+                            >
+                                {cartAdded ? (
+                                    /* Added to cart state */
+                                    <>
+                                        <svg className="w-5 h-5 check-pop" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span className="slide-text">Added to Cart!</span>
+                                    </>
+                                ) : cartAnimating ? (
+                                    /* Animating state - cart slides left to right */
+                                    <>
+                                        <span className="text-white/70">Adding...</span>
+                                        <div className="absolute cart-slide" style={{ top: '50%', transform: 'translateY(-50%)' }}>
+                                            <div className="relative">
+                                                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                                {/* Item dropping into cart */}
+                                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 item-drop">
+                                                    <div className="w-2.5 h-2.5 bg-white rounded-sm shadow-md"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    /* Default state */
+                                    <>
+                                        <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                        Add to Cart
+                                    </>
+                                )}
                             </button>
                             <button
                                 onClick={() => setReportModalOpen(true)}
@@ -326,11 +408,10 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-6 py-3 font-semibold text-sm transition-colors relative ${
-                                activeTab === tab
-                                    ? 'text-orange-600'
-                                    : 'text-gray-600 hover:text-gray-900'
-                            }`}
+                            className={`px-6 py-3 font-semibold text-sm transition-colors relative ${activeTab === tab
+                                ? 'text-orange-600'
+                                : 'text-gray-600 hover:text-gray-900'
+                                }`}
                         >
                             {tab.charAt(0).toUpperCase() + tab.slice(1)}
                             {activeTab === tab && (
@@ -346,11 +427,11 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                         <div>
                             <h2 className="text-2xl font-bold text-gray-900 mb-4">Project Description</h2>
                             <p className="text-gray-600 leading-relaxed mb-6">
-                                {project.description} It enables parallel development with seamless live editing and code sharing across multiple users. 
-                                Developers can communicate through an integrated chat system without switching tabs. The paint/draw feature makes 
+                                {project.description} It enables parallel development with seamless live editing and code sharing across multiple users.
+                                Developers can communicate through an integrated chat system without switching tabs. The paint/draw feature makes
                                 whiteboarding and flowcharting easy during collaboration. Ideal for team projects, hackathons, and remote coding interviews.
                             </p>
-                            
+
                             {/* Demo Video */}
                             {project.demoVideoUrl && (
                                 <div className="mt-8">
@@ -392,7 +473,7 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                                     {project.supportInfo || 'For any questions or support regarding this project, please contact the seller directly through their profile or email.'}
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <button 
+                                    <button
                                         onClick={() => onViewSeller?.(project.seller)}
                                         className="flex items-center justify-center gap-3 px-6 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02]"
                                     >
@@ -401,7 +482,7 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                                         </svg>
                                         Contact Seller
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => setReportModalOpen(true)}
                                         className="flex items-center justify-center gap-3 px-6 py-3.5 bg-white border-2 border-red-300 text-red-600 font-semibold rounded-xl hover:bg-red-50 hover:border-red-400 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-[1.02]"
                                     >
