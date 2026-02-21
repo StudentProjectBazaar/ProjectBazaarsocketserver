@@ -212,6 +212,28 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
     useEffect(() => {
         mainScrollRef.current?.scrollTo(0, 0);
     }, [activeView]);
+
+    // Auto-hide scrollbar effect: show on scroll, hide after idle
+    useEffect(() => {
+        const mainEl = mainScrollRef.current;
+        if (!mainEl) return;
+
+        let scrollTimeout: ReturnType<typeof setTimeout>;
+
+        const handleScroll = () => {
+            mainEl.classList.add('is-scrolling');
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                mainEl.classList.remove('is-scrolling');
+            }, 1000);
+        };
+
+        mainEl.addEventListener('scroll', handleScroll, { passive: true });
+        return () => {
+            mainEl.removeEventListener('scroll', handleScroll);
+            clearTimeout(scrollTimeout);
+        };
+    }, []);
     const [buyerProjectView, setBuyerProjectView] = useState<'all' | 'activated' | 'disabled'>('all');
     const [browseView, setBrowseView] = useState<'all' | 'freelancers' | 'projects'>('all');
     const [projects, setProjects] = useState<BuyerProject[]>([]);
@@ -747,7 +769,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
     return (
         <main
             ref={mainScrollRef}
-            className={`flex-1 flex flex-col min-h-0 overflow-x-hidden ${isCodingQuestions ? 'overflow-hidden' : 'overflow-y-auto'} bg-white`}
+            className={`flex-1 flex flex-col min-h-0 overflow-x-hidden ${isCodingQuestions ? 'overflow-hidden' : 'overflow-y-auto'} bg-white custom-scrollbar`}
         >
             {isCodingQuestions ? (
                 <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pt-8 px-6">
