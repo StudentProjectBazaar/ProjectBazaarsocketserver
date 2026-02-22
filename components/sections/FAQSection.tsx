@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'motion/react';
 import { Plus } from 'lucide-react';
-import { useNavigation, useTheme } from '../../App';
+import { useNavigation } from '../../App';
 import { CTAArrowIcon } from '../CTAArrowIcon';
 
 const faqData = [
