@@ -39,6 +39,103 @@ const TopSellers: React.FC = () => {
   const { isLoggedIn } = useAuth();
   const { navigateTo } = useNavigation();
 
+  // Sound effect for tab switching - Heavy "Thud" with haptic feedback
+  const playTabSwitchSound = useCallback(() => {
+    try {
+      // Haptic feedback (if supported on mobile devices)
+      if ('vibrate' in navigator) {
+        // Heavy thud vibration pattern: [vibrate, pause, vibrate]
+        navigator.vibrate([50, 30, 30]);
+      }
+
+      // Create AudioContext for generating a heavy "thud" sound
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Create multiple oscillators for a richer, deeper thud sound
+      const oscillator1 = audioContext.createOscillator();
+      const oscillator2 = audioContext.createOscillator();
+      const oscillator3 = audioContext.createOscillator();
+      
+      const gainNode1 = audioContext.createGain();
+      const gainNode2 = audioContext.createGain();
+      const gainNode3 = audioContext.createGain();
+      const masterGain = audioContext.createGain();
+
+      // Create a low-pass filter for that muffled "thud" quality
+      const filter = audioContext.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(200, audioContext.currentTime);
+      filter.Q.setValueAtTime(1, audioContext.currentTime);
+
+      // Connect oscillators through individual gains, then filter, then master gain
+      oscillator1.connect(gainNode1);
+      oscillator2.connect(gainNode2);
+      oscillator3.connect(gainNode3);
+      
+      gainNode1.connect(filter);
+      gainNode2.connect(filter);
+      gainNode3.connect(filter);
+      
+      filter.connect(masterGain);
+      masterGain.connect(audioContext.destination);
+
+      // Deep bass frequencies for heavy thud
+      oscillator1.type = 'sine';
+      oscillator1.frequency.setValueAtTime(60, audioContext.currentTime); // Deep bass
+      oscillator1.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + 0.15);
+
+      oscillator2.type = 'triangle';
+      oscillator2.frequency.setValueAtTime(90, audioContext.currentTime); // Mid-bass
+      oscillator2.frequency.exponentialRampToValueAtTime(45, audioContext.currentTime + 0.15);
+
+      oscillator3.type = 'sine';
+      oscillator3.frequency.setValueAtTime(120, audioContext.currentTime); // Upper bass
+      oscillator3.frequency.exponentialRampToValueAtTime(60, audioContext.currentTime + 0.15);
+
+      // Heavy attack, quick decay for "thud" effect
+      const now = audioContext.currentTime;
+      
+      // Oscillator 1 (deepest) - loudest
+      gainNode1.gain.setValueAtTime(0, now);
+      gainNode1.gain.linearRampToValueAtTime(0.4, now + 0.01); // Fast attack
+      gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.15); // Quick decay
+
+      // Oscillator 2 (mid) - medium volume
+      gainNode2.gain.setValueAtTime(0, now);
+      gainNode2.gain.linearRampToValueAtTime(0.3, now + 0.01);
+      gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+      // Oscillator 3 (upper) - quieter
+      gainNode3.gain.setValueAtTime(0, now);
+      gainNode3.gain.linearRampToValueAtTime(0.2, now + 0.01);
+      gainNode3.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+      // Master gain for overall volume control
+      masterGain.gain.setValueAtTime(0.6, now);
+      masterGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+      // Start and stop all oscillators
+      oscillator1.start(now);
+      oscillator2.start(now);
+      oscillator3.start(now);
+      
+      oscillator1.stop(now + 0.2);
+      oscillator2.stop(now + 0.2);
+      oscillator3.stop(now + 0.2);
+    } catch (error) {
+      // Silently fail if audio is not supported
+      console.debug('Audio not supported:', error);
+    }
+  }, []);
+
+  // Handle view mode change with sound
+  const handleViewModeChange = useCallback((newMode: ViewMode) => {
+    if (newMode !== viewMode) {
+      playTabSwitchSound();
+      setViewMode(newMode);
+    }
+  }, [viewMode, playTabSwitchSound]);
+
   // Fetch real profile picture
   const fetchUserProfile = useCallback(async (freelancerId: string) => {
     try {
@@ -305,14 +402,14 @@ const TopSellers: React.FC = () => {
               className={`text-base md:text-lg font-semibold italic cursor-pointer transition-colors duration-300 px-4 ${viewMode === "freelancers" ? "text-orange-500" : "text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/60"
                 }`}
               style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
-              onClick={() => setViewMode("freelancers")}
+              onClick={() => handleViewModeChange("freelancers")}
             >
               Top Freelancers
             </span>
 
             {/* Toggle pill */}
             <motion.button
-              onClick={() => setViewMode(viewMode === "freelancers" ? "projects" : "freelancers")}
+              onClick={() => handleViewModeChange(viewMode === "freelancers" ? "projects" : "freelancers")}
               className="relative w-[80px] h-[40px] rounded-full cursor-pointer transition-all duration-300 mx-2 shadow-lg"
               animate={{
                 backgroundColor: viewMode === "freelancers" ? "#f97316" : "#3b82f6",
@@ -331,7 +428,7 @@ const TopSellers: React.FC = () => {
               className={`text-base md:text-lg font-semibold italic cursor-pointer transition-colors duration-300 px-4 ${viewMode === "projects" ? "text-blue-500" : "text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/60"
                 }`}
               style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
-              onClick={() => setViewMode("projects")}
+              onClick={() => handleViewModeChange("projects")}
             >
               Top Projects
             </span>
