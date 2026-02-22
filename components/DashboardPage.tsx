@@ -146,15 +146,32 @@ export const CartProvider: React.FC<{ children: ReactNode; userId: string | null
         }
 
         setIsLoading(true);
-        const userData = await fetchUserData(userId);
-        if (userData && userData.cart) {
-            setCartItems(userData.cart);
-            setCart(userData.cart.map(item => item.projectId));
-        } else {
+        try {
+            const userData = await fetchUserData(userId);
+            if (userData && userData.cart) {
+                // Handle both string[] and CartItem[] formats
+                const cartData = Array.isArray(userData.cart) ? userData.cart : [];
+                const cartIds = cartData.map(item => 
+                    typeof item === 'string' ? item : item.projectId
+                );
+                const cartItemsData = cartData.map(item => 
+                    typeof item === 'string' 
+                        ? { projectId: item, addedAt: new Date().toISOString() }
+                        : item
+                );
+                setCartItems(cartItemsData);
+                setCart(cartIds);
+            } else {
+                setCart([]);
+                setCartItems([]);
+            }
+        } catch (error) {
+            console.error('Error loading cart:', error);
             setCart([]);
             setCartItems([]);
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }, [userId]);
 
     // Fetch cart from API on mount and when userId changes
@@ -185,12 +202,14 @@ export const CartProvider: React.FC<{ children: ReactNode; userId: string | null
                 // Revert on error
                 setCart(prev => prev.filter(id => id !== projectId));
                 setCartItems(prev => prev.filter(item => item.projectId !== projectId));
+                console.error('Failed to add to cart:', result.error || 'Unknown error');
             }
         } catch (error) {
             // Revert on error
             setCart(prev => prev.filter(id => id !== projectId));
             setCartItems(prev => prev.filter(item => item.projectId !== projectId));
             console.error('Error adding to cart:', error);
+            throw error; // Re-throw to allow caller to handle
         }
     };
 
@@ -206,20 +225,14 @@ export const CartProvider: React.FC<{ children: ReactNode; userId: string | null
             const result = await apiRemoveFromCart(userId, projectId);
             if (!result.success) {
                 // Revert on error - reload from API
-                const userData = await fetchUserData(userId);
-                if (userData && userData.cart) {
-                    setCartItems(userData.cart);
-                    setCart(userData.cart.map(item => item.projectId));
-                }
+                console.error('Failed to remove from cart:', result.error || 'Unknown error');
+                await loadCart(); // Use loadCart to properly handle data format
             }
         } catch (error) {
             // Revert on error - reload from API
-            const userData = await fetchUserData(userId);
-            if (userData && userData.cart) {
-                setCartItems(userData.cart);
-                setCart(userData.cart.map(item => item.projectId));
-            }
             console.error('Error removing from cart:', error);
+            await loadCart(); // Use loadCart to properly handle data format
+            throw error; // Re-throw to allow caller to handle
         }
     };
 

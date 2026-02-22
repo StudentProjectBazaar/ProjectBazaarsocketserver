@@ -132,11 +132,13 @@ export const getBidsByProjectIdAsync = async (projectId: string): Promise<Bid[]>
       return response.data.bids;
     }
     
-    // Fallback to localStorage
-    return getBidsByProjectId(projectId);
+    // API returned error - throw to allow caller to handle
+    const errorMessage = response.error?.message || 'Failed to fetch bids';
+    console.error('API error:', response.error);
+    throw new Error(errorMessage);
   } catch (error) {
     console.error('Error fetching bids by project:', error);
-    return getBidsByProjectId(projectId);
+    throw error instanceof Error ? error : new Error('Network error occurred');
   }
 };
 
@@ -163,10 +165,13 @@ export const getBidsByFreelancerIdAsync = async (freelancerId: string): Promise<
       return response.data.bids;
     }
     
-    return getBidsByFreelancerId(freelancerId);
+    // API returned error - throw to allow caller to handle
+    const errorMessage = response.error?.message || 'Failed to fetch freelancer bids';
+    console.error('API error:', response.error);
+    throw new Error(errorMessage);
   } catch (error) {
     console.error('Error fetching bids by freelancer:', error);
-    return getBidsByFreelancerId(freelancerId);
+    throw error instanceof Error ? error : new Error('Network error occurred');
   }
 };
 
@@ -377,10 +382,13 @@ export const hasFreelancerBidOnProjectAsync = async (
       return response.data.hasBid;
     }
 
-    return hasFreelancerBidOnProject(freelancerId, projectId);
+    // API returned error - throw to allow caller to handle
+    const errorMessage = response.error?.message || 'Failed to check existing bid';
+    console.error('API error:', response.error);
+    throw new Error(errorMessage);
   } catch (error) {
     console.error('Error checking existing bid:', error);
-    return hasFreelancerBidOnProject(freelancerId, projectId);
+    throw error instanceof Error ? error : new Error('Network error occurred');
   }
 };
 
@@ -406,14 +414,17 @@ export const getFreelancerBidOnProjectAsync = async (
   try {
     const response = await apiRequest<CheckBidData>('CHECK_EXISTING_BID', { freelancerId, projectId });
 
-    if (response.success && response.data && response.data.hasBid) {
-      return response.data.bid;
+    if (response.success && response.data) {
+      return response.data.hasBid ? response.data.bid : null;
     }
 
-    return getFreelancerBidOnProject(freelancerId, projectId);
+    // API returned error - throw to allow caller to handle
+    const errorMessage = response.error?.message || 'Failed to get freelancer bid';
+    console.error('API error:', response.error);
+    throw new Error(errorMessage);
   } catch (error) {
     console.error('Error getting freelancer bid:', error);
-    return getFreelancerBidOnProject(freelancerId, projectId);
+    throw error instanceof Error ? error : new Error('Network error occurred');
   }
 };
 

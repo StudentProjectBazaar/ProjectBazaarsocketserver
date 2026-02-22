@@ -3,7 +3,7 @@ import re
 import uuid
 import boto3
 from datetime import datetime
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from decimal import Decimal
 
 # ---------- CONFIG ----------
@@ -127,7 +127,7 @@ def handle_signup(body):
 
     # ---------- CHECK EMAIL EXISTS ----------
     existing = table.scan(
-        FilterExpression=Key("email").eq(email)
+        FilterExpression=Attr("email").eq(email)
     )
 
     if existing["Count"] > 0:
@@ -206,7 +206,7 @@ def handle_login(body):
         })
 
     result = table.scan(
-        FilterExpression=Key("email").eq(email)
+        FilterExpression=Attr("email").eq(email)
     )
 
     if result["Count"] == 0:

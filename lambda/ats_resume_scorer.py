@@ -211,10 +211,15 @@ def lambda_handler(event, context):
 
         prompt = build_ats_prompt(resume_text, job_description)
         raw = None
+        last_error = None
+        providers_tried = []
+        
         for provider in ("openai", "claude", "gemini"):
             api_key = keys.get(provider)
             if not api_key:
                 continue
+            
+            providers_tried.append(provider)
             model = models.get(provider)
             try:
                 if provider == "openai":
@@ -228,11 +233,18 @@ def lambda_handler(event, context):
                 if raw:
                     break
             except Exception as e:
+                last_error = str(e)
                 print(f"ATS {provider} error: {e}")
                 continue
 
         if not raw:
-            return response(500, {"success": False, "message": "Could not get ATS score from any configured LLM. Check your API keys in Settings."})
+            error_msg = "Could not get ATS score from any configured LLM."
+            if providers_tried:
+                error_msg += f" Tried: {', '.join(providers_tried)}."
+            if last_error:
+                error_msg += f" Last error: {last_error}"
+            error_msg += " Check your API keys in Settings."
+            return response(500, {"success": False, "message": error_msg})
 
         result = parse_llm_json(raw)
         # Normalize keys

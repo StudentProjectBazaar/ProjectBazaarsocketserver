@@ -117,21 +117,14 @@ export const getAllFreelancers = async (
       };
     }
     
-    // API returned error - return empty list (no mock fallback)
-    console.error('API error, returning empty list:', response.error);
-    return {
-      freelancers: [],
-      totalCount: 0,
-      hasMore: false,
-    };
+    // API returned error - throw to allow caller to handle
+    const errorMessage = response.error?.message || 'Failed to fetch freelancers';
+    console.error('API error:', response.error);
+    throw new Error(errorMessage);
   } catch (error) {
     console.error('Error fetching freelancers:', error);
-    // Network error - return empty list (no mock fallback)
-    return {
-      freelancers: [],
-      totalCount: 0,
-      hasMore: false,
-    };
+    // Re-throw to allow caller to handle
+    throw error instanceof Error ? error : new Error('Network error occurred');
   }
 };
 
@@ -151,10 +144,12 @@ export const getFreelancerById = async (freelancerId: string): Promise<Freelance
       return response.data;
     }
     
-    return null;
+    const errorMessage = response.error?.message || 'Failed to fetch freelancer profile';
+    console.error('API error:', response.error);
+    throw new Error(errorMessage);
   } catch (error) {
     console.error('Error fetching freelancer:', error);
-    return null;
+    throw error instanceof Error ? error : new Error('Network error occurred');
   }
 };
 
@@ -174,10 +169,12 @@ export const getTopFreelancers = async (limit: number = 6): Promise<Freelancer[]
       return response.data.freelancers;
     }
     
-    return [];
+    const errorMessage = response.error?.message || 'Failed to fetch top freelancers';
+    console.error('API error:', response.error);
+    throw new Error(errorMessage);
   } catch (error) {
     console.error('Error fetching top freelancers:', error);
-    return [];
+    throw error instanceof Error ? error : new Error('Network error occurred');
   }
 };
 
@@ -249,18 +246,12 @@ export const searchFreelancers = async (params: {
       };
     }
     
-    return {
-      freelancers: [],
-      totalCount: 0,
-      hasMore: false,
-    };
+    const errorMessage = response.error?.message || 'Failed to search freelancers';
+    console.error('API error:', response.error);
+    throw new Error(errorMessage);
   } catch (error) {
     console.error('Error searching freelancers:', error);
-    return {
-      freelancers: [],
-      totalCount: 0,
-      hasMore: false,
-    };
+    throw error instanceof Error ? error : new Error('Network error occurred');
   }
 };
 
@@ -281,7 +272,7 @@ export const getAvailableSkills = async (): Promise<string[]> => {
     return Array.from(skillsSet).sort();
   } catch (error) {
     console.error('Error fetching skills:', error);
-    return [];
+    throw error instanceof Error ? error : new Error('Failed to fetch available skills');
   }
 };
 
@@ -302,6 +293,6 @@ export const getAvailableCountries = async (): Promise<string[]> => {
     return Array.from(countriesSet).sort();
   } catch (error) {
     console.error('Error fetching countries:', error);
-    return [];
+    throw error instanceof Error ? error : new Error('Failed to fetch available countries');
   }
 };
