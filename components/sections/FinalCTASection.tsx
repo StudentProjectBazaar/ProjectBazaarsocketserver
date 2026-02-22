@@ -104,7 +104,7 @@ const FinalCTASection: React.FC = () => {
           className="flex flex-col md:flex-row items-center gap-6 mb-16 md:mb-20"
         >
           <motion.button
-            onClick={() => navigateTo('auth')}
+            onClick={() => navigateTo('browseProjects')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.97 }}
             className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#ff7a00] to-[#ff9533] rounded-full shadow-[0_0_30px_rgba(255,122,0,0.3)] group text-white font-bold text-lg"

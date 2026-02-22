@@ -48,11 +48,11 @@ const FreelancerProfilePage: React.FC = () => {
 
   const freelancerId = typeof window !== 'undefined'
     ? (() => {
-        const params = new URLSearchParams(window.location.search);
-        const p = params.get('p');
-        if (p) return decodeProfileId(p);
-        return params.get('id'); // backward compatibility
-      })()
+      const params = new URLSearchParams(window.location.search);
+      const p = params.get('p');
+      if (p) return decodeProfileId(p);
+      return params.get('id'); // backward compatibility
+    })()
     : null;
 
   useEffect(() => {
@@ -118,7 +118,11 @@ const FreelancerProfilePage: React.FC = () => {
   };
 
   const goToBrowseAndContact = () => {
-    window.location.href = `/browse-freelancers${freelancerId ? `?contact=${encodeURIComponent(freelancerId)}` : ''}`;
+    if (profile?.email) {
+      window.open(`mailto:${profile.email}`, '_blank');
+    } else {
+      alert('Contact information is not available for this freelancer.');
+    }
   };
 
   if (loading) {

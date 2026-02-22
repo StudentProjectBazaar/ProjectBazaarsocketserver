@@ -24,23 +24,25 @@ const Header: React.FC = () => {
     highlight?: boolean;
   }
 
+  // Helper: scroll to section, navigating to home first if needed
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // Not on home page — navigate first, then scroll after render
+      navigateTo('home');
+      setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    }
+  };
+
   const navLinks: NavLink[] = [
-    { name: 'Curriculum', onClick: () => {
-      const element = document.getElementById('curriculum');
-      if (element) element.scrollIntoView({ behavior: 'smooth' });
-    }},
-    { name: 'Reviews', onClick: () => {
-      const element = document.getElementById('reviews');
-      if (element) element.scrollIntoView({ behavior: 'smooth' });
-    }},
-    { name: 'Pricing', onClick: () => {
-      const element = document.getElementById('pricing');
-      if (element) element.scrollIntoView({ behavior: 'smooth' });
-    }},
-    { name: 'Why us', onClick: () => {
-      const element = document.getElementById('why-choose-us');
-      if (element) element.scrollIntoView({ behavior: 'smooth' });
-    }},
+    { name: 'Curriculum', onClick: () => scrollToSection('curriculum') },
+    { name: 'Reviews', onClick: () => scrollToSection('reviews') },
+    { name: 'Pricing', onClick: () => scrollToSection('pricing') },
+    { name: 'Why us', onClick: () => scrollToSection('why-choose-us') },
     { name: 'FAQs', onClick: () => navigateTo('faq') },
   ];
 
