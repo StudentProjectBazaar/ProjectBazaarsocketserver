@@ -86,7 +86,7 @@ const WalkInReadyAnimation: React.FC = () => {
     const getShowClassScale = (id: string) => activeElements.has(id) ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-90';
 
     return (
-        <div className="relative flex items-center justify-center h-[280px] transition-transform duration-700 transform scale-[0.28] sm:scale-[0.38] md:scale-[0.48] lg:scale-[0.52] xl:scale-[0.62] origin-top">
+        <div className="relative flex items-center justify-center h-[280px] transition-transform duration-700 transform scale-[0.22] sm:scale-[0.28] md:scale-[0.36] lg:scale-[0.40] xl:scale-[0.48] origin-top">
             <div className="w-[540px] flex flex-col gap-[14px]">
                 {/* READY CARD */}
                 <div

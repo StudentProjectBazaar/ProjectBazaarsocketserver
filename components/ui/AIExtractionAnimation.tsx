@@ -151,18 +151,19 @@ const AIExtractionAnimation: React.FC = () => {
         return () => clearAll();
     }, []);
 
-    const getShowClass = (id: string) => activeElements.has(id) ? ' opacity-100 translate-y-0 translate-x-0 blur-none scale-100' : '';
+    const getShowClass = (id: string) => activeElements.has(id) ? ' opacity-100 translate-y-0 translate-x-0 scale-100' : '';
     const getShowClassShadow = (id: string) => activeElements.has(id) ? ' shadow-[0_0_0_5px_rgba(34,197,94,0.1),0_8px_32px_rgba(0,0,0,0.08)]' : '';
-
+    // Blur only when hidden so "shown" state is always crisp (no Tailwind class conflict)
+    const getBlurClass = (id: string, row = false) => activeElements.has(id) ? 'blur-none' : row ? 'blur-[5px]' : 'blur-sm';
 
     return (
-        <div className="relative flex items-center justify-center h-[280px] transition-transform duration-700 transform scale-[0.28] sm:scale-[0.38] md:scale-[0.48] lg:scale-[0.52] xl:scale-[0.62] origin-top">
-            <div className="relative w-[860px] h-[390px]">
+        <div className="relative flex items-center justify-center min-h-[280px] transition-transform duration-700 transform scale-[0.28] sm:scale-[0.38] md:scale-[0.48] lg:scale-[0.52] xl:scale-[0.62] origin-center will-change-transform" style={{ backfaceVisibility: 'hidden' as const }}>
+            <div className="relative w-[860px] h-[390px] shrink-0">
                 {/* Canvas for dotted lines */}
                 <canvas ref={canvasRef} width="860" height="390" className="absolute top-0 left-0 w-[860px] h-[390px] pointer-events-none z-10" />
 
                 {/* Resume Card (Left Top) */}
-                <div id="resumeCard" className={`absolute w-[185px] left-0 top-[20px] bg-white border-[2.5px] border-[#e07b2a] rounded-[18px] p-[18px_20px] transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 translate-y-[14px] blur-sm z-20 ${getShowClass('resumeCard')}`}>
+                <div id="resumeCard" className={`absolute w-[185px] left-0 top-[20px] bg-white border-[2.5px] border-[#e07b2a] rounded-[18px] p-[18px_20px] transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] z-20 ${activeElements.has('resumeCard') ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 translate-y-[14px]'} ${getBlurClass('resumeCard')}`}>
                     <div className="flex items-center gap-[12px] mb-[14px]">
                         <div className="w-[40px] h-[40px] bg-[#fff4ec] rounded-[10px] flex items-center justify-center text-[20px] shrink-0">📄</div>
                         <div>
@@ -176,7 +177,7 @@ const AIExtractionAnimation: React.FC = () => {
                 </div>
 
                 {/* Job Card (Left Bottom) */}
-                <div id="jobCard" className={`absolute w-[185px] left-0 top-[215px] bg-white border-[2.5px] border-[#e07b2a] rounded-[18px] p-[18px_20px] transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 translate-y-[14px] blur-sm z-20 ${getShowClass('jobCard')}`}>
+                <div id="jobCard" className={`absolute w-[185px] left-0 top-[215px] bg-white border-[2.5px] border-[#e07b2a] rounded-[18px] p-[18px_20px] transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] z-20 ${activeElements.has('jobCard') ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 translate-y-[14px]'} ${getBlurClass('jobCard')}`}>
                     <div className="flex items-center gap-[12px] mb-[14px]">
                         <div className="w-[40px] h-[40px] bg-[#fff4ec] rounded-[10px] flex items-center justify-center text-[20px] shrink-0">💼</div>
                         <div>
@@ -197,35 +198,35 @@ const AIExtractionAnimation: React.FC = () => {
 
                 {/* Extracted Rows (Middle) */}
                 {/* Row 0 */}
-                <div id="row0" className={`absolute left-[263px] w-[234px] top-[58px] bg-white border-[1.5px] border-[#e8b080] rounded-[12px] p-[12px_15px] flex items-center gap-[12px] transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 -translate-x-3 blur-[5px] z-20 ${getShowClass('row0')}`}>
+                <div id="row0" className={`absolute left-[263px] w-[234px] top-[58px] bg-white border-[1.5px] border-[#e8b080] rounded-[12px] p-[12px_15px] flex items-center gap-[12px] transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] z-20 ${activeElements.has('row0') ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 -translate-x-3'} ${getBlurClass('row0', true)}`}>
                     <span className="text-[17px]">💼</span>
                     <span className="font-semibold text-[13px] text-[#222] flex-1">Role: Frontend Engineer</span>
                     <span className="w-[9px] h-[9px] bg-[#22c55e] rounded-full shrink-0 animate-[pulse_2s_ease_infinite]"></span>
                 </div>
 
                 {/* Row 1 */}
-                <div id="row1" className={`absolute left-[263px] w-[234px] top-[120px] bg-white border-[1.5px] border-[#e8b080] rounded-[12px] p-[12px_15px] flex items-center gap-[12px] transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 -translate-x-3 blur-[5px] z-20 ${getShowClass('row1')}`}>
+                <div id="row1" className={`absolute left-[263px] w-[234px] top-[120px] bg-white border-[1.5px] border-[#e8b080] rounded-[12px] p-[12px_15px] flex items-center gap-[12px] transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] z-20 ${activeElements.has('row1') ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 -translate-x-3'} ${getBlurClass('row1', true)}`}>
                     <span className="text-[17px] text-[#c0601a]">✦</span>
                     <span className="font-semibold text-[13px] text-[#222] flex-1">React, TypeScript</span>
                     <span className="w-[9px] h-[9px] bg-[#22c55e] rounded-full shrink-0 animate-[pulse_2s_ease_infinite]"></span>
                 </div>
 
                 {/* Row 2 */}
-                <div id="row2" className={`absolute left-[263px] w-[234px] top-[182px] bg-white border-[1.5px] border-[#e8b080] rounded-[12px] p-[12px_15px] flex items-center gap-[12px] transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 -translate-x-3 blur-[5px] z-20 ${getShowClass('row2')}`}>
+                <div id="row2" className={`absolute left-[263px] w-[234px] top-[182px] bg-white border-[1.5px] border-[#e8b080] rounded-[12px] p-[12px_15px] flex items-center gap-[12px] transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] z-20 ${activeElements.has('row2') ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 -translate-x-3'} ${getBlurClass('row2', true)}`}>
                     <span className="text-[17px]">📋</span>
                     <span className="font-semibold text-[13px] text-[#222] flex-1">UI/UX, System Design</span>
                     <span className="w-[9px] h-[9px] bg-[#22c55e] rounded-full shrink-0 animate-[pulse_2s_ease_infinite]"></span>
                 </div>
 
                 {/* Row 3 */}
-                <div id="row3" className={`absolute left-[263px] w-[234px] top-[244px] bg-white border-[1.5px] border-[#e8b080] rounded-[12px] p-[12px_15px] flex items-center gap-[12px] transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 -translate-x-3 blur-[5px] z-20 ${getShowClass('row3')}`}>
+                <div id="row3" className={`absolute left-[263px] w-[234px] top-[244px] bg-white border-[1.5px] border-[#e8b080] rounded-[12px] p-[12px_15px] flex items-center gap-[12px] transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] z-20 ${activeElements.has('row3') ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 -translate-x-3'} ${getBlurClass('row3', true)}`}>
                     <div className="w-[28px] h-[28px] bg-[#2d3748] rounded-full flex items-center justify-center text-white font-extrabold text-[12px] shrink-0">T</div>
                     <span className="font-semibold text-[13px] text-[#222] flex-1">Bazaar Tech</span>
                     <span className="w-[9px] h-[9px] bg-[#22c55e] rounded-full shrink-0 animate-[pulse_2s_ease_infinite]"></span>
                 </div>
 
-                {/* Prep Plan Card (Right) */}
-                <div id="prepCard" className={`absolute w-[210px] left-[645px] top-[20px] bg-white border-[2.5px] border-[#22c55e] rounded-[18px] p-[18px_20px] transition-all duration-750 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 translate-x-[14px] blur-sm z-20 ${getShowClass('prepCard')} ${getShowClassShadow('prepCard')}`}>
+                {/* Prep Plan Card (Right) - ensure visible and crisp when shown */}
+                <div id="prepCard" className={`absolute w-[210px] left-[645px] top-[20px] bg-white border-[2.5px] border-[#22c55e] rounded-[18px] p-[18px_20px] transition-all duration-750 ease-[cubic-bezier(0.22,1,0.36,1)] z-20 ${activeElements.has('prepCard') ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 translate-x-[14px]'} ${getBlurClass('prepCard')} ${getShowClassShadow('prepCard')}`}>
                     <div className="flex items-center justify-between mb-[16px]">
                         <div className="font-extrabold text-[16px] text-[#111] flex items-center gap-[6px]">📋 Prep Plan</div>
                         <div className="bg-[#fef9ec] border border-[#f0d890] rounded-[8px] px-[9px] py-[4px] text-[11px] font-bold text-[#a07000]">📅 5 days</div>
@@ -255,7 +256,7 @@ const AIExtractionAnimation: React.FC = () => {
                 </div>
             </div>
 
-            <div id="footer" className={`mt-[14px] text-[#b0a898] text-[14px] font-medium text-center transition-opacity duration-600 opacity-0 ${getShowClass('footer')}`}>
+            <div id="footer" className={`mt-[14px] text-[#b0a898] text-[14px] font-medium text-center transition-opacity duration-600 ${activeElements.has('footer') ? 'opacity-100' : 'opacity-0'}`}>
                 AI extracts key info from your profile
             </div>
         </div>
