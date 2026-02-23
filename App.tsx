@@ -14,6 +14,7 @@ import InstructorSection from './components/sections/InstructorSection';
 import FAQSection from './components/sections/FAQSection';
 import FinalCTASection from './components/sections/FinalCTASection';
 import HackathonCarouselSection from './components/sections/HackathonCarouselSection';
+import InterviewPrepHowItWorks from './components/sections/InterviewPrepHowItWorks';
 import AuthPage from './components/AuthPage';
 import TopSellers from './components/TopSellers';
 import DashboardPage from './components/DashboardPage';
@@ -233,6 +234,7 @@ const AppContent: React.FC = () => {
           <Header />
           <main className="min-h-screen bg-white dark:bg-[#0a0a0a] font-sans">
             <Hero />
+            <InterviewPrepHowItWorks />
             <ProblemsSection />
             <PlatformCardsSection />
             <UniSystemSection />
