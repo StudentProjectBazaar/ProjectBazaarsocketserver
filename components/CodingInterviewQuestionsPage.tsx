@@ -1321,14 +1321,16 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
                 </div>
 
                 {/* Asked In */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Asked In:</span>
-                  <div className="flex items-center gap-1">
-                    {question.askedIn.map(companyId => (
-                      <CompanyLogo key={companyId} companyId={companyId} size="md" />
-                    ))}
+                {question.askedIn && question.askedIn.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Asked In:</span>
+                    <div className="flex items-center gap-1">
+                      {question.askedIn.map(companyId => (
+                        <CompanyLogo key={companyId} companyId={companyId} size="md" />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Problem Description */}
                 <div>
@@ -2167,14 +2169,14 @@ const CodingInterviewQuestionsPage: React.FC<CodingInterviewQuestionsPageProps> 
               topic: q.topic || 'General',
               difficulty: difficultyMap[q.difficulty] || 'medium',
               avgTime: q.avgTime || 30,
-              submissions: q.submissions || ((index * 7919 + 12345) % 90000) + 10000, // Deterministic fallback
-              askedIn: q.companies || ['google', 'amazon'],
+              submissions: q.submissions || 0,
+              askedIn: q.companies || [],
               status: 'unsolved' as QuestionStatus,
               isBookmarked: false,
               dateAdded: q.createdAt || new Date().toISOString().split('T')[0],
-              likes: q.likes ?? ((index * 3571 + 5678) % 900) + 100, // Deterministic fallback
-              dislikes: q.dislikes ?? ((index * 1237 + 4321) % 90) + 10,
-              successRate: q.successRate ?? ((index * 2749 + 1111) % 40) + 30,
+              likes: q.likes ?? 0,
+              dislikes: q.dislikes ?? 0,
+              successRate: q.successRate ?? 0,
               problemDetails: {
                 description: q.description || '',
                 constraints: q.constraints || [],
@@ -2905,19 +2907,23 @@ const CodingInterviewQuestionsPage: React.FC<CodingInterviewQuestionsPageProps> 
                           {formatNumber(question.submissions)}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Asked in</span>
-                            <div className="flex items-center -space-x-1 ml-2">
-                              {question.askedIn.slice(0, 3).map((companyId) => (
-                                <CompanyLogo key={companyId} companyId={companyId} />
-                              ))}
+                          {(question.askedIn && question.askedIn.length > 0) ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm text-gray-500 dark:text-gray-400">Asked in</span>
+                              <div className="flex items-center -space-x-1 ml-2">
+                                {question.askedIn.slice(0, 3).map(companyId => (
+                                  <CompanyLogo key={companyId} companyId={companyId} />
+                                ))}
+                              </div>
+                              {question.askedIn.length > 3 ? (
+                                <span className="ml-2 text-sm font-medium text-teal-600 dark:text-teal-400">
+                                  +{question.askedIn.length - 3}
+                                </span>
+                              ) : null}
                             </div>
-                            {question.askedIn.length > 3 && (
-                              <span className="ml-2 text-sm font-medium text-teal-600 dark:text-teal-400">
-                                +{question.askedIn.length - 3}
-                              </span>
-                            )}
-                          </div>
+                          ) : (
+                            <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -3032,7 +3038,7 @@ const CodingInterviewQuestionsPage: React.FC<CodingInterviewQuestionsPageProps> 
           </>
         )}
       </main>
-    </div>
+    </div >
   );
 };
 
