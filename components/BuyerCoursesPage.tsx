@@ -6,7 +6,7 @@ import SkeletonDashboard from './ui/skeleton-dashboard';
 import { useAuth } from '../App';
 
 const GET_ALL_COURSES_ENDPOINT = 'https://lejjk9h72l.execute-api.ap-south-2.amazonaws.com/default/Get_all_courses_for_admin_and_buyer';
-const COURSE_LIKE_ENDPOINT = 'https://lejjk9h72l.execute-api.ap-south-2.amazonaws.com/default/course_like_handler';
+const COURSE_LIKE_ENDPOINT = 'https://d5mbqkhoz7.execute-api.ap-south-2.amazonaws.com/default/course_likes_handler';
 
 interface BuyerCoursesPageProps {
     onViewCourse?: (course: Course) => void;
@@ -296,8 +296,8 @@ const BuyerCoursesPage: React.FC<BuyerCoursesPageProps> = ({ onViewCourse }) => 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className={`w-full pl-12 pr-10 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-orange-500 focus:ring-offset-0 bg-white transition-all outline-none shadow-sm ${searchQuery
-                                    ? 'border-orange-300 hover:border-orange-400'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-orange-300 hover:border-orange-400'
+                                : 'border-gray-200 hover:border-gray-300'
                                 }`}
                             aria-label="Search courses by title, description, or category"
                         />
@@ -327,8 +327,8 @@ const BuyerCoursesPage: React.FC<BuyerCoursesPageProps> = ({ onViewCourse }) => 
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
                             className={`appearance-none pl-3 pr-8 py-2 text-sm rounded-full border transition-all outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-0 cursor-pointer font-medium min-w-[140px] ${selectedCategory !== 'all'
-                                    ? 'bg-orange-50 border-orange-400 text-orange-800 shadow-sm'
-                                    : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                                ? 'bg-orange-50 border-orange-400 text-orange-800 shadow-sm'
+                                : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                                 }`}
                             aria-label="Filter courses by category"
                         >
@@ -357,8 +357,8 @@ const BuyerCoursesPage: React.FC<BuyerCoursesPageProps> = ({ onViewCourse }) => 
                             value={selectedLevel}
                             onChange={(e) => setSelectedLevel(e.target.value)}
                             className={`appearance-none pl-3 pr-8 py-2 text-sm rounded-full border transition-all outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-0 cursor-pointer font-medium min-w-[130px] ${selectedLevel !== 'all'
-                                    ? 'bg-orange-50 border-orange-400 text-orange-800 shadow-sm'
-                                    : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                                ? 'bg-orange-50 border-orange-400 text-orange-800 shadow-sm'
+                                : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                                 }`}
                             aria-label="Filter courses by difficulty level"
                         >
@@ -370,8 +370,8 @@ const BuyerCoursesPage: React.FC<BuyerCoursesPageProps> = ({ onViewCourse }) => 
                         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none flex items-center gap-1">
                             {selectedLevel !== 'all' && (
                                 <div className={`w-2 h-2 rounded-full mr-1 ${selectedLevel === 'Beginner' ? 'bg-green-500' :
-                                        selectedLevel === 'Intermediate' ? 'bg-yellow-500' :
-                                            'bg-red-500'
+                                    selectedLevel === 'Intermediate' ? 'bg-yellow-500' :
+                                        'bg-red-500'
                                     }`} aria-hidden="true"></div>
                             )}
                             <svg className={`w-3.5 h-3.5 ${selectedLevel !== 'all' ? 'text-orange-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
