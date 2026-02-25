@@ -19,7 +19,7 @@ interface Feature {
   gradient: string;
   bgGlow: string;
   action: string;
-  page: 'browseFreelancers' | 'browseProjects' | 'buildPortfolio' | 'auth';
+  page: 'browseProjects' | 'buildPortfolio' | 'auth';
 }
 
 const features: Feature[] = [
