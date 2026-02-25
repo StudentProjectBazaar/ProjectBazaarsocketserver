@@ -50,7 +50,7 @@ interface ApiProject {
     category: string;
     tags: string[];
     thumbnailUrl: string;
-    additionalImages?: string[];
+    images?: string[]; // Backend returns 'images', not 'additionalImages'
     sellerId: string;
     sellerEmail: string;
     status: string;
@@ -260,10 +260,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
             description: apiProject.description || 'No description available',
             tags: apiProject.tags || [],
             price: typeof apiProject.price === 'number' ? apiProject.price : parseFloat(String(apiProject.price || '0')),
-            isPremium: false, // API doesn't provide this, can be updated later
+            isPremium: false,
             hasDocumentation: !!apiProject.documentationUrl,
             hasExecutionVideo: !!apiProject.youtubeVideoUrl,
-            additionalImages: apiProject.additionalImages,
+            additionalImages: apiProject.images,
         };
     };
 

@@ -59,7 +59,7 @@ export interface ProjectDetails {
   category: string;
   tags: string[];
   thumbnailUrl: string;
-  additionalImages?: string[];
+  images?: string[];
   sellerId: string;
   sellerEmail: string;
   status: string;

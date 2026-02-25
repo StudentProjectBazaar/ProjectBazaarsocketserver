@@ -157,10 +157,9 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
                 'Multiple user support',
                 'Code sharing capabilities'
             ],
-            images: project.images || [
-                project.imageUrl,
-                ...(project.additionalImages || [])
-            ],
+            images: project.images && project.images.length > 0
+                ? [project.imageUrl, ...project.images]
+                : [project.imageUrl],
             githubUrl: project.githubUrl || `https://github.com/${project.sellerName.toLowerCase().replace(' ', '-')}/${project.title.toLowerCase().replace(' ', '-')}`,
             liveDemoUrl: project.liveDemoUrl || `https://${project.title.toLowerCase().replace(' ', '-')}.demo.com`,
             documentationUrl: project.documentationUrl || `https://docs.${project.title.toLowerCase().replace(' ', '-')}.com`,
