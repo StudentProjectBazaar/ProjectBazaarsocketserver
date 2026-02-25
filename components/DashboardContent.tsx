@@ -50,6 +50,7 @@ interface ApiProject {
     category: string;
     tags: string[];
     thumbnailUrl: string;
+    additionalImages?: string[];
     sellerId: string;
     sellerEmail: string;
     status: string;
@@ -262,6 +263,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
             isPremium: false, // API doesn't provide this, can be updated later
             hasDocumentation: !!apiProject.documentationUrl,
             hasExecutionVideo: !!apiProject.youtubeVideoUrl,
+            additionalImages: apiProject.additionalImages,
         };
     };
 
@@ -656,8 +658,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
                     supportInfo: 'For any questions or support regarding this project, please contact the seller directly through their profile or email.',
                     images: [
                         selectedProject.imageUrl,
-                        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop',
-                        'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
+                        ...(selectedProject.additionalImages || [])
                     ],
                 };
                 return (

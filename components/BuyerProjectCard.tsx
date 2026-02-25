@@ -12,6 +12,7 @@ export interface BuyerProject {
   isPremium?: boolean;
   hasDocumentation?: boolean;
   hasExecutionVideo?: boolean;
+  additionalImages?: string[];
 }
 
 interface BuyerProjectCardProps {
@@ -51,7 +52,7 @@ const Tooltip = ({ children, text, position = 'bottom' }: { children: React.Reac
     left: 'right-full top-1/2 -translate-y-1/2 mr-2',
     right: 'left-full top-1/2 -translate-y-1/2 ml-2',
   };
-  
+
   const arrowClasses = {
     top: 'top-full left-1/2 -translate-x-1/2 border-t-gray-900',
     bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-gray-900',
@@ -106,7 +107,7 @@ const BuyerProjectCard: React.FC<BuyerProjectCardProps> = ({ project, onViewDeta
   };
 
   return (
-    <div 
+    <div
       onClick={handleCardClick}
       className="bg-white rounded-2xl overflow-hidden group transition-all duration-300 shadow-sm hover:shadow-xl hover:-translate-y-1.5 border border-gray-200/60 hover:border-orange-200 flex flex-col h-full relative w-full cursor-pointer"
     >

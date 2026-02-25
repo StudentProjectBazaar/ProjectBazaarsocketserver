@@ -131,10 +131,10 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
     };
 
     const handleProjectStatusChange = (projectId: string, newStatus: AdminProject['status']) => {
-        setUserProjects(userProjects.map((p: AdminProject) => 
+        setUserProjects(userProjects.map((p: AdminProject) =>
             p.id === projectId ? { ...p, status: newStatus } : p
         ));
-        setAllProjects(allProjects.map((p: AdminProject) => 
+        setAllProjects(allProjects.map((p: AdminProject) =>
             p.id === projectId ? { ...p, status: newStatus } : p
         ));
         if (selectedProject && selectedProject.id === projectId) {
@@ -159,8 +159,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
             ],
             images: project.images || [
                 project.imageUrl,
-                'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop',
+                ...(project.additionalImages || [])
             ],
             githubUrl: project.githubUrl || `https://github.com/${project.sellerName.toLowerCase().replace(' ', '-')}/${project.title.toLowerCase().replace(' ', '-')}`,
             liveDemoUrl: project.liveDemoUrl || `https://${project.title.toLowerCase().replace(' ', '-')}.demo.com`,
@@ -192,7 +191,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
             {/* Content */}
             <div ref={contentScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
                 {activeView === 'project-management' && (
-                    <ProjectManagementPage 
+                    <ProjectManagementPage
                         onViewUser={handleViewUser}
                         onViewProjectDetails={handleViewProjectDetails}
                     />
@@ -220,7 +219,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
                     />
                 )}
                 {activeView === 'fraud-management' && (
-                    <FraudManagementPage 
+                    <FraudManagementPage
                         onViewReport={(report) => {
                             setSelectedReport(report);
                             setActiveView('admin-report-details');
@@ -250,7 +249,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
                     />
                 )}
                 {activeView === 'user-management' && (
-                    <UserManagementPage 
+                    <UserManagementPage
                         onViewUser={handleViewUser}
                     />
                 )}
