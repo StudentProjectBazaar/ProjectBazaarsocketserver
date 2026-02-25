@@ -488,16 +488,6 @@ const App: React.FC = () => {
           </DashboardProvider>
         </PremiumProvider>
       </ThemeProvider>
-
-      {/* Sentry Test Error Button */}
-      <button
-        onClick={() => {
-          throw new Error('This is your first error!');
-        }}
-        className="fixed bottom-4 right-4 z-[9999] bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow-lg"
-      >
-        Break the world
-      </button>
     </>
   );
 };
