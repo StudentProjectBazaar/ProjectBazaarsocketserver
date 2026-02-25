@@ -70,6 +70,8 @@ interface CodingQuestion {
   dislikes?: number;
   successRate?: number;
   problemDetails?: ProblemDetails;
+  isLiked?: boolean;
+  isDisliked?: boolean;
 }
 
 interface UserProgress {
@@ -516,6 +518,8 @@ interface ProblemSolvingViewProps {
   onNext: () => void;
   onPrevious: () => void;
   onToggleBookmark: () => void;
+  onToggleLike?: () => void;
+  onToggleDislike?: () => void;
   onStatusUpdate: (questionId: string, status: QuestionStatus, passed: boolean) => void;
 }
 
@@ -527,6 +531,8 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
   onNext,
   onPrevious,
   onToggleBookmark,
+  onToggleLike,
+  onToggleDislike,
   onStatusUpdate,
 }) => {
   const [activeTab, setActiveTab] = useState<ProblemTab>('description');
@@ -1294,14 +1300,14 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
 
                 {/* Likes, Dislikes, Bookmark */}
                 <div className="flex items-center gap-4">
-                  <button className="flex items-center gap-1 text-gray-500 hover:text-green-600">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <button onClick={onToggleLike} className={`flex items-center gap-1 transition-colors ${question.isLiked ? 'text-green-600' : 'text-gray-500 hover:text-green-600'}`}>
+                    <svg className="w-5 h-5" fill={question.isLiked ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                     </svg>
                     <span className="text-sm">{question.likes || 0}</span>
                   </button>
-                  <button className="flex items-center gap-1 text-gray-500 hover:text-red-600">
-                    <svg className="w-5 h-5 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <button onClick={onToggleDislike} className={`flex items-center gap-1 transition-colors ${question.isDisliked ? 'text-red-600' : 'text-gray-500 hover:text-red-600'}`}>
+                    <svg className="w-5 h-5 transform rotate-180" fill={question.isDisliked ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                     </svg>
                     <span className="text-sm">{question.dislikes || 0}</span>
@@ -2421,6 +2427,108 @@ const CodingInterviewQuestionsPage: React.FC<CodingInterviewQuestionsPageProps> 
     }
   }, [selectedQuestion]);
 
+  // Toggle like
+  const handleLikeToggle = useCallback(async (questionId: string) => {
+    // Optimistically update UI
+    setQuestions(prev => prev.map(q => {
+      if (q.id === questionId) {
+        const newIsLiked = !q.isLiked;
+        return {
+          ...q,
+          isLiked: newIsLiked,
+          isDisliked: false,
+          likes: (q.likes || 0) + (newIsLiked ? 1 : -1),
+          dislikes: (q.dislikes || 0) + (q.isDisliked ? -1 : 0)
+        };
+      }
+      return q;
+    }));
+
+    // Also update selectedQuestion if it's the current one
+    if (selectedQuestion?.id === questionId) {
+      setSelectedQuestion(prev => {
+        if (!prev) return null;
+        const newIsLiked = !prev.isLiked;
+        return {
+          ...prev,
+          isLiked: newIsLiked,
+          isDisliked: false,
+          likes: (prev.likes || 0) + (newIsLiked ? 1 : -1),
+          dislikes: (prev.dislikes || 0) + (prev.isDisliked ? -1 : 0)
+        };
+      });
+    }
+
+    // Sync with API
+    const userId = getCurrentUserId();
+    if (userId) {
+      try {
+        await fetch(USER_PROGRESS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'toggle_like',
+            userId,
+            questionId
+          })
+        });
+      } catch (error) {
+        console.error('Error syncing like:', error);
+      }
+    }
+  }, [selectedQuestion]);
+
+  // Toggle dislike
+  const handleDislikeToggle = useCallback(async (questionId: string) => {
+    // Optimistically update UI
+    setQuestions(prev => prev.map(q => {
+      if (q.id === questionId) {
+        const newIsDisliked = !q.isDisliked;
+        return {
+          ...q,
+          isDisliked: newIsDisliked,
+          isLiked: false,
+          dislikes: (q.dislikes || 0) + (newIsDisliked ? 1 : -1),
+          likes: (q.likes || 0) + (q.isLiked ? -1 : 0)
+        };
+      }
+      return q;
+    }));
+
+    // Also update selectedQuestion if it's the current one
+    if (selectedQuestion?.id === questionId) {
+      setSelectedQuestion(prev => {
+        if (!prev) return null;
+        const newIsDisliked = !prev.isDisliked;
+        return {
+          ...prev,
+          isDisliked: newIsDisliked,
+          isLiked: false,
+          dislikes: (prev.dislikes || 0) + (newIsDisliked ? 1 : -1),
+          likes: (prev.likes || 0) + (prev.isLiked ? -1 : 0)
+        };
+      });
+    }
+
+    // Sync with API
+    const userId = getCurrentUserId();
+    if (userId) {
+      try {
+        await fetch(USER_PROGRESS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'toggle_dislike',
+            userId,
+            questionId
+          })
+        });
+      } catch (error) {
+        console.error('Error syncing dislike:', error);
+      }
+    }
+  }, [selectedQuestion]);
+
   // Open question in code editor
   const openQuestion = useCallback((question: CodingQuestion) => {
     const index = filteredQuestions.findIndex(q => q.id === question.id);
@@ -2494,6 +2602,8 @@ const CodingInterviewQuestionsPage: React.FC<CodingInterviewQuestionsPageProps> 
         onNext={goToNextQuestion}
         onPrevious={goToPreviousQuestion}
         onToggleBookmark={() => toggleBookmark(selectedQuestion.id)}
+        onToggleLike={() => handleLikeToggle(selectedQuestion.id)}
+        onToggleDislike={() => handleDislikeToggle(selectedQuestion.id)}
         onStatusUpdate={updateQuestionStatus}
       />
     );
