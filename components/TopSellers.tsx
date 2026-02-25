@@ -50,12 +50,12 @@ const TopSellers: React.FC = () => {
 
       // Create AudioContext for generating a heavy "thud" sound
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
+
       // Create multiple oscillators for a richer, deeper thud sound
       const oscillator1 = audioContext.createOscillator();
       const oscillator2 = audioContext.createOscillator();
       const oscillator3 = audioContext.createOscillator();
-      
+
       const gainNode1 = audioContext.createGain();
       const gainNode2 = audioContext.createGain();
       const gainNode3 = audioContext.createGain();
@@ -71,11 +71,11 @@ const TopSellers: React.FC = () => {
       oscillator1.connect(gainNode1);
       oscillator2.connect(gainNode2);
       oscillator3.connect(gainNode3);
-      
+
       gainNode1.connect(filter);
       gainNode2.connect(filter);
       gainNode3.connect(filter);
-      
+
       filter.connect(masterGain);
       masterGain.connect(audioContext.destination);
 
@@ -94,7 +94,7 @@ const TopSellers: React.FC = () => {
 
       // Heavy attack, quick decay for "thud" effect
       const now = audioContext.currentTime;
-      
+
       // Oscillator 1 (deepest) - loudest
       gainNode1.gain.setValueAtTime(0, now);
       gainNode1.gain.linearRampToValueAtTime(0.4, now + 0.01); // Fast attack
@@ -118,7 +118,7 @@ const TopSellers: React.FC = () => {
       oscillator1.start(now);
       oscillator2.start(now);
       oscillator3.start(now);
-      
+
       oscillator1.stop(now + 0.2);
       oscillator2.stop(now + 0.2);
       oscillator3.stop(now + 0.2);
@@ -269,7 +269,7 @@ const TopSellers: React.FC = () => {
     if (!isLoggedIn) {
       navigateTo("auth");
     } else {
-      navigateTo(viewMode === "freelancers" ? "browseFreelancers" : "browseProjects");
+      navigateTo("browseProjects");
     }
   };
 
@@ -615,7 +615,7 @@ const TopSellers: React.FC = () => {
             onClick={handleClick}
             className="inline-flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-sm rounded-full transition-all duration-300 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/35"
           >
-            {viewMode === "freelancers" ? "Browse All Freelancers" : "Browse All Projects"}
+            {viewMode === "freelancers" ? "Browse Projects Instead" : "Browse All Projects"}
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
             </svg>

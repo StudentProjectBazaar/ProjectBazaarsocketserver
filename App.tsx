@@ -22,7 +22,6 @@ import SellerDashboardPage from './components/SellerDashboardPage';
 import AdminDashboard from './components/admin/AdminDashboard';
 import NotFound from './components/NotFound';
 import FAQWithSpiral from './components/ui/faq-section';
-import BrowseFreelancers from './components/BrowseFreelancers';
 import BrowseProjects from './components/BrowseProjects';
 import FreelancerProfilePage from './components/FreelancerProfilePage';
 import DashboardLayoutWrapper from './components/DashboardLayoutWrapper';
@@ -32,7 +31,7 @@ import MockAssessmentPage from './components/MockAssessmentPage';
 import CodingInterviewQuestionsPage from './components/CodingInterviewQuestionsPage';
 
 type Theme = 'light' | 'dark';
-type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browseFreelancers' | 'browseProjects' | 'freelancerProfile' | 'buildPortfolio' | 'buildResume' | 'mockAssessment' | 'mockLeaderboard' | 'mockAchievements' | 'mockDailyChallenge' | 'mockHistory' | 'codingQuestions' | 'notFound';
+type Page = 'home' | 'auth' | 'dashboard' | 'seller' | 'admin' | 'faq' | 'browseProjects' | 'freelancerProfile' | 'buildPortfolio' | 'buildResume' | 'mockAssessment' | 'mockLeaderboard' | 'mockAchievements' | 'mockDailyChallenge' | 'mockHistory' | 'codingQuestions' | 'notFound';
 type UserRole = 'user' | 'admin';
 
 interface PremiumContextType {
@@ -199,8 +198,6 @@ const AppContent: React.FC = () => {
           <FAQWithSpiral />
         </div>
       );
-    case 'browseFreelancers':
-      return <BrowseFreelancers />;
     case 'browseProjects':
       return <BrowseProjects />;
     case 'freelancerProfile':
@@ -283,7 +280,6 @@ const App: React.FC = () => {
         '/seller': 'seller',
         '/admin': 'admin',
         '/faq': 'faq',
-        '/browse-freelancers': 'browseFreelancers',
         '/browse-projects': 'browseProjects',
         '/freelancer': 'freelancerProfile',
         '/build-portfolio': 'buildPortfolio',
@@ -305,7 +301,6 @@ const App: React.FC = () => {
         'seller': 'seller',
         'admin': 'admin',
         'faq': 'faq',
-        'browseFreelancers': 'browseFreelancers',
         'browseProjects': 'browseProjects',
         'freelancerProfile': 'freelancerProfile',
         'buildPortfolio': 'buildPortfolio',
@@ -427,7 +422,6 @@ const App: React.FC = () => {
       'seller': '/seller',
       'admin': '/admin',
       'faq': '/faq',
-      'browseFreelancers': '/browse-freelancers',
       'browseProjects': '/browse-projects',
       'freelancerProfile': '/freelancer',
       'buildPortfolio': '/build-portfolio',
