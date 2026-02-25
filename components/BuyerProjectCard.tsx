@@ -14,6 +14,9 @@ export interface BuyerProject {
   hasExecutionVideo?: boolean;
   demoVideoUrl?: string;
   images?: string[];
+  likesCount?: number;
+  purchasesCount?: number;
+  sellerEmail?: string;
 }
 
 interface BuyerProjectCardProps {

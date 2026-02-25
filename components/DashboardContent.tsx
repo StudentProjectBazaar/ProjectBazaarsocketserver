@@ -54,13 +54,14 @@ interface ApiProject {
     sellerId: string;
     sellerEmail: string;
     status: string;
+    likesCount?: number;
+    purchasesCount?: number;
+    demoVideoUrl?: string;
     adminApproved?: boolean;
     adminApprovalStatus?: string; // "approved" | "rejected" | "disabled"
     uploadedAt: string;
     documentationUrl?: string;
     youtubeVideoUrl?: string;
-    purchasesCount?: number;
-    likesCount?: number;
     viewsCount?: number;
 }
 
@@ -202,6 +203,25 @@ interface DashboardContentProps {
     setActiveView?: (view: DashboardView) => void;
 }
 
+export interface ExtendedProject extends BuyerProject {
+    seller: {
+        id?: string;
+        name: string;
+        email: string;
+        avatar: string;
+        rating: number;
+        totalSales: number;
+    };
+    likes: number;
+    purchases: number;
+    originalPrice?: number;
+    discount?: number;
+    promoCode?: string;
+    demoVideoUrl?: string;
+    features?: string[];
+    supportInfo?: string;
+}
+
 const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, toggleSidebar }) => {
     const { userId, userEmail } = useAuth();
     // Use global state
@@ -265,6 +285,9 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
             hasExecutionVideo: !!apiProject.youtubeVideoUrl,
             demoVideoUrl: apiProject.youtubeVideoUrl,
             images: apiProject.images,
+            likesCount: apiProject.likesCount || 0,
+            purchasesCount: apiProject.purchasesCount || 0,
+            sellerEmail: apiProject.sellerEmail || '',
         };
     };
 
@@ -627,35 +650,19 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
                     setTimeout(() => setActiveView('dashboard'), 0);
                     return null;
                 }
-                // Get seller info from map
-                const sellerInfo = projectSellerMap.get(selectedProject.id);
-                // Get cached seller profile
-                const cachedSellerProfile = sellerInfo?.sellerId ? sellerProfileCache.get(sellerInfo.sellerId) : undefined;
                 // Extend project with additional details
-                const extendedProject = {
+                const extendedProject: ExtendedProject = {
                     ...selectedProject,
-                    likes: Math.floor(Math.random() * 500) + 50,
-                    purchases: Math.floor(Math.random() * 200) + 10,
+                    likes: typeof selectedProject.likesCount === 'number' ? selectedProject.likesCount : 0,
+                    purchases: typeof selectedProject.purchasesCount === 'number' ? selectedProject.purchasesCount : 0,
                     seller: {
-                        id: sellerInfo?.sellerId || '',
-                        name: cachedSellerProfile?.fullName || sellerInfo?.sellerEmail?.split('@')[0] || 'Seller',
-                        email: sellerInfo?.sellerEmail || 'seller@example.com',
-                        avatar: cachedSellerProfile?.profilePicture || '',
-                        rating: 4.8,
-                        totalSales: Math.floor(Math.random() * 1000) + 100,
+                        name: selectedProject.sellerEmail ? selectedProject.sellerEmail.split('@')[0] : 'Seller',
+                        email: selectedProject.sellerEmail || 'seller@example.com',
+                        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedProject.sellerEmail ? selectedProject.sellerEmail.split('@')[0] : 'Seller')}&background=f97316&color=fff`,
+                        rating: 0,
+                        totalSales: 0,
                     },
-                    originalPrice: selectedProject.price * 1.1,
-                    discount: 4,
-                    promoCode: '444555',
                     demoVideoUrl: selectedProject.demoVideoUrl || (selectedProject.hasExecutionVideo ? '' : undefined),
-                    features: [
-                        'Real-time collaboration',
-                        'Live code editing',
-                        'Integrated chat system',
-                        'Drawing/paint board',
-                        'Multiple user support',
-                        'Code sharing capabilities'
-                    ],
                     supportInfo: 'For any questions or support regarding this project, please contact the seller directly through their profile or email.',
                     images: selectedProject.images && selectedProject.images.length > 0
                         ? selectedProject.images

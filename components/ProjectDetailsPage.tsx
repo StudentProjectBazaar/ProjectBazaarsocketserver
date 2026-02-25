@@ -98,14 +98,7 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
 
 
 
-    const features = project.features || [
-        'Real-time collaboration',
-        'Live code editing',
-        'Integrated chat system',
-        'Drawing/paint board',
-        'Multiple user support',
-        'Code sharing capabilities'
-    ];
+    const features = project.features;
 
     return (
         <div className="max-w-6xl mx-auto pb-12">
@@ -223,22 +216,14 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                             <svg className="w-4 h-4" fill={liked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={liked ? 0 : 2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 20.25l-7.682-7.682a4.5 4.5 0 010-6.364z" />
                             </svg>
-                            {project.likes}
+                            {project.likes || 0}
                         </button>
                         <div className="flex items-center gap-1.5 text-gray-500 text-sm">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128H5.228A2 2 0 013 17.208V17.19a2 2 0 012.228-1.987 9.338 9.338 0 004.121.952A9.38 9.38 0 0012 15.783" />
                             </svg>
-                            <span className="font-medium">{project.purchases}</span> bought
+                            <span className="font-medium">{project.purchases || 0}</span> bought
                         </div>
-                        {project.hasDocumentation && (
-                            <span className="flex items-center gap-1 text-green-600 text-xs font-medium bg-green-50 px-2 py-1 rounded-md">
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Docs
-                            </span>
-                        )}
                     </div>
 
                     {/* Tags */}
@@ -359,21 +344,15 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                                 {project.seller.avatar ? (
                                     <img src={project.seller.avatar} alt={project.seller.name} className="w-full h-full rounded-full object-cover" />
                                 ) : (
-                                    project.seller.name.charAt(0).toUpperCase()
+                                    // If no avatar, display initial or placeholder
+                                    // This div is meant to be the placeholder for the avatar, not the name.
+                                    // The name should be in a separate div next to this one.
+                                    // For now, just closing the JSX correctly.
+                                    <span>{project.seller.name.charAt(0)}</span>
                                 )}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-gray-900 text-sm truncate">{project.seller.name}</p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                    <div className="flex items-center gap-0.5">
-                                        <svg className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                        </svg>
-                                        <span className="text-xs font-medium text-gray-600">{project.seller.rating.toFixed(1)}</span>
-                                    </div>
-                                    <span className="text-gray-300 text-xs">•</span>
-                                    <span className="text-xs text-gray-500">{project.seller.totalSales} sales</span>
-                                </div>
                             </div>
                             <button
                                 onClick={() => onViewSeller?.(project.seller)}
@@ -410,10 +389,8 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                         <div className="space-y-8">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900 mb-3">About This Project</h2>
-                                <p className="text-gray-600 leading-7 text-[15px]">
-                                    {project.description} It enables parallel development with seamless live editing and code sharing across multiple users.
-                                    Developers can communicate through an integrated chat system without switching tabs. The paint/draw feature makes
-                                    whiteboarding and flowcharting easy during collaboration. Ideal for team projects, hackathons, and remote coding interviews.
+                                <p className="text-gray-600 leading-7 text-[15px] whitespace-pre-wrap">
+                                    {project.description}
                                 </p>
                             </div>
 
@@ -434,7 +411,7 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                         </div>
                     )}
 
-                    {activeTab === 'features' && (
+                    {activeTab === 'features' && features && features.length > 0 && (
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 mb-4">What's Included</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -486,89 +463,93 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
             </div>
 
             {/* Report Project Modal */}
-            {userId && (
-                <ReportProjectModal
-                    isOpen={reportModalOpen}
-                    onClose={() => setReportModalOpen(false)}
-                    projectId={project.id}
-                    projectTitle={project.title}
-                    buyerId={userId}
-                    isPurchased={isPurchased}
-                    onSuccess={() => {
-                        console.log('Report submitted successfully');
-                        setReportModalOpen(false);
-                    }}
-                />
-            )}
+            {
+                userId && (
+                    <ReportProjectModal
+                        isOpen={reportModalOpen}
+                        onClose={() => setReportModalOpen(false)}
+                        projectId={project.id}
+                        projectTitle={project.title}
+                        buyerId={userId}
+                        isPurchased={isPurchased}
+                        onSuccess={() => {
+                            console.log('Report submitted successfully');
+                            setReportModalOpen(false);
+                        }}
+                    />
+                )
+            }
             {/* Image Preview Modal */}
-            {isPreviewOpen && (
-                <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 sm:p-8"
-                    onClick={() => setIsPreviewOpen(false)}
-                >
-                    <button
+            {
+                isPreviewOpen && (
+                    <div
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 sm:p-8"
                         onClick={() => setIsPreviewOpen(false)}
-                        className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/70 hover:text-white p-2 transition-colors z-10 hover:bg-white/10 rounded-full"
                     >
-                        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+                        <button
+                            onClick={() => setIsPreviewOpen(false)}
+                            className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/70 hover:text-white p-2 transition-colors z-10 hover:bg-white/10 rounded-full"
+                        >
+                            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
 
-                    <div className="relative max-w-7xl w-full h-full flex flex-col items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                        <img
-                            src={images[currentImageIndex]}
-                            alt={project.title}
-                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
-                        />
+                        <div className="relative max-w-7xl w-full h-full flex flex-col items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                            <img
+                                src={images[currentImageIndex]}
+                                alt={project.title}
+                                className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                            />
 
-                        {/* Navigation inside modal */}
-                        {images.length > 1 && (
-                            <>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length); }}
-                                    className="absolute left-0 sm:left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all focus:outline-none"
-                                >
-                                    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </button>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev + 1) % images.length); }}
-                                    className="absolute right-0 sm:right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all focus:outline-none"
-                                >
-                                    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </button>
-
-                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 font-medium text-sm tracking-wide bg-black/50 px-4 py-1.5 rounded-full backdrop-blur-md tabular-nums">
-                                    {currentImageIndex + 1} / {images.length}
-                                </div>
-                            </>
-                        )}
-
-                        {/* Thumbnail strip in modal */}
-                        {images.length > 1 && (
-                            <div className="absolute bottom-16 sm:bottom-20 flex gap-2 overflow-x-auto max-w-full px-4 py-2 custom-scrollbar">
-                                {images.map((img, index) => (
+                            {/* Navigation inside modal */}
+                            {images.length > 1 && (
+                                <>
                                     <button
-                                        key={index}
-                                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(index); }}
-                                        className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all ${currentImageIndex === index
-                                            ? 'border-white ring-2 ring-white/50 shadow-md transform scale-110 z-10'
-                                            : 'border-white/20 hover:border-white/60 opacity-60 hover:opacity-100'
-                                            }`}
+                                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length); }}
+                                        className="absolute left-0 sm:left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all focus:outline-none"
                                     >
-                                        <img src={img} alt={`${project.title} thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                                        <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                        </svg>
                                     </button>
-                                ))}
-                            </div>
-                        )}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev + 1) % images.length); }}
+                                        className="absolute right-0 sm:right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all focus:outline-none"
+                                    >
+                                        <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+
+                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 font-medium text-sm tracking-wide bg-black/50 px-4 py-1.5 rounded-full backdrop-blur-md tabular-nums">
+                                        {currentImageIndex + 1} / {images.length}
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Thumbnail strip in modal */}
+                            {images.length > 1 && (
+                                <div className="absolute bottom-16 sm:bottom-20 flex gap-2 overflow-x-auto max-w-full px-4 py-2 custom-scrollbar">
+                                    {images.map((img, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(index); }}
+                                            className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all ${currentImageIndex === index
+                                                ? 'border-white ring-2 ring-white/50 shadow-md transform scale-110 z-10'
+                                                : 'border-white/20 hover:border-white/60 opacity-60 hover:opacity-100'
+                                                }`}
+                                        >
+                                            <img src={img} alt={`${project.title} thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
