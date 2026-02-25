@@ -38,6 +38,7 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
     const { userId } = useAuth();
     const [activeTab, setActiveTab] = useState<'description' | 'features' | 'support'>('description');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const [reportModalOpen, setReportModalOpen] = useState(false);
     const [isPurchased, setIsPurchased] = useState(false);
@@ -139,12 +140,20 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 mb-10">
                 {/* Left Column - Image Gallery (3/5 width) */}
                 <div className="lg:col-span-3 space-y-3">
-                    <div className="relative rounded-2xl overflow-hidden bg-gray-100 shadow-lg group">
+                    <div className="relative rounded-2xl overflow-hidden bg-gray-100 shadow-lg group cursor-pointer" onClick={() => setIsPreviewOpen(true)}>
                         <img
                             src={images[currentImageIndex]}
                             alt={project.title}
                             className="w-full aspect-[16/10] object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                         />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 z-10 pointer-events-none">
+                            <span className="bg-white/90 text-gray-900 px-4 py-2 rounded-full font-medium text-sm shadow-lg flex items-center gap-2 backdrop-blur-sm transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                </svg>
+                                Click to preview
+                            </span>
+                        </div>
                         {/* Image counter badge */}
                         {images.length > 1 && (
                             <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full">
@@ -490,6 +499,74 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                         setReportModalOpen(false);
                     }}
                 />
+            )}
+            {/* Image Preview Modal */}
+            {isPreviewOpen && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 sm:p-8"
+                    onClick={() => setIsPreviewOpen(false)}
+                >
+                    <button
+                        onClick={() => setIsPreviewOpen(false)}
+                        className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/70 hover:text-white p-2 transition-colors z-10 hover:bg-white/10 rounded-full"
+                    >
+                        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <div className="relative max-w-7xl w-full h-full flex flex-col items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                        <img
+                            src={images[currentImageIndex]}
+                            alt={project.title}
+                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                        />
+
+                        {/* Navigation inside modal */}
+                        {images.length > 1 && (
+                            <>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length); }}
+                                    className="absolute left-0 sm:left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all focus:outline-none"
+                                >
+                                    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev + 1) % images.length); }}
+                                    className="absolute right-0 sm:right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all focus:outline-none"
+                                >
+                                    <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 font-medium text-sm tracking-wide bg-black/50 px-4 py-1.5 rounded-full backdrop-blur-md tabular-nums">
+                                    {currentImageIndex + 1} / {images.length}
+                                </div>
+                            </>
+                        )}
+
+                        {/* Thumbnail strip in modal */}
+                        {images.length > 1 && (
+                            <div className="absolute bottom-16 sm:bottom-20 flex gap-2 overflow-x-auto max-w-full px-4 py-2 custom-scrollbar">
+                                {images.map((img, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(index); }}
+                                        className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all ${currentImageIndex === index
+                                            ? 'border-white ring-2 ring-white/50 shadow-md transform scale-110 z-10'
+                                            : 'border-white/20 hover:border-white/60 opacity-60 hover:opacity-100'
+                                            }`}
+                                    >
+                                        <img src={img} alt={`${project.title} thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );
