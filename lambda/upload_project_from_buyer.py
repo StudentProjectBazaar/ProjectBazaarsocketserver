@@ -225,6 +225,7 @@ def lambda_handler(event, context):
             "category": category_val,
             "description": description_val,
             "tags": [t.strip() for t in (body.get("tags") or "").split(",") if t.strip()] if body.get("tags") else [],
+            "features": body.get("features") if body.get("features") else [],
             "price": to_decimal(price_value) if price_value is not None else Decimal("0"),
             "originalPrice": (
                 to_decimal(body["originalPrice"])

@@ -173,6 +173,9 @@ const SellerDashboard: React.FC = () => {
     const [tags, setTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState('');
 
+    const [features, setFeatures] = useState<string[]>([]);
+    const [featureInput, setFeatureInput] = useState('');
+
     // Resource links state
     type ResourceType = 'ppt' | 'documentation' | 'executionVideo' | 'researchPaper';
     const [selectedResources, setSelectedResources] = useState<ResourceType[]>([]);
@@ -761,6 +764,28 @@ const SellerDashboard: React.FC = () => {
         setTags(prev => prev.filter((_, i) => i !== index));
     };
 
+    // Feature handling
+    const handleFeatureInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addFeature();
+        } else if (e.key === 'Backspace' && featureInput === '' && features.length > 0) {
+            removeFeature(features.length - 1);
+        }
+    };
+
+    const addFeature = () => {
+        const trimmedFeature = featureInput.trim();
+        if (trimmedFeature && !features.includes(trimmedFeature) && features.length < 15) {
+            setFeatures(prev => [...prev, trimmedFeature]);
+            setFeatureInput('');
+        }
+    };
+
+    const removeFeature = (index: number) => {
+        setFeatures(prev => prev.filter((_, i) => i !== index));
+    };
+
     // GitHub URL validation - check if it's a public repository
     const parseGithubUrl = (url: string): { owner: string; repo: string } | null => {
         // Match various GitHub URL formats
@@ -876,6 +901,7 @@ const SellerDashboard: React.FC = () => {
             githubUrl: formData.githubUrl.trim()
         };
         const capturedTags = [...tags];
+        const capturedFeatures = [...features];
         const capturedResourceUrls = { ...resourceUrls };
         const capturedCustomResources = customResources
             .filter(r => r.label.trim() && r.url.trim())
@@ -910,6 +936,7 @@ const SellerDashboard: React.FC = () => {
                 category: capturedFormData.category || undefined,
                 description: capturedFormData.description || undefined,
                 tags: capturedTags.length > 0 ? capturedTags.join(', ') : undefined,
+                features: capturedFeatures.length > 0 ? capturedFeatures : undefined,
                 price: capturedFormData.price ? parseFloat(capturedFormData.price) : undefined,
                 originalPrice: capturedFormData.originalPrice ? parseFloat(capturedFormData.originalPrice) : undefined,
                 githubUrl: capturedFormData.githubUrl || undefined,
@@ -927,7 +954,7 @@ const SellerDashboard: React.FC = () => {
                 requestBody.projectId = capturedEditingProjectId;
             }
 
-            const optionalKeys = ['originalPrice', 'pptUrl', 'documentationUrl', 'executionVideoUrl', 'researchPaperUrl', 'customResources', 'projectId', 'category', 'description', 'tags', 'price', 'githubUrl', 'youtubeVideoUrl', 'thumbnailUrl', 'imageUrls'];
+            const optionalKeys = ['originalPrice', 'pptUrl', 'documentationUrl', 'executionVideoUrl', 'researchPaperUrl', 'customResources', 'projectId', 'category', 'description', 'tags', 'features', 'price', 'githubUrl', 'youtubeVideoUrl', 'thumbnailUrl', 'imageUrls'];
             optionalKeys.forEach(key => {
                 const value = requestBody[key];
                 if (value === undefined || (Array.isArray(value) && value.length === 0)) {
@@ -1056,6 +1083,7 @@ const SellerDashboard: React.FC = () => {
             githubUrl: formData.githubUrl.trim()
         };
         const capturedTags = [...tags];
+        const capturedFeatures = [...features];
         const capturedResourceUrls = { ...resourceUrls };
         const capturedCustomResources = customResources
             .filter(r => r.label.trim() && r.url.trim())
@@ -1092,6 +1120,7 @@ const SellerDashboard: React.FC = () => {
                 category: capturedFormData.category,
                 description: capturedFormData.description,
                 tags: capturedTags.join(', '),
+                features: capturedFeatures.length > 0 ? capturedFeatures : undefined,
                 price: parseFloat(capturedFormData.price),
                 originalPrice: capturedFormData.originalPrice ? parseFloat(capturedFormData.originalPrice) : undefined,
                 githubUrl: capturedFormData.githubUrl || undefined,
@@ -1110,7 +1139,7 @@ const SellerDashboard: React.FC = () => {
             }
 
             // Only remove optional keys when undefined/empty; never strip required or user-provided fields
-            const optionalKeys = ['originalPrice', 'pptUrl', 'documentationUrl', 'executionVideoUrl', 'researchPaperUrl', 'customResources', 'projectId'];
+            const optionalKeys = ['originalPrice', 'pptUrl', 'documentationUrl', 'executionVideoUrl', 'researchPaperUrl', 'customResources', 'projectId', 'features'];
             optionalKeys.forEach(key => {
                 const value = requestBody[key];
                 if (value === undefined || (Array.isArray(value) && value.length === 0)) {
@@ -1169,6 +1198,8 @@ const SellerDashboard: React.FC = () => {
         });
         setTags([]);
         setTagInput('');
+        setFeatures([]);
+        setFeatureInput('');
         setSelectedResources([]);
         setResourceUrls({
             ppt: '',
@@ -1241,6 +1272,16 @@ const SellerDashboard: React.FC = () => {
                         ? projectData.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
                         : []);
                 setTags(tagsArray);
+            }
+
+            // Load features
+            if (projectData.features) {
+                const featuresArray = Array.isArray(projectData.features)
+                    ? projectData.features
+                    : (typeof projectData.features === 'string'
+                        ? projectData.features.split(',').map((f: string) => f.trim()).filter(Boolean)
+                        : []);
+                setFeatures(featuresArray);
             }
 
             // Load resource URLs
@@ -1933,6 +1974,44 @@ const SellerDashboard: React.FC = () => {
                                         value={formData.description}
                                         onChange={handleInputChange}
                                     />
+                                </div>
+                                <div className="mt-6">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Features <span className="text-gray-400 font-normal">(optional, max 15)</span>
+                                    </label>
+                                    <div className={`w-full px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-orange-500 transition-all ${features.length >= 15 ? 'opacity-75' : ''}`}>
+                                        <div className="flex flex-wrap gap-2">
+                                            {features.map((feature, index) => (
+                                                <span
+                                                    key={index}
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full border border-blue-200"
+                                                >
+                                                    {feature}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeFeature(index)}
+                                                        className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-blue-200 transition-colors"
+                                                    >
+                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </span>
+                                            ))}
+                                            {features.length < 15 && (
+                                                <input
+                                                    type="text"
+                                                    value={featureInput}
+                                                    onChange={(e) => setFeatureInput(e.target.value)}
+                                                    onKeyDown={handleFeatureInputKeyDown}
+                                                    onBlur={() => { if (featureInput.trim()) addFeature(); }}
+                                                    placeholder={features.length === 0 ? "Type a feature and press Enter..." : "Add more..."}
+                                                    className="flex-1 min-w-[200px] bg-transparent border-none outline-none text-gray-900 placeholder-gray-400 py-1"
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                    <p className="mt-1 text-xs text-gray-500">Press Enter to add a feature. Backspace to remove the last feature.</p>
                                 </div>
                                 <div className="mt-6">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
