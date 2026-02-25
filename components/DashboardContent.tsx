@@ -263,7 +263,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
             isPremium: false,
             hasDocumentation: !!apiProject.documentationUrl,
             hasExecutionVideo: !!apiProject.youtubeVideoUrl,
-            additionalImages: apiProject.images,
+            images: apiProject.images,
         };
     };
 
@@ -656,10 +656,9 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
                         'Code sharing capabilities'
                     ],
                     supportInfo: 'For any questions or support regarding this project, please contact the seller directly through their profile or email.',
-                    images: [
-                        selectedProject.imageUrl,
-                        ...(selectedProject.additionalImages || [])
-                    ],
+                    images: selectedProject.images && selectedProject.images.length > 0
+                        ? selectedProject.images
+                        : [selectedProject.imageUrl],
                 };
                 return (
                     <ProjectDetailsPage

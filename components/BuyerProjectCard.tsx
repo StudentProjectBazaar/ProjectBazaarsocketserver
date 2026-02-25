@@ -12,7 +12,7 @@ export interface BuyerProject {
   isPremium?: boolean;
   hasDocumentation?: boolean;
   hasExecutionVideo?: boolean;
-  additionalImages?: string[];
+  images?: string[];
 }
 
 interface BuyerProjectCardProps {

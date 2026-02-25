@@ -158,7 +158,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
                 'Code sharing capabilities'
             ],
             images: project.images && project.images.length > 0
-                ? [project.imageUrl, ...project.images]
+                ? project.images
                 : [project.imageUrl],
             githubUrl: project.githubUrl || `https://github.com/${project.sellerName.toLowerCase().replace(' ', '-')}/${project.title.toLowerCase().replace(' ', '-')}`,
             liveDemoUrl: project.liveDemoUrl || `https://${project.title.toLowerCase().replace(' ', '-')}.demo.com`,
