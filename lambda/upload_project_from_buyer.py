@@ -195,6 +195,7 @@ def lambda_handler(event, context):
 
         timestamp = now_iso()
 
+        # Only use defaults when key is missing (not when value is empty), so user-provided data is never overwritten
         resources = {
             "pptUrl": body.get("pptUrl"),
             "documentationUrl": body.get("documentationUrl"),
@@ -212,14 +213,18 @@ def lambda_handler(event, context):
             project_status = "pending"
             admin_approval_status = "pending"
 
+        title_val = (body.get("title") or "").strip() if "title" in body else ""
+        category_val = (body.get("category") or "").strip() if "category" in body else "Uncategorized"
+        description_val = body.get("description", "") if "description" in body else ""
+
         project_item = {
             "projectId": project_id,
             "sellerId": seller_id,
             "sellerEmail": seller_email,
-            "title": body.get("title", "").strip(),
-            "category": body.get("category", "Uncategorized"),
-            "description": body.get("description", ""),
-            "tags": [t.strip() for t in body.get("tags", "").split(",") if t.strip()] if body.get("tags") else [],
+            "title": title_val,
+            "category": category_val,
+            "description": description_val,
+            "tags": [t.strip() for t in (body.get("tags") or "").split(",") if t.strip()] if body.get("tags") else [],
             "price": to_decimal(price_value) if price_value is not None else Decimal("0"),
             "originalPrice": (
                 to_decimal(body["originalPrice"])

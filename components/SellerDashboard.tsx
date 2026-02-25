@@ -865,16 +865,33 @@ const SellerDashboard: React.FC = () => {
         setIsSubmitting(true);
         setUploadProgress('Saving draft...');
 
-        try {
-            // Upload images if any are provided (optional for drafts)
-            // Start with existing image URLs (from draft) that are already uploaded
-            const imageUrls: string[] = imagePreviews.filter(url => url.startsWith('http')); // Keep existing URLs
+        // Capture form state before any async work so draft stores what the user entered
+        const capturedFormData = {
+            title: formData.title.trim(),
+            category: formData.category.trim(),
+            description: formData.description.trim(),
+            price: formData.price.trim(),
+            originalPrice: formData.originalPrice?.trim(),
+            youtubeVideoUrl: formData.youtubeVideoUrl.trim(),
+            githubUrl: formData.githubUrl.trim()
+        };
+        const capturedTags = [...tags];
+        const capturedResourceUrls = { ...resourceUrls };
+        const capturedCustomResources = customResources
+            .filter(r => r.label.trim() && r.url.trim())
+            .map(r => ({ label: r.label.trim(), url: r.url.trim() }));
+        const capturedEditingProjectId = editingProjectId;
+        const capturedImageFiles = [...imageFiles];
+        const capturedImagePreviews = imagePreviews.filter(url => url.startsWith('http'));
 
-            if (imageFiles.length > 0) {
-                setUploadProgress(`Uploading ${imageFiles.length} image(s) to cloud...`);
-                for (let i = 0; i < imageFiles.length; i++) {
+        try {
+            const imageUrls: string[] = [...capturedImagePreviews];
+
+            if (capturedImageFiles.length > 0) {
+                setUploadProgress(`Uploading ${capturedImageFiles.length} image(s) to cloud...`);
+                for (let i = 0; i < capturedImageFiles.length; i++) {
                     try {
-                        const imageUrl = await uploadImageToS3(imageFiles[i], i);
+                        const imageUrl = await uploadImageToS3(capturedImageFiles[i], i);
                         imageUrls.push(imageUrl);
                     } catch (uploadError) {
                         console.error(`Failed to upload image ${i + 1}:`, uploadError);
@@ -885,41 +902,36 @@ const SellerDashboard: React.FC = () => {
 
             setUploadProgress('Saving draft...');
 
-            // Prepare request body for draft
             const requestBody: any = {
                 sellerId: userId,
                 sellerEmail: userEmail,
                 isDraft: true,
-                title: formData.title.trim(),
-                category: formData.category.trim() || undefined,
-                description: formData.description.trim() || undefined,
-                tags: tags.length > 0 ? tags.join(', ') : undefined,
-                price: formData.price.trim() ? parseFloat(formData.price) : undefined,
-                originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
-                githubUrl: formData.githubUrl.trim() || undefined,
-                youtubeVideoUrl: formData.youtubeVideoUrl.trim() || undefined,
+                title: capturedFormData.title,
+                category: capturedFormData.category || undefined,
+                description: capturedFormData.description || undefined,
+                tags: capturedTags.length > 0 ? capturedTags.join(', ') : undefined,
+                price: capturedFormData.price ? parseFloat(capturedFormData.price) : undefined,
+                originalPrice: capturedFormData.originalPrice ? parseFloat(capturedFormData.originalPrice) : undefined,
+                githubUrl: capturedFormData.githubUrl || undefined,
+                youtubeVideoUrl: capturedFormData.youtubeVideoUrl || undefined,
                 thumbnailUrl: imageUrls[0] || undefined,
                 imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
-                pptUrl: resourceUrls.ppt.trim() || undefined,
-                documentationUrl: resourceUrls.documentation.trim() || undefined,
-                executionVideoUrl: resourceUrls.executionVideo.trim() || undefined,
-                researchPaperUrl: resourceUrls.researchPaper.trim() || undefined,
-                customResources: customResources.filter(r => r.label.trim() && r.url.trim()).map(r => ({
-                    label: r.label.trim(),
-                    url: r.url.trim()
-                }))
+                pptUrl: capturedResourceUrls.ppt.trim() || undefined,
+                documentationUrl: capturedResourceUrls.documentation.trim() || undefined,
+                executionVideoUrl: capturedResourceUrls.executionVideo.trim() || undefined,
+                researchPaperUrl: capturedResourceUrls.researchPaper.trim() || undefined,
+                customResources: capturedCustomResources
             };
 
-            // If editing existing draft, include projectId
-            if (editingProjectId) {
-                requestBody.projectId = editingProjectId;
+            if (capturedEditingProjectId) {
+                requestBody.projectId = capturedEditingProjectId;
             }
 
-            // Remove undefined/empty values
-            Object.keys(requestBody).forEach(key => {
-                const value = requestBody[key as keyof typeof requestBody];
+            const optionalKeys = ['originalPrice', 'pptUrl', 'documentationUrl', 'executionVideoUrl', 'researchPaperUrl', 'customResources', 'projectId', 'category', 'description', 'tags', 'price', 'githubUrl', 'youtubeVideoUrl', 'thumbnailUrl', 'imageUrls'];
+            optionalKeys.forEach(key => {
+                const value = requestBody[key];
                 if (value === undefined || (Array.isArray(value) && value.length === 0)) {
-                    delete requestBody[key as keyof typeof requestBody];
+                    delete requestBody[key];
                 }
             });
 
@@ -1032,16 +1044,35 @@ const SellerDashboard: React.FC = () => {
         setIsSubmitting(true);
         setUploadProgress('Preparing upload...');
 
+        // Capture form state once before any async work so we never send stale/default values
+        // (state can change during image uploads; using captured values ensures we send what the user entered)
+        const capturedFormData = {
+            title: formData.title.trim(),
+            category: formData.category.trim(),
+            description: formData.description.trim(),
+            price: formData.price.trim(),
+            originalPrice: formData.originalPrice?.trim(),
+            youtubeVideoUrl: formData.youtubeVideoUrl.trim(),
+            githubUrl: formData.githubUrl.trim()
+        };
+        const capturedTags = [...tags];
+        const capturedResourceUrls = { ...resourceUrls };
+        const capturedCustomResources = customResources
+            .filter(r => r.label.trim() && r.url.trim())
+            .map(r => ({ label: r.label.trim(), url: r.url.trim() }));
+        const capturedEditingProjectId = editingProjectId;
+        const capturedImageFiles = [...imageFiles];
+        const capturedImagePreviews = imagePreviews.filter(url => url.startsWith('http'));
+
         try {
             // 1. Upload all images to S3 first
-            // Start with existing image URLs (from draft) that are already uploaded
-            const imageUrls: string[] = imagePreviews.filter(url => url.startsWith('http')); // Keep existing URLs
+            const imageUrls: string[] = [...capturedImagePreviews];
 
-            if (imageFiles.length > 0) {
-                setUploadProgress(`Uploading ${imageFiles.length} image(s) to cloud...`);
-                for (let i = 0; i < imageFiles.length; i++) {
+            if (capturedImageFiles.length > 0) {
+                setUploadProgress(`Uploading ${capturedImageFiles.length} image(s) to cloud...`);
+                for (let i = 0; i < capturedImageFiles.length; i++) {
                     try {
-                        const imageUrl = await uploadImageToS3(imageFiles[i], i);
+                        const imageUrl = await uploadImageToS3(capturedImageFiles[i], i);
                         imageUrls.push(imageUrl);
                     } catch (uploadError) {
                         console.error(`Failed to upload image ${i + 1}:`, uploadError);
@@ -1052,44 +1083,38 @@ const SellerDashboard: React.FC = () => {
 
             setUploadProgress('Submitting project...');
 
-            // 2. Prepare request body with S3 image URLs
+            // 2. Prepare request body from captured values (not current state)
             const requestBody: any = {
                 sellerId: userId,
                 sellerEmail: userEmail,
-                isDraft: false, // Explicitly set to false for submission
-                title: formData.title.trim(),
-                category: formData.category.trim(),
-                description: formData.description.trim(),
-                tags: tags.join(', '),
-                price: parseFloat(formData.price),
-                originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
-                githubUrl: formData.githubUrl.trim() || undefined,
-                youtubeVideoUrl: formData.youtubeVideoUrl.trim() || undefined,
-                // Image URLs from S3
-                thumbnailUrl: imageUrls[0], // First image is the thumbnail
-                imageUrls: imageUrls, // All images including thumbnail
-                // Resource links
-                pptUrl: resourceUrls.ppt.trim() || undefined,
-                documentationUrl: resourceUrls.documentation.trim() || undefined,
-                executionVideoUrl: resourceUrls.executionVideo.trim() || undefined,
-                researchPaperUrl: resourceUrls.researchPaper.trim() || undefined,
-                // Custom resources - filter out empty ones
-                customResources: customResources.filter(r => r.label.trim() && r.url.trim()).map(r => ({
-                    label: r.label.trim(),
-                    url: r.url.trim()
-                }))
+                isDraft: false,
+                title: capturedFormData.title,
+                category: capturedFormData.category,
+                description: capturedFormData.description,
+                tags: capturedTags.join(', '),
+                price: parseFloat(capturedFormData.price),
+                originalPrice: capturedFormData.originalPrice ? parseFloat(capturedFormData.originalPrice) : undefined,
+                githubUrl: capturedFormData.githubUrl || undefined,
+                youtubeVideoUrl: capturedFormData.youtubeVideoUrl || undefined,
+                thumbnailUrl: imageUrls[0],
+                imageUrls,
+                pptUrl: capturedResourceUrls.ppt.trim() || undefined,
+                documentationUrl: capturedResourceUrls.documentation.trim() || undefined,
+                executionVideoUrl: capturedResourceUrls.executionVideo.trim() || undefined,
+                researchPaperUrl: capturedResourceUrls.researchPaper.trim() || undefined,
+                customResources: capturedCustomResources
             };
 
-            // If editing existing draft, include projectId
-            if (editingProjectId) {
-                requestBody.projectId = editingProjectId;
+            if (capturedEditingProjectId) {
+                requestBody.projectId = capturedEditingProjectId;
             }
 
-            // Remove undefined/empty values
-            Object.keys(requestBody).forEach(key => {
-                const value = requestBody[key as keyof typeof requestBody];
+            // Only remove optional keys when undefined/empty; never strip required or user-provided fields
+            const optionalKeys = ['originalPrice', 'pptUrl', 'documentationUrl', 'executionVideoUrl', 'researchPaperUrl', 'customResources', 'projectId'];
+            optionalKeys.forEach(key => {
+                const value = requestBody[key];
                 if (value === undefined || (Array.isArray(value) && value.length === 0)) {
-                    delete requestBody[key as keyof typeof requestBody];
+                    delete requestBody[key];
                 }
             });
 
