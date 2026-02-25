@@ -12,6 +12,7 @@ export interface BuyerProject {
   isPremium?: boolean;
   hasDocumentation?: boolean;
   hasExecutionVideo?: boolean;
+  demoVideoUrl?: string;
   images?: string[];
 }
 

@@ -423,7 +423,7 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                                     <h2 className="text-xl font-bold text-gray-900 mb-3">Demo Video</h2>
                                     <div className="relative bg-gray-900 rounded-2xl overflow-hidden aspect-video shadow-lg">
                                         <iframe
-                                            src={project.demoVideoUrl}
+                                            src={project.demoVideoUrl.replace('watch?v=', 'embed/').split('&')[0]}
                                             className="w-full h-full"
                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                             allowFullScreen

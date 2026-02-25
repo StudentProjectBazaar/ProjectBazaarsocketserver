@@ -263,6 +263,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
             isPremium: false,
             hasDocumentation: !!apiProject.documentationUrl,
             hasExecutionVideo: !!apiProject.youtubeVideoUrl,
+            demoVideoUrl: apiProject.youtubeVideoUrl,
             images: apiProject.images,
         };
     };
@@ -646,7 +647,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
                     originalPrice: selectedProject.price * 1.1,
                     discount: 4,
                     promoCode: '444555',
-                    demoVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+                    demoVideoUrl: selectedProject.demoVideoUrl || (selectedProject.hasExecutionVideo ? '' : undefined),
                     features: [
                         'Real-time collaboration',
                         'Live code editing',

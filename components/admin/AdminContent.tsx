@@ -148,7 +148,7 @@ const AdminContent: React.FC<AdminContentProps> = ({ activeView, toggleSidebar, 
             ...project,
             likes: project.likes || Math.floor(Math.random() * 500) + 50,
             purchases: project.purchases || Math.floor(Math.random() * 200) + 10,
-            demoVideoUrl: project.demoVideoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            demoVideoUrl: project.demoVideoUrl || undefined,
             features: project.features || [
                 'Real-time collaboration',
                 'Live code editing',
