@@ -278,6 +278,8 @@ def handle_update_settings(body):
         "profilePictureUrl",
         "linkedinUrl",
         "githubUrl",
+        "location",
+        "hourlyRate",
         "emailNotifications",
         "pushNotifications",
         # Integration data fields

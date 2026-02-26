@@ -9,6 +9,8 @@ import { sendFreelancerMessage, sendFreelancerInvitation } from '../services/fre
 import { GET_USER_DETAILS_ENDPOINT } from '../services/buyerApi';
 import { useAuth } from '../App';
 import verifiedFreelanceSvg from '../lottiefiles/verified_freelance.svg';
+import Lottie from 'lottie-react';
+import noFreelancerUsersAnimation from '../lottiefiles/no_freelancer_users.json';
 import SkeletonDashboard from './ui/skeleton-dashboard';
 
 type SortOption = 'most-relevant' | 'highest-rated' | 'lowest-price';
@@ -846,10 +848,10 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
               )}
             </>
           ) : (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl">
-              <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            <div className="text-center py-16 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl flex flex-col items-center justify-center">
+              <div className="w-64 h-64 mb-4">
+                <Lottie animationData={noFreelancerUsersAnimation} loop={true} />
+              </div>
               <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">No freelancers found</p>
               <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
                 Try adjusting your filters or search query

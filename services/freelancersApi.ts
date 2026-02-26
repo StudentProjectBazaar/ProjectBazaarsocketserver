@@ -87,7 +87,7 @@ const USE_MOCK_DATA = false;
  * @param includeAll - If true, includes all active users (not just sellers/freelancers)
  */
 export const getAllFreelancers = async (
-  limit: number = 50, 
+  limit: number = 50,
   offset: number = 0,
   includeAll: boolean = true  // Default to true to show all users
 ): Promise<{ freelancers: Freelancer[]; totalCount: number; hasMore: boolean }> => {
@@ -102,21 +102,26 @@ export const getAllFreelancers = async (
   }
 
   try {
-    const response = await apiRequest<FreelancersData>('GET_ALL_FREELANCERS', { 
-      limit, 
+    const response = await apiRequest<FreelancersData>('GET_ALL_FREELANCERS', {
+      limit,
       offset,
-      includeAll 
+      includeAll
     });
-    
+
     if (response.success && response.data) {
-      // Return real data from API (even if empty)
+      // Filter out dummy seeded users
+      const filteredFreelancers = response.data.freelancers.filter(
+        (f) => !f.email?.endsWith('@projectbazaar.com') &&
+          !['John Smith', 'Sarah Johnson', 'Mike Chen', 'Emma Wilson', 'David Kumar', 'Lisa Anderson'].includes(f.name)
+      );
+
       return {
-        freelancers: response.data.freelancers,
-        totalCount: response.data.totalCount,
+        freelancers: filteredFreelancers,
+        totalCount: response.data.totalCount - (response.data.freelancers.length - filteredFreelancers.length),
         hasMore: response.data.hasMore,
       };
     }
-    
+
     // API returned error - throw to allow caller to handle
     const errorMessage = response.error?.message || 'Failed to fetch freelancers';
     console.error('API error:', response.error);
@@ -139,11 +144,11 @@ export const getFreelancerById = async (freelancerId: string): Promise<Freelance
 
   try {
     const response = await apiRequest<FreelancerProfile>('GET_FREELANCER_BY_ID', { freelancerId });
-    
+
     if (response.success && response.data) {
       return response.data;
     }
-    
+
     const errorMessage = response.error?.message || 'Failed to fetch freelancer profile';
     console.error('API error:', response.error);
     throw new Error(errorMessage);
@@ -164,11 +169,15 @@ export const getTopFreelancers = async (limit: number = 6): Promise<Freelancer[]
 
   try {
     const response = await apiRequest<FreelancersData>('GET_TOP_FREELANCERS', { limit });
-    
+
     if (response.success && response.data) {
-      return response.data.freelancers;
+      const filteredFreelancers = response.data.freelancers.filter(
+        (f) => !f.email?.endsWith('@projectbazaar.com') &&
+          !['John Smith', 'Sarah Johnson', 'Mike Chen', 'Emma Wilson', 'David Kumar', 'Lisa Anderson'].includes(f.name)
+      );
+      return filteredFreelancers;
     }
-    
+
     const errorMessage = response.error?.message || 'Failed to fetch top freelancers';
     console.error('API error:', response.error);
     throw new Error(errorMessage);
@@ -193,41 +202,41 @@ export const searchFreelancers = async (params: {
   if (USE_MOCK_DATA) {
     // Filter mock data locally
     let filtered = [...(freelancersData as Freelancer[])];
-    
+
     if (params.query) {
       const query = params.query.toLowerCase();
-      filtered = filtered.filter(f => 
+      filtered = filtered.filter(f =>
         f.name.toLowerCase().includes(query) ||
         f.username.toLowerCase().includes(query) ||
         f.skills.some(s => s.toLowerCase().includes(query))
       );
     }
-    
+
     if (params.skills && params.skills.length > 0) {
-      filtered = filtered.filter(f => 
-        params.skills!.some(skill => 
+      filtered = filtered.filter(f =>
+        params.skills!.some(skill =>
           f.skills.some(s => s.toLowerCase() === skill.toLowerCase())
         )
       );
     }
-    
+
     if (params.country) {
-      filtered = filtered.filter(f => 
+      filtered = filtered.filter(f =>
         f.location.country.toLowerCase() === params.country!.toLowerCase()
       );
     }
-    
+
     if (params.minHourlyRate !== undefined) {
       filtered = filtered.filter(f => f.hourlyRate >= params.minHourlyRate!);
     }
-    
+
     if (params.maxHourlyRate !== undefined) {
       filtered = filtered.filter(f => f.hourlyRate <= params.maxHourlyRate!);
     }
-    
+
     const offset = params.offset || 0;
     const limit = params.limit || 50;
-    
+
     return {
       freelancers: filtered.slice(offset, offset + limit),
       totalCount: filtered.length,
@@ -237,15 +246,20 @@ export const searchFreelancers = async (params: {
 
   try {
     const response = await apiRequest<FreelancersData>('SEARCH_FREELANCERS', params);
-    
+
     if (response.success && response.data) {
+      const filteredFreelancers = response.data.freelancers.filter(
+        (f) => !f.email?.endsWith('@projectbazaar.com') &&
+          !['John Smith', 'Sarah Johnson', 'Mike Chen', 'Emma Wilson', 'David Kumar', 'Lisa Anderson'].includes(f.name)
+      );
+
       return {
-        freelancers: response.data.freelancers,
-        totalCount: response.data.totalCount,
+        freelancers: filteredFreelancers,
+        totalCount: response.data.totalCount - (response.data.freelancers.length - filteredFreelancers.length),
         hasMore: response.data.hasMore,
       };
     }
-    
+
     const errorMessage = response.error?.message || 'Failed to search freelancers';
     console.error('API error:', response.error);
     throw new Error(errorMessage);
