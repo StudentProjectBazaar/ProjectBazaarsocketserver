@@ -352,7 +352,7 @@ const Dropdown: React.FC<{
   };
 
   return (
-    <div className="relative">
+    <div className="relative z-30">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${isOpen
