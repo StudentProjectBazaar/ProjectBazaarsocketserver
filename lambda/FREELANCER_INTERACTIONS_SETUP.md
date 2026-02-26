@@ -34,7 +34,7 @@ Global Secondary Indexes (GSI):
   "receiverId": "string (The freelancer receiving the message/invite)",
   "targetId": "string (The project ID for invites, or the Freelancer ID for reviews)",
   "content": "string (Message body or review comment)",
-  "status": "string (unread | pending)",
+  "status": "string (unread | read | pending | accepted | declined)",
   "rating": "number (For reviews only, 1-5)",
   "createdAt": "string (ISO date)"
 }

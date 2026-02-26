@@ -141,12 +141,30 @@ const FreelancerProfilePage: React.FC = () => {
     setReviewSubmitMessage(null);
 
     try {
+      // Fetch the reviewer's full profile to get their image before submitting
+      let reviewerProfileImage = '';
+      try {
+        const res = await fetch(GET_USER_DETAILS_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUserId }),
+        });
+        const data = await res.json();
+        const user = data.data || data.user || data;
+        if (user) {
+          reviewerProfileImage = user.profilePictureUrl ?? user.profilePicture ?? user.profileImage ?? user.avatar ?? user.photoURL ?? '';
+        }
+      } catch (err) {
+        console.warn('Could not fetch reviewer image', err);
+      }
+
       // Create a fallback name if userName isn't populated
       const displayName = currentUserName || 'User';
 
       await addFreelancerReview(
         currentUserId,
         displayName,
+        reviewerProfileImage || undefined,
         freelancerId,
         reviewRating,
         reviewComment
@@ -369,17 +387,31 @@ const FreelancerProfilePage: React.FC = () => {
                   {reviews.map((review) => (
                     <div key={review.interactionId} className="pb-6 border-b border-gray-100 dark:border-gray-700 last:border-0 last:pb-0">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{review.senderName || 'User'}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center overflow-hidden border border-orange-200 dark:border-orange-800">
+                            {review.senderImage ? (
+                              <img src={review.senderImage} alt={review.senderName || 'User'} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-orange-600 dark:text-orange-400 font-bold text-lg">
+                                {(review.senderName || 'U').charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-900 dark:text-gray-100 block">{review.senderName || 'User'}</span>
+                            <div className="flex text-yellow-400 text-sm">
+                              {'★'.repeat(Math.floor(review.rating || 0))}
+                              {'☆'.repeat(5 - Math.floor(review.rating || 0))}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 self-start mt-1">
                           {new Date(review.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <div className="flex text-yellow-400 text-sm mb-2">
-                        {'★'.repeat(Math.floor(review.rating || 0))}
-                        {'☆'.repeat(5 - Math.floor(review.rating || 0))}
-                      </div>
+
                       {review.content && (
-                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{review.content}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line mt-3 ml-13">{review.content}</p>
                       )}
                     </div>
                   ))}

@@ -168,6 +168,7 @@ def handle_add_review(body):
         'type': 'review',
         'senderId': body['reviewerId'],
         'senderName': body['reviewerName'],
+        'senderImage': body.get('reviewerProfileImage', ''),
         'targetId': body['freelancerId'], # freelancer being reviewed
         'rating': Decimal(str(rating)),
         'content': comment,
@@ -253,6 +254,35 @@ def handle_get_user_interactions(body):
         return response(500, {"success": False, "error": {"code": "DATABASE_ERROR", "message": "Failed to fetch interactions"}})
 
 
+# ---------- UPDATE INTERACTION STATUS ----------
+def handle_update_interaction_status(body):
+    interaction_id = body.get('interactionId')
+    status = body.get('status')
+    
+    if not interaction_id or not status:
+        return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "Interaction ID and status required"}})
+        
+    try:
+        updated = interactions_table.update_item(
+            Key={'interactionId': interaction_id},
+            UpdateExpression="set #s = :s",
+            ExpressionAttributeNames={'#s': 'status'},
+            ExpressionAttributeValues={':s': status},
+            ReturnValues="UPDATED_NEW"
+        )
+        
+        return response(200, {
+            "success": True,
+            "message": "Status updated successfully",
+            "data": updated.get('Attributes')
+        })
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+             return response(404, {"success": False, "error": {"code": "NOT_FOUND", "message": "Interaction not found"}})
+        print(f"Error updating interaction: {str(e)}")
+        return response(500, {"success": False, "error": {"code": "DATABASE_ERROR", "message": "Failed to update status"}})
+
+
 def lambda_handler(event, context):
     print(f"Received event: {json.dumps(event)}")
     
@@ -283,7 +313,8 @@ def lambda_handler(event, context):
             'SEND_INVITATION': handle_send_invitation,
             'ADD_REVIEW': handle_add_review,
             'GET_FREELANCER_REVIEWS': handle_get_freelancer_reviews,
-            'GET_USER_INTERACTIONS': handle_get_user_interactions
+            'GET_USER_INTERACTIONS': handle_get_user_interactions,
+            'UPDATE_INTERACTION_STATUS': handle_update_interaction_status
         }
         
         if handler := handlers.get(action):

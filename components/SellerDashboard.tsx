@@ -5,6 +5,7 @@ import { fetchProjectDetails, ProjectDetails } from '../services/buyerApi';
 import Lottie from 'lottie-react';
 import SkeletonDashboard from './ui/skeleton-dashboard';
 import projectStatusAnimation from '../lottiefiles/project_status.json';
+import FreelancerInbox from './FreelancerInbox';
 
 interface StatCardProps {
     title: string;
@@ -155,6 +156,7 @@ const SellerDashboard: React.FC = () => {
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [showPremiumModal, setShowPremiumModal] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const [activeTab, setActiveTab] = useState<'projects' | 'inbox'>('projects');
     const [statusFilter, setStatusFilter] = useState<'all' | 'Draft' | 'In Review' | 'Approved' | 'Rejected' | 'Disabled'>('all');
     const [isDragging, setIsDragging] = useState(false);
     const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null);
@@ -1419,8 +1421,36 @@ const SellerDashboard: React.FC = () => {
                         <StatCard title="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} colorClass="bg-gradient-to-br from-purple-500 to-purple-600" />
                     </div>
 
-                    {/* Uploaded Projects Grid (shown by default) */}
-                    {!showUploadForm && (
+                    {/* Tabs */}
+                    <div className="flex space-x-4 border-b border-gray-200 mb-6">
+                        <button
+                            onClick={() => {
+                                setActiveTab('projects');
+                                setShowUploadForm(false);
+                            }}
+                            className={`py-3 px-4 outline-none font-medium text-sm transition-colors ${activeTab === 'projects' && !showUploadForm ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        >
+                            My Projects
+                        </button>
+                        <button
+                            onClick={() => {
+                                setActiveTab('inbox');
+                                setShowUploadForm(false);
+                            }}
+                            className={`py-3 px-4 outline-none font-medium text-sm transition-colors ${activeTab === 'inbox' && !showUploadForm ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        >
+                            Messages & Invitations
+                        </button>
+                    </div>
+
+                    {activeTab === 'inbox' && !showUploadForm && (
+                        <div className="mt-6">
+                            <FreelancerInbox />
+                        </div>
+                    )}
+
+                    {/* Uploaded Projects Grid (shown when projects tab is active) */}
+                    {activeTab === 'projects' && !showUploadForm && (
                         <div>
                             <div className="flex justify-between items-center mb-6">
                                 <div className="flex items-center gap-4">

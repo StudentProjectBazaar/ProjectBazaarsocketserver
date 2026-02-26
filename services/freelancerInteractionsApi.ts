@@ -16,6 +16,7 @@ export interface Interaction {
     type: 'message' | 'invitation' | 'review';
     senderId: string;
     senderName?: string;
+    senderImage?: string;
     receiverId?: string;
     targetId?: string;
     content: string;
@@ -111,6 +112,7 @@ export const sendFreelancerInvitation = async (
 export const addFreelancerReview = async (
     reviewerId: string,
     reviewerName: string,
+    reviewerProfileImage: string | undefined,
     freelancerId: string,
     rating: number,
     comment: string
@@ -119,6 +121,7 @@ export const addFreelancerReview = async (
         const response = await apiRequest<{ interactionId: string }>('ADD_REVIEW', {
             reviewerId,
             reviewerName,
+            reviewerProfileImage,
             freelancerId,
             rating,
             comment
@@ -158,5 +161,53 @@ export const getFreelancerReviews = async (freelancerId: string): Promise<{
     } catch (error) {
         console.error('Error fetching reviews:', error);
         return { reviews: [], count: 0, averageRating: 0 };
+    }
+};
+
+/**
+ * Get all interactions (messages, invitations) sent to a user
+ */
+export const getUserInteractions = async (userId: string): Promise<{
+    interactions: Interaction[],
+    count: number
+}> => {
+    try {
+        const response = await apiRequest<{
+            interactions: Interaction[],
+            count: number
+        }>('GET_USER_INTERACTIONS', { userId });
+
+        if (response.success && response.data) {
+            return response.data;
+        }
+
+        throw new Error(response.error?.message || 'Failed to fetch interactions');
+    } catch (error) {
+        console.error('Error fetching interactions:', error);
+        return { interactions: [], count: 0 };
+    }
+};
+
+/**
+ * Update the status of a specific interaction
+ */
+export const updateInteractionStatus = async (
+    interactionId: string,
+    status: 'read' | 'accepted' | 'declined'
+): Promise<boolean> => {
+    try {
+        const response = await apiRequest<any>('UPDATE_INTERACTION_STATUS', {
+            interactionId,
+            status
+        });
+
+        if (response.success) {
+            return true;
+        }
+
+        throw new Error(response.error?.message || 'Failed to update status');
+    } catch (error) {
+        console.error('Error updating status:', error);
+        throw error;
     }
 };
