@@ -518,7 +518,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                 className="w-full flex items-center justify-between mb-3 group"
               >
                 <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 cursor-pointer">
-                  Hourly Rate: <span className="text-orange-500 font-semibold">${hourlyRateRange[0]}</span> - <span className="text-orange-500 font-semibold">${hourlyRateRange[1]}</span>
+                  Hourly Rate: <span className="text-orange-500 font-semibold">₹{hourlyRateRange[0]}</span> - <span className="text-orange-500 font-semibold">₹{hourlyRateRange[1]}</span>
                 </label>
                 <svg
                   className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${expandedSections.hourlyRate ? 'rotate-180' : ''}`}
@@ -1052,7 +1052,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">@{selectedFreelancer.username}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">${selectedFreelancer.hourlyRate}/hr</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">₹{selectedFreelancer.hourlyRate}/hr</span>
                   <span className="text-sm text-gray-500 dark:text-gray-400">•</span>
                   <span className="text-sm text-gray-500 dark:text-gray-400">{selectedFreelancer.location.city}, {selectedFreelancer.location.country}</span>
                 </div>
