@@ -42,7 +42,7 @@ function decodeProfileId(encoded: string): string | null {
 }
 
 const FreelancerProfilePage: React.FC = () => {
-  const { userId: currentUserId, userName: currentUserName } = useAuth();
+  const { userId: currentUserId, userEmail: currentUserEmail } = useAuth();
   const [profile, setProfile] = useState<FreelancerProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,8 +158,8 @@ const FreelancerProfilePage: React.FC = () => {
         console.warn('Could not fetch reviewer image', err);
       }
 
-      // Create a fallback name if userName isn't populated
-      const displayName = currentUserName || 'User';
+      // Create a fallback name if user details aren't populated
+      const displayName = currentUserEmail ? currentUserEmail.split('@')[0] : 'User';
 
       await addFreelancerReview(
         currentUserId,
