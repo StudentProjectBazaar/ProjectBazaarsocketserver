@@ -200,12 +200,12 @@ def handle_get_all_freelancers(body):
             # Enforce isFreelancer=True even if include_all is requested, 
             # as the system now strictly requires explicit opt-in
             result = users_table.scan(
-                FilterExpression=Attr('isFreelancer').eq(True)
+                FilterExpression=Attr('isFreelancer').eq(True) | Attr('isFreelancer').eq('true')
             )
         else:
             # Filter for sellers/freelancers only
             result = users_table.scan(
-                FilterExpression=Attr('isFreelancer').eq(True)
+                FilterExpression=Attr('isFreelancer').eq(True) | Attr('isFreelancer').eq('true')
             )
         
         users = result.get('Items', [])
@@ -214,12 +214,12 @@ def handle_get_all_freelancers(body):
         while 'LastEvaluatedKey' in result:
             if include_all:
                 result = users_table.scan(
-                    FilterExpression=Attr('isFreelancer').eq(True),
+                    FilterExpression=Attr('isFreelancer').eq(True) | Attr('isFreelancer').eq('true'),
                     ExclusiveStartKey=result['LastEvaluatedKey']
                 )
             else:
                 result = users_table.scan(
-                    FilterExpression=Attr('isFreelancer').eq(True),
+                    FilterExpression=Attr('isFreelancer').eq(True) | Attr('isFreelancer').eq('true'),
                     ExclusiveStartKey=result['LastEvaluatedKey']
                 )
             users.extend(result.get('Items', []))
@@ -333,16 +333,9 @@ def handle_get_top_freelancers(body):
     try:
         # Get all active users who could be freelancers
         result = users_table.scan(
-            FilterExpression=Attr('isFreelancer').eq(True) & (
-                (
-                    Attr('role').eq('seller') | 
-                    Attr('role').eq('freelancer') |
-                    Attr('projectsCount').gt(0) |
-                    Attr('skills').exists()
-                ) & (
-                    Attr('status').eq('active') | 
-                    Attr('status').not_exists()
-                )
+            FilterExpression=(Attr('isFreelancer').eq(True) | Attr('isFreelancer').eq('true')) & (
+                Attr('status').eq('active') | 
+                Attr('status').not_exists()
             )
         )
         
@@ -402,16 +395,9 @@ def handle_search_freelancers(body):
     try:
         # Get all potential freelancers
         result = users_table.scan(
-            FilterExpression=Attr('isFreelancer').eq(True) & (
-                (
-                    Attr('role').eq('seller') | 
-                    Attr('role').eq('freelancer') |
-                    Attr('projectsCount').gt(0) |
-                    Attr('skills').exists()
-                ) & (
-                    Attr('status').eq('active') | 
-                    Attr('status').not_exists()
-                )
+            FilterExpression=(Attr('isFreelancer').eq(True) | Attr('isFreelancer').eq('true')) & (
+                Attr('status').eq('active') | 
+                Attr('status').not_exists()
             )
         )
         
