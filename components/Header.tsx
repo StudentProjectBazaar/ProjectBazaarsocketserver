@@ -62,7 +62,7 @@ const Header: React.FC = () => {
   );
 
   return (
-    <header className="fixed top-0 left-1/2 -translate-x-1/2 z-[100] w-full max-w-[800px] px-4 pt-6 pointer-events-none">
+    <header className="fixed top-0 left-1/2 -translate-x-1/2 z-[100] w-full max-w-[960px] px-4 pt-6 pointer-events-none">
       <div
         className="pointer-events-auto flex items-center justify-between w-full h-[68px] px-4 rounded-[12px] backdrop-blur-[12px] transition-all duration-350"
         style={{
