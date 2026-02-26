@@ -53,6 +53,7 @@ interface ProblemDetails {
   hints: string[];
   starterCode: Record<string, string>;
   testCases: { input: string; expectedOutput: string; hidden?: boolean }[];
+  solution?: string;
 }
 
 interface CodingQuestion {
@@ -106,29 +107,15 @@ const DISCUSSION_API = 'https://fciixra802.execute-api.ap-south-2.amazonaws.com/
 // Supported programming languages
 const supportedLanguages = [
   { id: 'python', name: 'Python 3', monacoId: 'python' },
-  { id: 'javascript', name: 'JavaScript', monacoId: 'javascript' },
   { id: 'java', name: 'Java', monacoId: 'java' },
-  { id: 'cpp', name: 'C++', monacoId: 'cpp' },
-  { id: 'c', name: 'C', monacoId: 'c' },
-  { id: 'typescript', name: 'TypeScript', monacoId: 'typescript' },
-  { id: 'go', name: 'Go', monacoId: 'go' },
-  { id: 'rust', name: 'Rust', monacoId: 'rust' },
-  { id: 'kotlin', name: 'Kotlin', monacoId: 'kotlin' },
-  { id: 'swift', name: 'Swift', monacoId: 'swift' },
+  { id: 'cpp', name: 'C++', monacoId: 'cpp' }
 ];
 
 // Judge0 language keys for code execution (see services/codeExecution judge0LanguageIdMap)
 const executionLanguageKeys: Record<string, string> = {
   python: 'python',
-  javascript: 'javascript',
   java: 'java',
-  cpp: 'cpp',
-  c: 'c',
-  typescript: 'typescript',
-  go: 'go',
-  rust: 'rust',
-  kotlin: 'kotlin',
-  swift: 'swift',
+  cpp: 'cpp'
 };
 
 const executeCode = async (code: string, language: string, input: string = ''): Promise<{ output: string; error: string; success: boolean }> => {
@@ -1445,18 +1432,26 @@ const ProblemSolvingView: React.FC<ProblemSolvingViewProps> = ({
             {activeTab === 'solution' && (
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Solution / Editorial</h2>
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 text-center">
-                  <svg className="w-12 h-12 mx-auto mb-3 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-                  </svg>
-                  <h3 className="text-base font-semibold text-amber-800 dark:text-amber-300 mb-1">Editorial Coming Soon</h3>
-                  <p className="text-sm text-amber-600 dark:text-amber-400">
-                    Detailed solutions with multiple approaches, time/space complexity analysis, and explanations will be available soon.
-                  </p>
-                  <p className="text-xs text-amber-500 dark:text-amber-500 mt-3">
-                    💡 Tip: Try solving the problem yourself first, then check the Discussion tab for community solutions!
-                  </p>
-                </div>
+                {problemDetails.solution ? (
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                    <pre className="font-mono text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                      <code>{problemDetails.solution}</code>
+                    </pre>
+                  </div>
+                ) : (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 text-center">
+                    <svg className="w-12 h-12 mx-auto mb-3 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                    </svg>
+                    <h3 className="text-base font-semibold text-amber-800 dark:text-amber-300 mb-1">Editorial Coming Soon</h3>
+                    <p className="text-sm text-amber-600 dark:text-amber-400">
+                      Detailed solutions with multiple approaches, time/space complexity analysis, and explanations will be available soon.
+                    </p>
+                    <p className="text-xs text-amber-500 dark:text-amber-500 mt-3">
+                      💡 Tip: Try solving the problem yourself first, then check the Discussion tab for community solutions!
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
