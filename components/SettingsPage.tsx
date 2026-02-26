@@ -1164,7 +1164,6 @@ const SettingsPage: React.FC = () => {
         }
     };
 
-
     const handleProfileSubmit = async (e?: React.FormEvent) => {
         console.log('Save button clicked!'); // Debug: confirm button works
         if (e) {
