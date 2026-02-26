@@ -2756,7 +2756,7 @@ const CodingInterviewQuestionsPage: React.FC<CodingInterviewQuestionsPageProps> 
               </div>
 
               {/* Filters Section */}
-              <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="relative z-20 p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
                   {/* Search */}
                   <div className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-md">
@@ -2846,7 +2846,7 @@ const CodingInterviewQuestionsPage: React.FC<CodingInterviewQuestionsPageProps> 
               </div>
 
               {/* Table */}
-              <div className="overflow-x-auto">
+              <div className="relative z-10 overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 dark:bg-gray-700/50">
                     <tr>
