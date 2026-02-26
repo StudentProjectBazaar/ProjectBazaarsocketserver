@@ -650,15 +650,21 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
                     setTimeout(() => setActiveView('dashboard'), 0);
                     return null;
                 }
+                const sellerInfo = projectSellerMap.get(selectedProject.id);
+                const cachedProfile = sellerInfo?.sellerId ? sellerProfileCache.get(sellerInfo.sellerId) : null;
+                const defaultName = selectedProject.sellerEmail ? selectedProject.sellerEmail.split('@')[0] : 'Seller';
+                const sellerName = cachedProfile?.fullName || defaultName;
+
                 // Extend project with additional details
                 const extendedProject: ExtendedProject = {
                     ...selectedProject,
                     likes: typeof selectedProject.likesCount === 'number' ? selectedProject.likesCount : 0,
                     purchases: typeof selectedProject.purchasesCount === 'number' ? selectedProject.purchasesCount : 0,
                     seller: {
-                        name: selectedProject.sellerEmail ? selectedProject.sellerEmail.split('@')[0] : 'Seller',
+                        id: sellerInfo?.sellerId,
+                        name: sellerName,
                         email: selectedProject.sellerEmail || 'seller@example.com',
-                        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedProject.sellerEmail ? selectedProject.sellerEmail.split('@')[0] : 'Seller')}&background=f97316&color=fff`,
+                        avatar: cachedProfile?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(sellerName)}&background=f97316&color=fff`,
                         rating: 0,
                         totalSales: 0,
                     },
@@ -671,7 +677,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
                 return (
                     <ProjectDetailsPage
                         project={extendedProject}
-                        onBack={() => setActiveView(previousView)}
+                        onBack={() => setActiveView(previousView === 'project-details' ? 'dashboard' : previousView)}
                         onViewSeller={(seller) => {
                             setPreviousView('project-details');
                             setSelectedSeller(seller);

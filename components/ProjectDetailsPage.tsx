@@ -44,6 +44,15 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
     const [isPurchased, setIsPurchased] = useState(false);
     const [cartAnimating, setCartAnimating] = useState(false);
     const [cartAdded, setCartAdded] = useState(false);
+    const [isHoveringImage, setIsHoveringImage] = useState(false);
+
+    // Manage local likes for immediate visual feedback
+    const [localLikes, setLocalLikes] = useState(project.likes || 0);
+
+    // Update local likes if project changes
+    useEffect(() => {
+        setLocalLikes(project.likes || 0);
+    }, [project.id, project.likes]);
 
     // Sync cartAdded state with actual cart
     useEffect(() => {
@@ -93,10 +102,19 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
     const discount = project.discount || (project.originalPrice ? Math.round(((project.originalPrice - project.price) / project.originalPrice) * 100) : 0);
 
     const handleLikeClick = () => {
+        const currentlyLiked = isInWishlist(project.id);
         toggleWishlist(project.id);
+        setLocalLikes(prev => currentlyLiked ? Math.max(0, prev - 1) : prev + 1);
     };
 
-
+    // Auto-scroll images
+    useEffect(() => {
+        if (images.length <= 1 || isHoveringImage || isPreviewOpen) return;
+        const interval = setInterval(() => {
+            setCurrentImageIndex((prev) => (prev + 1) % images.length);
+        }, 3000); // 3 seconds per image
+        return () => clearInterval(interval);
+    }, [images.length, isHoveringImage, isPreviewOpen]);
 
     const features = project.features;
 
@@ -133,7 +151,12 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 mb-10">
                 {/* Left Column - Image Gallery (3/5 width) */}
                 <div className="lg:col-span-3 space-y-3">
-                    <div className="relative rounded-2xl overflow-hidden bg-gray-100 shadow-lg group cursor-pointer" onClick={() => setIsPreviewOpen(true)}>
+                    <div
+                        className="relative rounded-2xl overflow-hidden bg-gray-100 shadow-lg group cursor-pointer"
+                        onClick={() => setIsPreviewOpen(true)}
+                        onMouseEnter={() => setIsHoveringImage(true)}
+                        onMouseLeave={() => setIsHoveringImage(false)}
+                    >
                         <img
                             src={images[currentImageIndex]}
                             alt={project.title}
@@ -216,7 +239,7 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                             <svg className="w-4 h-4" fill={liked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={liked ? 0 : 2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 20.25l-7.682-7.682a4.5 4.5 0 010-6.364z" />
                             </svg>
-                            {project.likes || 0}
+                            {localLikes}
                         </button>
                         <div className="flex items-center gap-1.5 text-gray-500 text-sm">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -340,14 +363,10 @@ const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ project, onBack
                     {/* Seller Card - Compact */}
                     <div className="bg-white border border-gray-200 rounded-2xl p-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 relative overflow-hidden">
                                 {project.seller.avatar ? (
-                                    <img src={project.seller.avatar} alt={project.seller.name} className="w-full h-full rounded-full object-cover" />
+                                    <img src={project.seller.avatar} alt={project.seller.name} className="w-full h-full object-cover" />
                                 ) : (
-                                    // If no avatar, display initial or placeholder
-                                    // This div is meant to be the placeholder for the avatar, not the name.
-                                    // The name should be in a separate div next to this one.
-                                    // For now, just closing the JSX correctly.
                                     <span>{project.seller.name.charAt(0)}</span>
                                 )}
                             </div>
