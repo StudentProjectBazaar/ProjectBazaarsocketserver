@@ -383,13 +383,6 @@ const AuthPage: React.FC = () => {
     }));
   };
 
-  const goToForgotPassword = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.preventDefault();
-    console.log('forgot password');
-  };
-
   const toggleAuthMode = () => {
     setAuthMode(isLogin ? 'signup' : 'login');
     setError(null);
@@ -477,7 +470,6 @@ const AuthPage: React.FC = () => {
     subHeader: isLogin ? 'Sign in to your account' : 'Sign up to get started',
     fields: isLogin ? loginFields : signupFields,
     submitButton: isLogin ? 'Sign in' : 'Sign up',
-    textVariantButton: isLogin ? 'Forgot password?' : undefined,
   };
 
   return (
@@ -531,7 +523,7 @@ const AuthPage: React.FC = () => {
           <div className='w-full flex-shrink-0' key={authMode}>
             <AuthTabs
               formFields={formFields}
-              goTo={isLogin ? goToForgotPassword : toggleAuthMode}
+              goTo={() => { }}
               handleSubmit={handleSubmit}
               accountToggleText={isLogin ? "Don't have an account yet? Sign up" : "Already have an account? Log in"}
               onAccountToggle={toggleAuthMode}
