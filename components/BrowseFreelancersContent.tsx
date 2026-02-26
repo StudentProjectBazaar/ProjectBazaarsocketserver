@@ -5,6 +5,7 @@ import type { Freelancer } from '../types/browse';
 import type { BrowseProject } from '../types/browse';
 import { getAllFreelancers, searchFreelancers, getAvailableSkills, getAvailableCountries } from '../services/freelancersApi';
 import { getBidRequestProjectsByBuyer } from '../services/bidRequestProjectsApi';
+import { sendFreelancerMessage, sendFreelancerInvitation } from '../services/freelancerInteractionsApi';
 import { GET_USER_DETAILS_ENDPOINT } from '../services/buyerApi';
 import { useAuth } from '../App';
 import verifiedFreelanceSvg from '../lottiefiles/verified_freelance.svg';
@@ -143,7 +144,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
       // If no filters are active, fetch all freelancers
       if (!searchQuery && selectedSkills.length === 0 && !selectedCountry && hourlyRateRange[0] === 10 && hourlyRateRange[1] === 100) {
         try {
-          const { freelancers: data } = await getAllFreelancers(100, 0);
+          const { freelancers: data } = await getAllFreelancers(100, 0, false);
           setFreelancers(data);
           enrichFreelancersWithProfiles(data);
         } catch (err) {
@@ -306,11 +307,20 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
     const selectedProject = userProjects.find((p) => p.id === selectedInviteProjectId);
     setIsSending(true);
     try {
-      // Simulate API call - in production, this would call a notification/messaging API with projectId
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!userId) {
+        alert('Please login to invite freelancers to bid');
+        return;
+      }
+
+      await sendFreelancerInvitation(
+        userId,
+        selectedFreelancer.id,
+        selectedProject?.id || '',
+        inviteMessage
+      );
 
       // Log the invitation (in production, save to database with selectedInviteProjectId)
-      console.log('Invitation sent to:', selectedFreelancer.name, 'Project:', selectedProject?.title, 'Message:', inviteMessage);
+      console.log('Invitation sent to:', selectedFreelancer.name, 'Project:', selectedProject?.title);
 
       setSendSuccess(`Invitation sent to ${selectedFreelancer.name}!`);
       setTimeout(() => {
@@ -334,11 +344,19 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
 
     setIsSending(true);
     try {
-      // Simulate API call - in production, this would call a messaging API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!userId) {
+        alert('Please login to send a message');
+        return;
+      }
+
+      await sendFreelancerMessage(
+        userId,
+        selectedFreelancer.id,
+        contactMessage
+      );
 
       // Log the message (in production, save to database)
-      console.log('Message sent to:', selectedFreelancer.name, 'Message:', contactMessage);
+      console.log('Message sent to:', selectedFreelancer.name);
 
       setSendSuccess(`Message sent to ${selectedFreelancer.name}!`);
       setTimeout(() => {
@@ -727,29 +745,31 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                     </div>
 
                     {/* Rating and Success Rate */}
-                    <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100 dark:border-gray-700">
-                      <div className="flex items-center gap-1">
-                        {renderStars(freelancer.rating)}
-                        <span className="text-xs font-semibold text-gray-900 dark:text-gray-100 ml-0.5">
-                          {freelancer.rating}
+                    {freelancer.reviewsCount > 0 && (
+                      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center gap-1">
+                          {renderStars(freelancer.rating)}
+                          <span className="text-xs font-semibold text-gray-900 dark:text-gray-100 ml-0.5">
+                            {freelancer.rating}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {freelancer.reviewsCount} reviews
+                        </span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
+                        <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                          {freelancer.successRate}% Success
                         </span>
                       </div>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        {freelancer.reviewsCount} reviews
-                      </span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
-                      <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                        {freelancer.successRate}% Success
-                      </span>
-                    </div>
+                    )}
 
                     {/* Hourly Rate */}
                     <div className="mb-3">
                       <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                        ${freelancer.hourlyRate}
+                        ₹{freelancer.hourlyRate}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">/{freelancer.currency}/hr</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">/hr</span>
                     </div>
 
                     {/* Location */}
@@ -798,6 +818,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                         href={`/freelancer?p=${encodeURIComponent(btoa(unescape(encodeURIComponent(freelancer.id))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''))}`}
                         onClick={(e) => {
                           e.preventDefault();
+                          localStorage.setItem('activeView', 'freelancers');
                           const enc = btoa(unescape(encodeURIComponent(freelancer.id))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
                           window.location.href = `/freelancer?p=${encodeURIComponent(enc)}`;
                         }}

@@ -22,6 +22,7 @@ from decimal import Decimal
 dynamodb = boto3.resource('dynamodb')
 users_table = dynamodb.Table('Users')
 projects_table = dynamodb.Table('Projects')
+interactions_table = dynamodb.Table('FreelancerInteractions')
 
 # Helper to convert Decimal to float for JSON serialization
 def decimal_to_float(obj):
@@ -94,6 +95,34 @@ def get_seller_stats(seller_id):
             'totalLikes': 0
         }
 
+def get_freelancer_reviews_stats(freelancer_id):
+    """Get real review statistics for a freelancer from the interactions table"""
+    try:
+        try:
+            result = interactions_table.query(
+                IndexName='targetId-index',
+                KeyConditionExpression=Key('targetId').eq(freelancer_id),
+                FilterExpression=Attr('type').eq('review')
+            )
+        except Exception:
+            result = interactions_table.scan(
+                FilterExpression=Attr('targetId').eq(freelancer_id) & Attr('type').eq('review')
+            )
+            
+        reviews = result.get('Items', [])
+        
+        if not reviews:
+            return {'count': 0, 'averageRating': 0}
+            
+        total_rating = sum(float(r.get('rating', 0)) for r in reviews)
+        return {
+            'count': len(reviews),
+            'averageRating': total_rating / len(reviews)
+        }
+    except Exception as e:
+        print(f"Error getting freelancer reviews: {str(e)}")
+        return {'count': 0, 'averageRating': 0}
+
 
 def format_freelancer(user, include_stats=True):
     """Format user data to freelancer profile format"""
@@ -130,10 +159,8 @@ def format_freelancer(user, include_stats=True):
         successful_projects = min(total_sales, total_projects)
         success_rate = min(99, 85 + (successful_projects / total_projects) * 14)
     
-    # Rating calculation (based on likes and sales)
-    rating = 4.5  # Default base rating
-    if total_sales > 0:
-        rating = min(5.0, 4.5 + (total_sales / 100) * 0.5)
+    # Get actual reviews
+    review_stats = get_freelancer_reviews_stats(user.get('userId'))
     
     return {
         'id': user.get('userId'),
@@ -142,8 +169,8 @@ def format_freelancer(user, include_stats=True):
         'username': user.get('username', user.get('email', '').split('@')[0].lower()),
         'email': user.get('email'),
         'isVerified': user.get('isVerified', user.get('isPremium', False)),
-        'rating': round(rating, 1),
-        'reviewsCount': stats.get('totalLikes', 0) + stats.get('totalSales', 0),
+        'rating': round(review_stats['averageRating'], 1) if review_stats['count'] > 0 else 0,
+        'reviewsCount': review_stats['count'],
         'successRate': round(success_rate),
         'hourlyRate': user.get('hourlyRate', 20),
         'currency': user.get('currency', 'USD'),

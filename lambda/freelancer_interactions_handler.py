@@ -1,0 +1,298 @@
+"""
+Freelancer Interactions Handler Lambda Function
+Handles messaging, invitations, and reviews between buyers and freelancers.
+
+DynamoDB Table: FreelancerInteractions
+Primary Key: interactionId (String)
+GSI: senderId-index (Partition: senderId, Sort: createdAt)
+GSI: receiverId-index (Partition: receiverId, Sort: createdAt)
+GSI: targetId-index (Partition: targetId, Sort: createdAt) - used for reviews
+
+Actions:
+- SEND_MESSAGE: Send a contact message
+- SEND_INVITATION: Send an invitation to bid
+- ADD_REVIEW: Add a review for a freelancer
+- GET_USER_INTERACTIONS: Get messages and invites for a user
+- GET_FREELANCER_REVIEWS: Get reviews for a specific freelancer
+"""
+
+import json
+import boto3
+import uuid
+from datetime import datetime
+from boto3.dynamodb.conditions import Key, Attr
+from decimal import Decimal
+
+# Initialize DynamoDB
+dynamodb = boto3.resource('dynamodb')
+interactions_table = dynamodb.Table('FreelancerInteractions')
+users_table = dynamodb.Table('Users')
+
+def decimal_to_float(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {k: decimal_to_float(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [decimal_to_float(i) for i in obj]
+    return obj
+
+def sanitize_string(value):
+    if not isinstance(value, str):
+        return value
+    import re
+    value = re.sub(r'<script[^>]*>.*?</script>', '', value, flags=re.IGNORECASE | re.DOTALL)
+    value = re.sub(r'\son\w+\s*=', ' ', value, flags=re.IGNORECASE)
+    return value[:10000]
+
+# CORS headers
+CORS_HEADERS = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Access-Control-Max-Age': '86400'
+}
+
+def response(status_code, body):
+    return {
+        'statusCode': status_code,
+        'headers': CORS_HEADERS,
+        'body': json.dumps(decimal_to_float(body))
+    }
+
+# ---------- SEND MESSAGE ----------
+def handle_send_message(body):
+    required_fields = ['senderId', 'receiverId', 'message']
+    
+    for field in required_fields:
+        if not body.get(field):
+            return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": f"Missing field: {field}"}})
+            
+    sender_id = body['senderId']
+    receiver_id = body['receiverId']
+    message = str(body['message']).strip()
+    
+    if len(message) < 10 or len(message) > 5000:
+        return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "Message must be between 10 and 5000 characters"}})
+
+    interaction_id = str(uuid.uuid4())
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    
+    item = {
+        'interactionId': interaction_id,
+        'type': 'message',
+        'senderId': sender_id,
+        'receiverId': receiver_id,
+        'content': sanitize_string(message),
+        'status': 'unread',
+        'createdAt': timestamp
+    }
+    
+    try:
+        interactions_table.put_item(Item=item)
+        return response(201, {
+            "success": True, 
+            "message": "Message sent successfully",
+            "data": item
+        })
+    except Exception as e:
+        print(f"Error sending message: {str(e)}")
+        return response(500, {"success": False, "error": {"code": "DATABASE_ERROR", "message": "Failed to send message"}})
+
+# ---------- SEND INVITATION ----------
+def handle_send_invitation(body):
+    required_fields = ['senderId', 'receiverId', 'projectId', 'message']
+    
+    for field in required_fields:
+        if not body.get(field):
+            return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": f"Missing field: {field}"}})
+            
+    interaction_id = str(uuid.uuid4())
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    
+    item = {
+        'interactionId': interaction_id,
+        'type': 'invitation',
+        'senderId': body['senderId'],
+        'receiverId': body['receiverId'],
+        'targetId': body['projectId'],  # the project they are invited to
+        'content': sanitize_string(body['message']),
+        'status': 'pending',
+        'createdAt': timestamp
+    }
+    
+    try:
+        interactions_table.put_item(Item=item)
+        return response(201, {
+            "success": True, 
+            "message": "Invitation sent successfully",
+            "data": item
+        })
+    except Exception as e:
+        print(f"Error sending invite: {str(e)}")
+        return response(500, {"success": False, "error": {"code": "DATABASE_ERROR", "message": "Failed to send invitation"}})
+
+
+# ---------- ADD REVIEW ----------
+def handle_add_review(body):
+    required_fields = ['reviewerId', 'reviewerName', 'freelancerId', 'rating']
+    
+    for field in required_fields:
+        if not body.get(field):
+            return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": f"Missing field: {field}"}})
+            
+    rating = float(body['rating'])
+    if rating < 1 or rating > 5:
+        return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "Rating must be between 1 and 5"}})
+        
+    comment = sanitize_string(body.get('comment', ''))
+    
+    # Check if a review from this user to this freelancer already exists
+    try:
+        existing = interactions_table.query(
+            IndexName='senderId-index',
+            KeyConditionExpression=Key('senderId').eq(body['reviewerId']),
+            FilterExpression=Attr('type').eq('review') & Attr('targetId').eq(body['freelancerId'])
+        )
+        if existing.get('Items'):
+            return response(409, {"success": False, "error": {"code": "DUPLICATE_REVIEW", "message": "You have already reviewed this freelancer"}})
+    except Exception as e:
+        pass # Ignore errors on check and proceed
+
+    interaction_id = str(uuid.uuid4())
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    
+    item = {
+        'interactionId': interaction_id,
+        'type': 'review',
+        'senderId': body['reviewerId'],
+        'senderName': body['reviewerName'],
+        'targetId': body['freelancerId'], # freelancer being reviewed
+        'rating': Decimal(str(rating)),
+        'content': comment,
+        'createdAt': timestamp
+    }
+    
+    try:
+        interactions_table.put_item(Item=item)
+        return response(201, {
+            "success": True, 
+            "message": "Review added successfully",
+            "data": item
+        })
+    except Exception as e:
+        print(f"Error adding review: {str(e)}")
+        return response(500, {"success": False, "error": {"code": "DATABASE_ERROR", "message": "Failed to add review"}})
+
+
+# ---------- GET FREELANCER REVIEWS ----------
+def handle_get_freelancer_reviews(body):
+    freelancer_id = body.get('freelancerId')
+    if not freelancer_id:
+        return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "Freelancer ID required"}})
+        
+    try:
+        # If targetId-index does not exist yet, we must scan and filter.
+        # Ideally, you create the targetId-index for performance.
+        try:
+             result = interactions_table.query(
+                IndexName='targetId-index',
+                KeyConditionExpression=Key('targetId').eq(freelancer_id),
+                FilterExpression=Attr('type').eq('review')
+            )
+        except Exception:
+            # Fallback to scan if index not created
+             result = interactions_table.scan(
+                FilterExpression=Attr('targetId').eq(freelancer_id) & Attr('type').eq('review')
+            )
+            
+        reviews = result.get('Items', [])
+        reviews.sort(key=lambda x: x.get('createdAt', ''), reverse=True)
+        
+        # Calculate fresh stats
+        total_rating = sum(float(r.get('rating', 0)) for r in reviews)
+        avg_rating = total_rating / len(reviews) if reviews else 0
+        
+        return response(200, {
+            "success": True,
+            "data": {
+                "reviews": reviews,
+                "count": len(reviews),
+                "averageRating": round(avg_rating, 1)
+            }
+        })
+    except Exception as e:
+        print(f"Error fetching reviews: {str(e)}")
+        return response(500, {"success": False, "error": {"code": "DATABASE_ERROR", "message": "Failed to fetch reviews"}})
+
+# ---------- GET USER INTERACTIONS ----------
+def handle_get_user_interactions(body):
+    user_id = body.get('userId')
+    if not user_id:
+        return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "User ID required"}})
+        
+    try:
+        # Get things sent TO the user
+        result = interactions_table.query(
+            IndexName='receiverId-index',
+            KeyConditionExpression=Key('receiverId').eq(user_id)
+        )
+        interactions = result.get('Items', [])
+        interactions.sort(key=lambda x: x.get('createdAt', ''), reverse=True)
+        
+        return response(200, {
+            "success": True,
+            "data": {
+                "interactions": interactions,
+                "count": len(interactions)
+            }
+        })
+    except Exception as e:
+        print(f"Error fetching interactions: {str(e)}")
+        return response(500, {"success": False, "error": {"code": "DATABASE_ERROR", "message": "Failed to fetch interactions"}})
+
+
+def lambda_handler(event, context):
+    print(f"Received event: {json.dumps(event)}")
+    
+    http_method = event.get('httpMethod') or event.get('requestContext', {}).get('http', {}).get('method', '')
+    if http_method.upper() == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({"message": "CORS preflight"})
+        }
+        
+    try:
+        body = {}
+        if event.get('body'):
+            if isinstance(event.get('body'), str):
+                body = json.loads(event['body'])
+            else:
+                body = event.get('body')
+                
+        if event.get('httpMethod') == 'GET':
+            query_params = event.get('queryStringParameters') or {}
+            body = {**body, **query_params}
+            
+        action = body.get('action', '').upper()
+        
+        handlers = {
+            'SEND_MESSAGE': handle_send_message,
+            'SEND_INVITATION': handle_send_invitation,
+            'ADD_REVIEW': handle_add_review,
+            'GET_FREELANCER_REVIEWS': handle_get_freelancer_reviews,
+            'GET_USER_INTERACTIONS': handle_get_user_interactions
+        }
+        
+        if handler := handlers.get(action):
+            return handler(body)
+            
+        return response(400, {"success": False, "error": {"code": "INVALID_ACTION", "message": f"Action {action} not supported"}})
+        
+    except json.JSONDecodeError:
+        return response(400, {"success": False, "error": {"code": "INVALID_JSON", "message": "Invalid JSON mapping"}})
+    except Exception as e:
+        print(f"System Error: {str(e)}")
+        return response(500, {"success": False, "error": {"code": "INTERNAL_ERROR", "message": "System fault"}})

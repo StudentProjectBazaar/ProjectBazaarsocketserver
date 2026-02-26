@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import { GET_USER_DETAILS_ENDPOINT } from '../services/buyerApi';
+import { addFreelancerReview, getFreelancerReviews, type Interaction } from '../services/freelancerInteractionsApi';
 import verifiedFreelanceSvg from '../lottiefiles/verified_freelance.svg';
 
 interface FreelancerProfileData {
@@ -41,10 +42,20 @@ function decodeProfileId(encoded: string): string | null {
 }
 
 const FreelancerProfilePage: React.FC = () => {
-  const { userId: currentUserId } = useAuth();
+  const { userId: currentUserId, userName: currentUserName } = useAuth();
   const [profile, setProfile] = useState<FreelancerProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Reviews state
+  const [reviews, setReviews] = useState<Interaction[]>([]);
+  const [averageRating, setAverageRating] = useState<number>(0);
+  const [reviewsCount, setReviewsCount] = useState<number>(0);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSubmitMessage, setReviewSubmitMessage] = useState<{ text: string, isError: boolean } | null>(null);
 
   const freelancerId = typeof window !== 'undefined'
     ? (() => {
@@ -106,8 +117,66 @@ const FreelancerProfilePage: React.FC = () => {
         setLoading(false);
       }
     };
+
+    const fetchReviews = async () => {
+      try {
+        const { reviews, count, averageRating } = await getFreelancerReviews(freelancerId);
+        setReviews(reviews);
+        setReviewsCount(count);
+        setAverageRating(averageRating);
+      } catch (err) {
+        console.error('Error fetching reviews:', err);
+      }
+    };
+
     fetchProfile();
+    fetchReviews();
   }, [freelancerId]);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUserId || !freelancerId) return;
+
+    setIsSubmittingReview(true);
+    setReviewSubmitMessage(null);
+
+    try {
+      // Create a fallback name if userName isn't populated
+      const displayName = currentUserName || 'User';
+
+      await addFreelancerReview(
+        currentUserId,
+        displayName,
+        freelancerId,
+        reviewRating,
+        reviewComment
+      );
+
+      setReviewSubmitMessage({ text: 'Review submitted successfully!', isError: false });
+
+      // Refresh reviews
+      const { reviews: newReviews, count, averageRating: newAvg } = await getFreelancerReviews(freelancerId);
+      setReviews(newReviews);
+      setReviewsCount(count);
+      setAverageRating(newAvg);
+
+      // Close modal after delay
+      setTimeout(() => {
+        setShowReviewModal(false);
+        setReviewSubmitMessage(null);
+        setReviewComment('');
+        setReviewRating(5);
+      }, 2000);
+
+    } catch (err) {
+      setReviewSubmitMessage({
+        text: err instanceof Error ? err.message : 'Failed to submit review',
+        isError: true
+      });
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   const goBack = () => {
     window.history.back();
@@ -155,7 +224,10 @@ const FreelancerProfilePage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="max-w-2xl mx-auto p-4 md:p-6">
         <button
-          onClick={goBack}
+          onClick={() => {
+            localStorage.setItem('activeView', 'freelancers');
+            window.location.href = '/dashboard';
+          }}
           className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 mb-6"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -272,6 +344,123 @@ const FreelancerProfilePage: React.FC = () => {
                 >
                   Contact
                 </button>
+                <button
+                  onClick={() => setShowReviewModal(true)}
+                  className="px-5 py-2.5 border border-orange-500 text-orange-600 dark:text-orange-400 text-sm font-semibold rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                >
+                  Write Review
+                </button>
+              </div>
+            )}
+
+            {/* Reviews Section */}
+            {reviewsCount > 0 && (
+              <div className="mt-10 border-t border-gray-200 dark:border-gray-700 pt-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Reviews</h2>
+                  <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+                    <span className="text-yellow-400">★</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{averageRating.toFixed(1)}</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">({reviewsCount})</span>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {reviews.map((review) => (
+                    <div key={review.interactionId} className="pb-6 border-b border-gray-100 dark:border-gray-700 last:border-0 last:pb-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{review.senderName || 'User'}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex text-yellow-400 text-sm mb-2">
+                        {'★'.repeat(Math.floor(review.rating || 0))}
+                        {'☆'.repeat(5 - Math.floor(review.rating || 0))}
+                      </div>
+                      {review.content && (
+                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{review.content}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add Review Modal */}
+            {showReviewModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 shadow-xl relative z-50">
+                  <button
+                    onClick={() => setShowReviewModal(false)}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    ✕
+                  </button>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
+                    Write a review for {displayName}
+                  </h3>
+
+                  <form onSubmit={handleReviewSubmit}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Rating
+                      </label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewRating(star)}
+                            className={`text-2xl ${reviewRating >= star ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Comment
+                      </label>
+                      <textarea
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 h-32 resize-none"
+                        placeholder="Share your experience working with this freelancer..."
+                      />
+                    </div>
+
+                    {reviewSubmitMessage && (
+                      <div className={`mb-4 p-3 rounded-lg text-sm ${reviewSubmitMessage.isError ? 'bg-red-50 text-red-600 dark:bg-red-900/30' : 'bg-green-50 text-green-600 dark:bg-green-900/30'}`}>
+                        {reviewSubmitMessage.text}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3 justify-end mt-6">
+                      <button
+                        type="button"
+                        onClick={() => setShowReviewModal(false)}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                        disabled={isSubmittingReview}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 flex items-center justify-center min-w-[100px]"
+                        disabled={isSubmittingReview}
+                      >
+                        {isSubmittingReview ? (
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          'Submit'
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
           </div>
