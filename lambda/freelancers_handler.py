@@ -479,145 +479,16 @@ def handle_search_freelancers(body):
         })
 
 
-# ---------- SEED FREELANCERS ----------
+# ---------- SEED FREELANCERS (REMOVED) ----------
 def handle_seed_freelancers(body):
-    """Add sample freelancer users to the database for testing/demo purposes"""
-    import uuid
-    
-    sample_freelancers = [
-        {
-            'userId': str(uuid.uuid4()),
-            'email': 'john.smith@projectbazaar.com',
-            'fullName': 'John Smith',
-            'username': 'johnsmith',
-            'role': 'freelancer',
-            'status': 'active',
-            'skills': ['React', 'Node.js', 'TypeScript', 'MongoDB'],
-            'hourlyRate': 25,
-            'currency': 'USD',
-            'country': 'India',
-            'city': 'Mohali',
-            'bio': 'Full-stack developer with 5+ years of experience building scalable web applications.',
-            'profileImage': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-            'isVerified': True,
-            'createdAt': datetime.now().isoformat()
-        },
-        {
-            'userId': str(uuid.uuid4()),
-            'email': 'sarah.johnson@projectbazaar.com',
-            'fullName': 'Sarah Johnson',
-            'username': 'sarahj',
-            'role': 'freelancer',
-            'status': 'active',
-            'skills': ['Python', 'Django', 'PostgreSQL', 'AWS'],
-            'hourlyRate': 30,
-            'currency': 'USD',
-            'country': 'India',
-            'city': 'Bangalore',
-            'bio': 'Backend specialist with expertise in building robust APIs and cloud infrastructure.',
-            'profileImage': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face',
-            'isVerified': True,
-            'createdAt': datetime.now().isoformat()
-        },
-        {
-            'userId': str(uuid.uuid4()),
-            'email': 'mike.chen@projectbazaar.com',
-            'fullName': 'Mike Chen',
-            'username': 'mikechen',
-            'role': 'freelancer',
-            'status': 'active',
-            'skills': ['Vue.js', 'Nuxt.js', 'Firebase', 'Tailwind CSS'],
-            'hourlyRate': 22,
-            'currency': 'USD',
-            'country': 'India',
-            'city': 'Mumbai',
-            'bio': 'Frontend developer passionate about creating beautiful and responsive user interfaces.',
-            'profileImage': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
-            'isVerified': False,
-            'createdAt': datetime.now().isoformat()
-        },
-        {
-            'userId': str(uuid.uuid4()),
-            'email': 'emma.wilson@projectbazaar.com',
-            'fullName': 'Emma Wilson',
-            'username': 'emmaw',
-            'role': 'freelancer',
-            'status': 'active',
-            'skills': ['Angular', 'RxJS', 'GraphQL', 'Docker'],
-            'hourlyRate': 35,
-            'currency': 'USD',
-            'country': 'USA',
-            'city': 'San Francisco',
-            'bio': 'Senior software architect with a track record of delivering enterprise-grade solutions.',
-            'profileImage': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
-            'isVerified': True,
-            'createdAt': datetime.now().isoformat()
-        },
-        {
-            'userId': str(uuid.uuid4()),
-            'email': 'david.kumar@projectbazaar.com',
-            'fullName': 'David Kumar',
-            'username': 'davidk',
-            'role': 'freelancer',
-            'status': 'active',
-            'skills': ['Java', 'Spring Boot', 'Microservices', 'Kubernetes'],
-            'hourlyRate': 28,
-            'currency': 'USD',
-            'country': 'India',
-            'city': 'Delhi',
-            'bio': 'Java expert with deep knowledge of microservices architecture and DevOps practices.',
-            'profileImage': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face',
-            'isVerified': True,
-            'createdAt': datetime.now().isoformat()
-        },
-        {
-            'userId': str(uuid.uuid4()),
-            'email': 'lisa.anderson@projectbazaar.com',
-            'fullName': 'Lisa Anderson',
-            'username': 'lisaa',
-            'role': 'freelancer',
-            'status': 'active',
-            'skills': ['Swift', 'iOS', 'SwiftUI', 'Core Data'],
-            'hourlyRate': 32,
-            'currency': 'USD',
-            'country': 'UK',
-            'city': 'London',
-            'bio': 'iOS developer creating intuitive mobile experiences for startups and enterprises.',
-            'profileImage': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face',
-            'isVerified': True,
-            'createdAt': datetime.now().isoformat()
+    """Seed functionality removed for production."""
+    return response(400, {
+        "success": False,
+        "error": {
+            "code": "NOT_SUPPORTED",
+            "message": "Seeding freelancers is no longer supported"
         }
-    ]
-    
-    try:
-        added_count = 0
-        for freelancer in sample_freelancers:
-            # Check if user with this email already exists
-            existing = users_table.scan(
-                FilterExpression=Attr('email').eq(freelancer['email'])
-            )
-            
-            if existing.get('Items', []):
-                continue  # Skip if exists
-            
-            users_table.put_item(Item=freelancer)
-            added_count += 1
-        
-        return response(200, {
-            "success": True,
-            "message": f"Added {added_count} sample freelancers to the database",
-            "totalSamples": len(sample_freelancers),
-            "addedCount": added_count
-        })
-    except Exception as e:
-        print(f"Error seeding freelancers: {str(e)}")
-        return response(500, {
-            "success": False,
-            "error": {
-                "code": "DATABASE_ERROR",
-                "message": f"Failed to seed freelancers: {str(e)}"
-            }
-        })
+    })
 
 
 # ---------- LAMBDA HANDLER ----------
