@@ -274,6 +274,7 @@ def handle_update_settings(body):
     # Updated allowed_fields to include integration and freelancer profile fields
     allowed_fields = [
         "fullName",
+        "role",
         "phoneNumber",
         "profilePictureUrl",
         "linkedinUrl",

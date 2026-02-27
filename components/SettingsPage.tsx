@@ -1188,7 +1188,8 @@ const SettingsPage: React.FC = () => {
                 body: JSON.stringify({
                     action: 'updateSettings',
                     userId,
-                    [field]: value
+                    [field]: value,
+                    ...(field === 'isFreelancer' && value ? { role: 'freelancer' } : {})
                 }),
             });
             const data = await response.json();
