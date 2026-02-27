@@ -698,7 +698,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                 {paginatedFreelancers.map((freelancer) => (
                   <div
                     key={freelancer.id}
-                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-lg hover:border-orange-300 dark:hover:border-orange-600 transition-all duration-300 group"
+                    className="flex flex-col h-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:shadow-lg hover:border-orange-300 dark:hover:border-orange-600 transition-all duration-300 group"
                   >
                     {/* Header Section */}
                     <div className="flex items-start gap-3 mb-4">
@@ -808,7 +808,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-col gap-2">
+                    <div className="mt-auto flex flex-col gap-2">
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleInviteToBid(freelancer)}
