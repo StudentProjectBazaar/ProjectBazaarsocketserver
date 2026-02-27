@@ -51,6 +51,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [projectType, setProjectType] = useState<ProjectTypeFilter>('all');
+  const [dynamicMaxBudget, setDynamicMaxBudget] = useState<number>(50000);
   const [budgetRange, setBudgetRange] = useState<[number, number]>([0, 50000]);
   const [sortOption, setSortOption] = useState<SortOption>('latest');
   const [receiveAlerts, setReceiveAlerts] = useState(false);
@@ -146,7 +147,12 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
 
       try {
         // Fetch bid request projects (job postings by buyers)
-        const bidRequestProjects = await getAllBidRequestProjects();
+        const { projects: bidRequestProjects, maxBudget } = await getAllBidRequestProjects();
+
+        if (maxBudget) {
+          setDynamicMaxBudget(maxBudget);
+          setBudgetRange([0, maxBudget]);
+        }
 
         if (bidRequestProjects && bidRequestProjects.length > 0) {
           setProjects(bidRequestProjects);
@@ -296,13 +302,13 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
 
   // Calculate budget range from projects
   const { minBudget, maxBudget } = useMemo(() => {
-    if (projects.length === 0) return { minBudget: 0, maxBudget: 10000 };
+    if (projects.length === 0) return { minBudget: 0, maxBudget: dynamicMaxBudget };
     const budgets = projects.flatMap(p => [p.budget.min, p.budget.max]);
     return {
       minBudget: Math.floor(Math.min(...budgets)),
-      maxBudget: Math.ceil(Math.max(...budgets))
+      maxBudget: Math.ceil(Math.max(...budgets, dynamicMaxBudget))
     };
-  }, [projects]);
+  }, [projects, dynamicMaxBudget]);
 
   // Update budgetRange when projects are loaded and min/max change
   useEffect(() => {

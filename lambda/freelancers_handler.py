@@ -244,6 +244,9 @@ def handle_get_all_freelancers(body):
         # Format freelancers
         freelancers = [format_freelancer(user) for user in users]
         
+        # Calculate max hourly rate for dynamic filters
+        max_rate = max([f['hourlyRate'] for f in freelancers]) if freelancers else 500
+        
         # Sort by rating and success rate
         freelancers.sort(key=lambda x: (x['rating'], x['successRate']), reverse=True)
         
@@ -257,6 +260,7 @@ def handle_get_all_freelancers(body):
                 "freelancers": paginated_freelancers,
                 "count": len(paginated_freelancers),
                 "totalCount": total_count,
+                "maxHourlyRate": max_rate,
                 "hasMore": offset + limit < total_count
             }
         })
@@ -420,6 +424,9 @@ def handle_search_freelancers(body):
         # Format freelancers
         freelancers = [format_freelancer(user) for user in users]
         
+        # Calculate max hourly rate for dynamic filters (from all potential freelancers, not just filtered)
+        max_rate = max([f['hourlyRate'] for f in freelancers]) if freelancers else 500
+        
         # Apply filters
         filtered = []
         for f in freelancers:
@@ -465,6 +472,7 @@ def handle_search_freelancers(body):
                 "freelancers": paginated,
                 "count": len(paginated),
                 "totalCount": total_count,
+                "maxHourlyRate": max_rate,
                 "hasMore": offset + limit < total_count
             }
         })

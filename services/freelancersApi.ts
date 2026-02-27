@@ -25,6 +25,18 @@ interface FreelancersData {
   count: number;
   totalCount: number;
   hasMore: boolean;
+  maxHourlyRate?: number;
+}
+
+export interface SearchFilters {
+  [key: string]: unknown;
+  query?: string;
+  skills?: string[];
+  country?: string;
+  minHourlyRate?: number;
+  maxHourlyRate?: number;
+  limit?: number;
+  offset?: number;
 }
 
 interface FreelancerProfile extends Freelancer {
@@ -90,7 +102,7 @@ export const getAllFreelancers = async (
   limit: number = 50,
   offset: number = 0,
   includeAll: boolean = true  // Default to true to show all users
-): Promise<{ freelancers: Freelancer[]; totalCount: number; hasMore: boolean }> => {
+): Promise<{ freelancers: Freelancer[]; totalCount: number; hasMore: boolean; maxHourlyRate?: number }> => {
   // If using mock data, return it directly
   if (USE_MOCK_DATA) {
     console.log('Using mock freelancer data');
@@ -119,6 +131,7 @@ export const getAllFreelancers = async (
         freelancers: filteredFreelancers,
         totalCount: response.data.totalCount - (response.data.freelancers.length - filteredFreelancers.length),
         hasMore: response.data.hasMore,
+        maxHourlyRate: response.data.maxHourlyRate,
       };
     }
 
@@ -190,21 +203,15 @@ export const getTopFreelancers = async (limit: number = 6): Promise<Freelancer[]
 /**
  * Search freelancers by various criteria
  */
-export const searchFreelancers = async (params: {
-  query?: string;
-  skills?: string[];
-  country?: string;
-  minHourlyRate?: number;
-  maxHourlyRate?: number;
-  limit?: number;
-  offset?: number;
-}): Promise<{ freelancers: Freelancer[]; totalCount: number; hasMore: boolean }> => {
+export const searchFreelancers = async (
+  filters: SearchFilters
+): Promise<{ freelancers: Freelancer[]; totalCount: number; hasMore: boolean; maxHourlyRate?: number }> => {
   if (USE_MOCK_DATA) {
     // Filter mock data locally
     let filtered = [...(freelancersData as Freelancer[])];
 
-    if (params.query) {
-      const query = params.query.toLowerCase();
+    if (filters.query) {
+      const query = filters.query.toLowerCase();
       filtered = filtered.filter(f =>
         f.name.toLowerCase().includes(query) ||
         f.username.toLowerCase().includes(query) ||
@@ -212,51 +219,53 @@ export const searchFreelancers = async (params: {
       );
     }
 
-    if (params.skills && params.skills.length > 0) {
+    if (filters.skills && filters.skills.length > 0) {
       filtered = filtered.filter(f =>
-        params.skills!.some(skill =>
-          f.skills.some(s => s.toLowerCase() === skill.toLowerCase())
+        filters.skills!.some((skill: string) =>
+          f.skills.some((s: string) => s.toLowerCase() === skill.toLowerCase())
         )
       );
     }
 
-    if (params.country) {
+    if (filters.country) {
       filtered = filtered.filter(f =>
-        f.location.country.toLowerCase() === params.country!.toLowerCase()
+        f.location.country.toLowerCase() === filters.country!.toLowerCase()
       );
     }
 
-    if (params.minHourlyRate !== undefined) {
-      filtered = filtered.filter(f => f.hourlyRate >= params.minHourlyRate!);
+    if (filters.minHourlyRate !== undefined) {
+      filtered = filtered.filter(f => f.hourlyRate >= filters.minHourlyRate!);
     }
 
-    if (params.maxHourlyRate !== undefined) {
-      filtered = filtered.filter(f => f.hourlyRate <= params.maxHourlyRate!);
+    if (filters.maxHourlyRate !== undefined) {
+      filtered = filtered.filter(f => f.hourlyRate <= filters.maxHourlyRate!);
     }
 
-    const offset = params.offset || 0;
-    const limit = params.limit || 50;
+    const offset = filters.offset || 0;
+    const limit = filters.limit || 50;
 
     return {
       freelancers: filtered.slice(offset, offset + limit),
       totalCount: filtered.length,
       hasMore: offset + limit < filtered.length,
+      maxHourlyRate: undefined, // Mock data doesn't provide this, so set to undefined
     };
   }
 
   try {
-    const response = await apiRequest<FreelancersData>('SEARCH_FREELANCERS', params);
+    const response = await apiRequest<FreelancersData>('SEARCH_FREELANCERS', filters);
 
     if (response.success && response.data) {
-      const filteredFreelancers = response.data.freelancers.filter(
+      const filteredResults = response.data.freelancers.filter(
         (f) => !f.email?.endsWith('@projectbazaar.com') &&
           !['John Smith', 'Sarah Johnson', 'Mike Chen', 'Emma Wilson', 'David Kumar', 'Lisa Anderson'].includes(f.name)
       );
 
       return {
-        freelancers: filteredFreelancers,
-        totalCount: response.data.totalCount - (response.data.freelancers.length - filteredFreelancers.length),
+        freelancers: filteredResults,
+        totalCount: response.data.totalCount - (response.data.freelancers.length - filteredResults.length),
         hasMore: response.data.hasMore,
+        maxHourlyRate: response.data.maxHourlyRate,
       };
     }
 

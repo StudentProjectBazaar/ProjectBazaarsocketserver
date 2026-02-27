@@ -48,6 +48,7 @@ interface BidRequestProject {
 interface ProjectsData {
   projects: BidRequestProject[];
   count: number;
+  maxBudget?: number;
 }
 
 /**
@@ -57,7 +58,7 @@ const getTimeAgo = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (diffInSeconds < 60) return 'Just now';
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
@@ -147,26 +148,29 @@ async function apiRequest<T>(action: string, body: Record<string, unknown> = {})
 /**
  * Get all open bid request projects for freelancers to browse
  */
-export const getAllBidRequestProjects = async (): Promise<BrowseProject[]> => {
+export const getAllBidRequestProjects = async (): Promise<{ projects: BrowseProject[]; maxBudget?: number }> => {
   // If API endpoint is not configured, use mock data
   if (!BID_REQUEST_PROJECTS_API_ENDPOINT) {
     console.log('Using mock data for bid request projects (API not configured)');
-    return (mockProjectsData as any[]).map(mapMockToBrowseProject);
+    return { projects: (mockProjectsData as any[]).map(mapMockToBrowseProject), maxBudget: 50000 };
   }
 
   try {
     const response = await apiRequest<ProjectsData>('GET_ALL_PROJECTS');
-    
+
     if (response.success && response.data?.projects) {
-      return response.data.projects.map(mapToBrowseProject);
+      return {
+        projects: response.data.projects.map(mapToBrowseProject),
+        maxBudget: response.data.maxBudget
+      };
     }
-    
+
     // Fallback to mock data
     console.log('API call failed, using mock data');
-    return (mockProjectsData as any[]).map(mapMockToBrowseProject);
+    return { projects: (mockProjectsData as any[]).map(mapMockToBrowseProject), maxBudget: 50000 };
   } catch (error) {
     console.error('Error fetching bid request projects:', error);
-    return (mockProjectsData as any[]).map(mapMockToBrowseProject);
+    return { projects: (mockProjectsData as any[]).map(mapMockToBrowseProject), maxBudget: 50000 };
   }
 };
 
@@ -181,11 +185,11 @@ export const getBidRequestProject = async (projectId: string): Promise<BrowsePro
 
   try {
     const response = await apiRequest<{ project: BidRequestProject }>('GET_PROJECT', { projectId });
-    
+
     if (response.success && response.data?.project) {
       return mapToBrowseProject(response.data.project);
     }
-    
+
     return null;
   } catch (error) {
     console.error('Error fetching project:', error);
@@ -204,11 +208,11 @@ export const getBidRequestProjectsByBuyer = async (buyerId: string): Promise<Bro
 
   try {
     const response = await apiRequest<ProjectsData>('GET_PROJECTS_BY_BUYER', { buyerId });
-    
+
     if (response.success && response.data?.projects) {
       return response.data.projects.map(mapToBrowseProject);
     }
-    
+
     return [];
   } catch (error) {
     console.error('Error fetching buyer projects:', error);
@@ -244,11 +248,11 @@ export const createBidRequestProject = async (
 
   try {
     const response = await apiRequest<{ projectId: string }>('CREATE_PROJECT', projectData);
-    
+
     if (response.success && response.data?.projectId) {
       return { success: true, projectId: response.data.projectId };
     }
-    
+
     return { success: false, error: response.error?.message || 'Failed to create project' };
   } catch (error) {
     console.error('Error creating project:', error);
@@ -270,11 +274,11 @@ export const updateBidRequestProjectStatus = async (
 
   try {
     const response = await apiRequest<void>('UPDATE_PROJECT_STATUS', { projectId, buyerId, status });
-    
+
     if (response.success) {
       return { success: true };
     }
-    
+
     return { success: false, error: response.error?.message || 'Failed to update status' };
   } catch (error) {
     console.error('Error updating project status:', error);
@@ -295,11 +299,11 @@ export const deleteBidRequestProject = async (
 
   try {
     const response = await apiRequest<void>('DELETE_PROJECT', { projectId, buyerId });
-    
+
     if (response.success) {
       return { success: true };
     }
-    
+
     return { success: false, error: response.error?.message || 'Failed to delete project' };
   } catch (error) {
     console.error('Error deleting project:', error);
@@ -317,11 +321,11 @@ export const incrementBidCount = async (projectId: string): Promise<{ success: b
 
   try {
     const response = await apiRequest<void>('INCREMENT_BIDS_COUNT', { projectId });
-    
+
     if (response.success) {
       return { success: true };
     }
-    
+
     return { success: false, error: response.error?.message || 'Failed to increment bid count' };
   } catch (error) {
     console.error('Error incrementing bid count:', error);
@@ -339,11 +343,11 @@ export const decrementBidCount = async (projectId: string): Promise<{ success: b
 
   try {
     const response = await apiRequest<void>('DECREMENT_BIDS_COUNT', { projectId });
-    
+
     if (response.success) {
       return { success: true };
     }
-    
+
     return { success: false, error: response.error?.message || 'Failed to decrement bid count' };
   } catch (error) {
     console.error('Error decrementing bid count:', error);

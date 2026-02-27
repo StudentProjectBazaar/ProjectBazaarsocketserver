@@ -25,7 +25,8 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [hourlyRateRange, setHourlyRateRange] = useState<[number, number]>([10, 100]);
+  const [dynamicMaxRate, setDynamicMaxRate] = useState<number>(500);
+  const [hourlyRateRange, setHourlyRateRange] = useState<[number, number]>([0, 500]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [availableSkills, setAvailableSkills] = useState<string[]>([]);
@@ -109,8 +110,12 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
       setIsLoading(true);
       setError(null);
       try {
-        const { freelancers: data } = await getAllFreelancers(100, 0);
+        const { freelancers: data, maxHourlyRate } = await getAllFreelancers(100, 0);
         setFreelancers(data);
+        if (maxHourlyRate) {
+          setDynamicMaxRate(maxHourlyRate);
+          setHourlyRateRange([0, maxHourlyRate]);
+        }
         enrichFreelancersWithProfiles(data);
       } catch (err) {
         console.error('Error fetching freelancers:', err);
@@ -144,10 +149,11 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
   useEffect(() => {
     const searchWithFilters = async () => {
       // If no filters are active, fetch all freelancers
-      if (!searchQuery && selectedSkills.length === 0 && !selectedCountry && hourlyRateRange[0] === 10 && hourlyRateRange[1] === 100) {
+      if (!searchQuery && selectedSkills.length === 0 && !selectedCountry && hourlyRateRange[0] === 0 && (hourlyRateRange[1] === dynamicMaxRate || hourlyRateRange[1] === 5000)) {
         try {
-          const { freelancers: data } = await getAllFreelancers(100, 0, false);
+          const { freelancers: data, maxHourlyRate } = await getAllFreelancers(100, 0, false);
           setFreelancers(data);
+          if (maxHourlyRate) setDynamicMaxRate(maxHourlyRate);
           enrichFreelancersWithProfiles(data);
         } catch (err) {
           console.error('Error fetching all freelancers:', err);
@@ -156,7 +162,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
       }
 
       try {
-        const { freelancers: results } = await searchFreelancers({
+        const { freelancers: results, maxHourlyRate } = await searchFreelancers({
           query: searchQuery,
           skills: selectedSkills,
           country: selectedCountry,
@@ -165,6 +171,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
           limit: 100,
         });
         setFreelancers(results);
+        if (maxHourlyRate) setDynamicMaxRate(maxHourlyRate);
         enrichFreelancersWithProfiles(results);
       } catch (err) {
         console.error('Error searching freelancers:', err);
@@ -257,7 +264,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
   }, [isFilterOpen]);
 
   const clearFilters = () => {
-    setHourlyRateRange([10, 100]);
+    setHourlyRateRange([0, dynamicMaxRate]);
     setSelectedSkills([]);
     setSelectedCountry('');
     setSearchQuery('');
@@ -375,7 +382,7 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
     }
   };
 
-  const hasActiveFilters = selectedSkills.length > 0 || selectedCountry !== '' || hourlyRateRange[0] > 10 || hourlyRateRange[1] < 100;
+  const hasActiveFilters = selectedSkills.length > 0 || selectedCountry !== '' || hourlyRateRange[0] > 0 || hourlyRateRange[1] < dynamicMaxRate;
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -384,9 +391,9 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
     }));
   };
 
-  // Calculate slider percentages (range: 10-100, so 90 total)
-  const minPercent = ((hourlyRateRange[0] - 10) / 90) * 100;
-  const maxPercent = ((hourlyRateRange[1] - 10) / 90) * 100;
+  // Calculate slider percentages (range: 0 to dynamicMaxRate)
+  const minPercent = (hourlyRateRange[0] / dynamicMaxRate) * 100;
+  const maxPercent = (hourlyRateRange[1] / dynamicMaxRate) * 100;
 
   const StarIcon = ({ filled }: { filled: boolean }) => (
     <svg
@@ -541,16 +548,16 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                     ></div>
                     <input
                       type="range"
-                      min={10}
-                      max={100}
+                      min={0}
+                      max={dynamicMaxRate}
                       value={hourlyRateRange[0]}
                       onChange={(e) => setHourlyRateRange([Number(e.target.value), hourlyRateRange[1]])}
                       className="absolute top-0 left-0 w-full h-8 bg-transparent appearance-none cursor-pointer z-30 pointer-events-none"
                     />
                     <input
                       type="range"
-                      min={10}
-                      max={100}
+                      min={0}
+                      max={dynamicMaxRate}
                       value={hourlyRateRange[1]}
                       onChange={(e) => setHourlyRateRange([hourlyRateRange[0], Number(e.target.value)])}
                       className="absolute top-0 left-0 w-full h-8 bg-transparent appearance-none cursor-pointer z-20 pointer-events-none"
@@ -585,11 +592,11 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                       <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Min</label>
                       <input
                         type="number"
-                        min={10}
-                        max={100}
+                        min={0}
+                        max={dynamicMaxRate}
                         value={hourlyRateRange[0]}
                         onChange={(e) => {
-                          const val = Math.max(10, Math.min(100, Number(e.target.value)));
+                          const val = Math.max(0, Math.min(dynamicMaxRate, Number(e.target.value)));
                           setHourlyRateRange([val, hourlyRateRange[1]]);
                         }}
                         className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-gray-100 text-sm"
@@ -599,11 +606,11 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
                       <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Max</label>
                       <input
                         type="number"
-                        min={10}
-                        max={100}
+                        min={0}
+                        max={dynamicMaxRate}
                         value={hourlyRateRange[1]}
                         onChange={(e) => {
-                          const val = Math.max(10, Math.min(100, Number(e.target.value)));
+                          const val = Math.max(0, Math.min(dynamicMaxRate, Number(e.target.value)));
                           setHourlyRateRange([hourlyRateRange[0], val]);
                         }}
                         className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-gray-100 text-sm"
