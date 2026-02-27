@@ -54,7 +54,6 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
   const [dynamicMaxBudget, setDynamicMaxBudget] = useState<number>(50000);
   const [budgetRange, setBudgetRange] = useState<[number, number]>([0, 50000]);
   const [sortOption, setSortOption] = useState<SortOption>('latest');
-  const [receiveAlerts, setReceiveAlerts] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     projectType: false,
     budget: false,
@@ -758,20 +757,7 @@ export const BrowseProjectsContent: React.FC<BrowseProjectsContentProps> = () =>
               )}
             </div>
 
-            {/* Receive Alerts Toggle */}
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={receiveAlerts}
-                  onChange={(e) => setReceiveAlerts(e.target.checked)}
-                  className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
-                  Receive alerts for this search
-                </span>
-              </label>
-            </div>
+
           </div>
         </div>
 
