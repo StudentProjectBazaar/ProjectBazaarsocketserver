@@ -37,11 +37,15 @@ export type DashboardView =
     | 'edit-project'
     | 'purchases'; // Add any missing views here
 
+export type BrowseView = 'all' | 'freelancers' | 'projects';
+
 interface DashboardContextType {
     dashboardMode: DashboardMode;
     activeView: DashboardView;
+    browseView: BrowseView;
     setDashboardMode: (mode: DashboardMode) => void;
     setActiveView: (view: DashboardView) => void;
+    setBrowseView: (view: BrowseView) => void;
     toggleDashboardMode: () => void;
 }
 
@@ -65,6 +69,16 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
         return 'dashboard';
     });
 
+    const [browseView, setBrowseViewState] = useState<BrowseView>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('browseView');
+            if (saved === 'freelancers' || saved === 'projects' || saved === 'all') {
+                return saved as BrowseView;
+            }
+        }
+        return 'all';
+    });
+
     // Persist state changes to localStorage
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -81,6 +95,12 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
         }
     }, [activeView]);
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('browseView', browseView);
+        }
+    }, [browseView]);
+
     const setDashboardMode = (mode: DashboardMode) => {
         setDashboardModeState(mode);
         // When switching modes, reset active view to dashboard if needed, or keep last visited view for that mode if we want to be fancy.
@@ -95,6 +115,10 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
         setActiveViewState(view);
     };
 
+    const setBrowseView = (view: BrowseView) => {
+        setBrowseViewState(view);
+    };
+
     const toggleDashboardMode = () => {
         setDashboardMode(dashboardMode === 'buyer' ? 'seller' : 'buyer');
     };
@@ -104,8 +128,10 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
             value={{
                 dashboardMode,
                 activeView,
+                browseView,
                 setDashboardMode,
                 setActiveView,
+                setBrowseView,
                 toggleDashboardMode,
             }}
         >

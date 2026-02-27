@@ -29,18 +29,11 @@ const ToggleButton = ({
     {text}
   </button>
 );
-
 interface DashboardHeaderProps {
-  dashboardMode: 'buyer' | 'seller';
-  setDashboardMode: (mode: 'buyer' | 'seller') => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  activeView: DashboardView;
-  setActiveView: (view: DashboardView) => void;
   buyerProjectView: 'all' | 'activated' | 'disabled';
   setBuyerProjectView: (view: 'all' | 'activated' | 'disabled') => void;
-  browseView?: 'all' | 'freelancers' | 'projects';
-  setBrowseView?: (view: 'all' | 'freelancers' | 'projects') => void;
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
 }
@@ -78,19 +71,13 @@ const viewTitles: Record<DashboardView, string> = {
 };
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({
-  dashboardMode: _dashboardModeProp,
-  setDashboardMode: _setDashboardModeProp,
   searchQuery,
   setSearchQuery,
-  activeView,
-  setActiveView,
   buyerProjectView,
   setBuyerProjectView,
-  browseView,
-  setBrowseView,
   toggleSidebar,
 }) => {
-  const { dashboardMode, setDashboardMode } = useDashboard();
+  const { dashboardMode, setDashboardMode, activeView, setActiveView, browseView, setBrowseView } = useDashboard();
   const { navigateTo } = useNavigation();
   const title = viewTitles[activeView] || 'Dashboard';
   const isBuyerDashboard =

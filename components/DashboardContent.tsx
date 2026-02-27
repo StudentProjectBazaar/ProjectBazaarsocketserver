@@ -225,7 +225,8 @@ export interface ExtendedProject extends BuyerProject {
 const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, toggleSidebar }) => {
     const { userId, userEmail } = useAuth();
     // Use global state
-    const { dashboardMode, setDashboardMode, activeView, setActiveView } = useDashboard();
+    // Use global state
+    const { dashboardMode, activeView, setActiveView, browseView } = useDashboard();
     const mainScrollRef = useRef<HTMLElement>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -256,7 +257,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
         };
     }, []);
     const [buyerProjectView, setBuyerProjectView] = useState<'all' | 'activated' | 'disabled'>('all');
-    const [browseView, setBrowseView] = useState<'all' | 'freelancers' | 'projects'>('all');
     const [projects, setProjects] = useState<BuyerProject[]>([]);
     const [filteredProjects, setFilteredProjects] = useState<BuyerProject[]>([]);
     const [projectSellerMap, setProjectSellerMap] = useState<Map<string, { sellerId: string; sellerEmail: string; sellerProfilePicture?: string; sellerName?: string }>>(new Map());
@@ -793,16 +793,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
                 <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pt-8 px-6">
                     <div className="flex-shrink-0">
                         <DashboardHeader
-                            dashboardMode={dashboardMode}
-                            setDashboardMode={setDashboardMode}
                             searchQuery={searchQuery}
                             setSearchQuery={setSearchQuery}
-                            activeView={activeView}
-                            setActiveView={setActiveView}
                             buyerProjectView={buyerProjectView}
                             setBuyerProjectView={setBuyerProjectView}
-                            browseView={browseView}
-                            setBrowseView={setBrowseView}
                             isSidebarOpen={isSidebarOpen}
                             toggleSidebar={toggleSidebar}
                         />
@@ -812,16 +806,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({ isSidebarOpen, togg
             ) : (
                 <div className="container mx-auto px-6 py-8">
                     <DashboardHeader
-                        dashboardMode={dashboardMode}
-                        setDashboardMode={setDashboardMode}
                         searchQuery={searchQuery}
                         setSearchQuery={setSearchQuery}
-                        activeView={activeView}
-                        setActiveView={setActiveView}
                         buyerProjectView={buyerProjectView}
                         setBuyerProjectView={setBuyerProjectView}
-                        browseView={browseView}
-                        setBrowseView={setBrowseView}
                         isSidebarOpen={isSidebarOpen}
                         toggleSidebar={toggleSidebar}
                     />

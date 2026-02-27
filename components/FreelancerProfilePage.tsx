@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../App';
+import { useAuth, useNavigation } from '../App';
+import { useDashboard } from '../context/DashboardContext';
 import { GET_USER_DETAILS_ENDPOINT } from '../services/buyerApi';
-import { addFreelancerReview, getFreelancerReviews, type Interaction } from '../services/freelancerInteractionsApi';
+import { addFreelancerReview, getFreelancerReviews, sendFreelancerMessage, type Interaction } from '../services/freelancerInteractionsApi';
 import verifiedFreelanceSvg from '../lottiefiles/verified_freelance.svg';
 
 interface FreelancerProfileData {
@@ -43,6 +44,8 @@ function decodeProfileId(encoded: string): string | null {
 
 const FreelancerProfilePage: React.FC = () => {
   const { userId: currentUserId, userEmail: currentUserEmail } = useAuth();
+  const { navigateTo } = useNavigation();
+  const { setActiveView, setBrowseView } = useDashboard();
   const [profile, setProfile] = useState<FreelancerProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +59,12 @@ const FreelancerProfilePage: React.FC = () => {
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewSubmitMessage, setReviewSubmitMessage] = useState<{ text: string, isError: boolean } | null>(null);
+
+  // Messaging state
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactMessage, setContactMessage] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [contactSubmitMessage, setContactSubmitMessage] = useState<{ text: string, isError: boolean } | null>(null);
 
   const freelancerId = typeof window !== 'undefined'
     ? (() => {
@@ -205,10 +214,35 @@ const FreelancerProfilePage: React.FC = () => {
   };
 
   const goToBrowseAndContact = () => {
-    if (profile?.email) {
-      window.open(`mailto:${profile.email}`, '_blank');
-    } else {
-      alert('Contact information is not available for this freelancer.');
+    setShowContactModal(true);
+    setContactSubmitMessage(null);
+    setContactMessage('');
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUserId || !freelancerId || !contactMessage.trim()) return;
+
+    setIsSendingMessage(true);
+    setContactSubmitMessage(null);
+
+    try {
+      await sendFreelancerMessage(currentUserId, freelancerId, contactMessage);
+      setContactSubmitMessage({ text: 'Message sent successfully!', isError: false });
+
+      // Close modal after delay
+      setTimeout(() => {
+        setShowContactModal(false);
+        setContactMessage('');
+        setContactSubmitMessage(null);
+      }, 2000);
+    } catch (err) {
+      setContactSubmitMessage({
+        text: err instanceof Error ? err.message : 'Failed to send message',
+        isError: true
+      });
+    } finally {
+      setIsSendingMessage(false);
     }
   };
 
@@ -243,8 +277,9 @@ const FreelancerProfilePage: React.FC = () => {
       <div className="max-w-2xl mx-auto p-4 md:p-6">
         <button
           onClick={() => {
-            localStorage.setItem('activeView', 'freelancers');
-            window.location.href = '/dashboard';
+            setActiveView('dashboard');
+            setBrowseView('freelancers');
+            navigateTo('dashboard');
           }}
           className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 mb-6"
         >
@@ -360,7 +395,7 @@ const FreelancerProfilePage: React.FC = () => {
                   onClick={goToBrowseAndContact}
                   className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
-                  Contact
+                  Message
                 </button>
                 <button
                   onClick={() => setShowReviewModal(true)}
@@ -488,6 +523,66 @@ const FreelancerProfilePage: React.FC = () => {
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         ) : (
                           'Submit'
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+            {/* Contact/Message Modal */}
+            {showContactModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 shadow-xl relative z-50">
+                  <button
+                    onClick={() => setShowContactModal(false)}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    ✕
+                  </button>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
+                    Message {displayName}
+                  </h3>
+
+                  <form onSubmit={handleContactSubmit}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Message
+                      </label>
+                      <textarea
+                        value={contactMessage}
+                        onChange={(e) => setContactMessage(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 h-32 resize-none"
+                        placeholder="Write your message here..."
+                        required
+                        minLength={5}
+                      />
+                    </div>
+
+                    {contactSubmitMessage && (
+                      <div className={`mb-4 p-3 rounded-lg text-sm ${contactSubmitMessage.isError ? 'bg-red-50 text-red-600 dark:bg-red-900/30' : 'bg-green-50 text-green-600 dark:bg-green-900/30'}`}>
+                        {contactSubmitMessage.text}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3 justify-end mt-6">
+                      <button
+                        type="button"
+                        onClick={() => setShowContactModal(false)}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                        disabled={isSendingMessage}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 flex items-center justify-center min-w-[100px]"
+                        disabled={isSendingMessage || contactMessage.trim().length < 5}
+                      >
+                        {isSendingMessage ? (
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          'Send'
                         )}
                       </button>
                     </div>
