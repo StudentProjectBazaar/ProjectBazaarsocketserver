@@ -3570,48 +3570,6 @@ const CareerGuidancePage: React.FC<CareerGuidancePageProps> = ({ toggleSidebar }
                     )}
                 </div>
 
-                {/* Features */}
-                <div className="mt-12">
-                    <h3 className="text-center text-lg font-semibold text-gray-900 mb-6">🚀 Everything You Need for Career Success</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {[
-                            { icon: <TrendingIcon />, title: "Trending Careers", desc: "Hot jobs & salaries" },
-                            { icon: <RoadmapIcon />, title: "Learning Roadmap", desc: "Step-by-step guide" },
-                            { icon: <PlacementIcon />, title: "Placement Prep", desc: "DSA & interviews" },
-                            { icon: <ProjectIcon />, title: "Project Ideas", desc: "Build your portfolio" },
-                        ].map((feature, idx) => (
-                            <div key={idx} className="text-center p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-orange-200 transition-all cursor-pointer" onClick={() => setActiveTab(idx === 0 ? 'trending' : idx === 1 ? 'roadmap' : idx === 2 ? 'placement' : 'projects')}>
-                                <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center mx-auto mb-2">
-                                    {feature.icon}
-                                </div>
-                                <h3 className="font-semibold text-gray-900 text-sm mb-1">{feature.title}</h3>
-                                <p className="text-xs text-gray-500">{feature.desc}</p>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Stats for credibility */}
-                    <div className="mt-8 p-6 bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl text-white">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                            <div>
-                                <div className="text-3xl font-bold text-orange-400">10K+</div>
-                                <div className="text-sm text-gray-400">Students Guided</div>
-                            </div>
-                            <div>
-                                <div className="text-3xl font-bold text-green-400">95%</div>
-                                <div className="text-sm text-gray-400">Placement Rate</div>
-                            </div>
-                            <div>
-                                <div className="text-3xl font-bold text-blue-400">500+</div>
-                                <div className="text-sm text-gray-400">Partner Companies</div>
-                            </div>
-                            <div>
-                                <div className="text-3xl font-bold text-purple-400">₹12L</div>
-                                <div className="text-sm text-gray-400">Avg Package</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
