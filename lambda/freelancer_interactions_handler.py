@@ -19,6 +19,8 @@ Actions:
 import json
 import boto3
 import uuid
+import os
+import urllib.request
 from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
 from decimal import Decimal
@@ -61,6 +63,28 @@ def response(status_code, body):
         'body': json.dumps(decimal_to_float(body))
     }
 
+def notify_socket_server(user_id, event, data):
+    """Notify the socket server about an event for a specific user."""
+    socket_url = os.environ.get('SOCKET_SERVER_URL', 'http://localhost:3001') # Default for local testing
+    try:
+        payload = json.dumps({
+            "userId": user_id,
+            "event": event,
+            "data": data
+        }).encode('utf-8')
+        
+        req = urllib.request.Request(
+            f"{socket_url}/notify",
+            data=payload,
+            headers={'Content-Type': 'application/json'},
+            method='POST'
+        )
+        
+        with urllib.request.urlopen(req, timeout=2) as res:
+            print(f"Socket server notified: {res.read().decode()}")
+    except Exception as e:
+        print(f"Failed to notify socket server: {str(e)}")
+
 # ---------- SEND MESSAGE ----------
 def handle_send_message(body):
     required_fields = ['senderId', 'receiverId', 'message']
@@ -91,6 +115,15 @@ def handle_send_message(body):
     
     try:
         interactions_table.put_item(Item=item)
+        
+        # Notify recipient via socket server
+        notify_socket_server(receiver_id, 'new_message', {
+            "senderId": sender_id,
+            "message": item['content'],
+            "interactionId": interaction_id,
+            "timestamp": timestamp
+        })
+        
         return response(201, {
             "success": True, 
             "message": "Message sent successfully",
@@ -124,6 +157,16 @@ def handle_send_invitation(body):
     
     try:
         interactions_table.put_item(Item=item)
+        
+        # Notify freelancer via socket server
+        notify_socket_server(item['receiverId'], 'new_invitation', {
+            "senderId": item['senderId'],
+            "projectId": item['targetId'],
+            "message": item['content'],
+            "interactionId": interaction_id,
+            "timestamp": timestamp
+        })
+        
         return response(201, {
             "success": True, 
             "message": "Invitation sent successfully",

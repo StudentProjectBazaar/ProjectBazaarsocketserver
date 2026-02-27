@@ -12,6 +12,7 @@ import verifiedFreelanceSvg from '../lottiefiles/verified_freelance.svg';
 import Lottie from 'lottie-react';
 import noFreelancerUsersAnimation from '../lottiefiles/no_freelancer_users.json';
 import SkeletonDashboard from './ui/skeleton-dashboard';
+import { useSocket } from '../context/SocketContext';
 
 type SortOption = 'most-relevant' | 'highest-rated' | 'lowest-price';
 
@@ -21,6 +22,7 @@ interface BrowseFreelancersContentProps {
 
 export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> = () => {
   const { userId } = useAuth();
+  const { socket, isConnected, subscribe } = useSocket();
   const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +146,18 @@ export const BrowseFreelancersContent: React.FC<BrowseFreelancersContentProps> =
     };
     fetchMetadata();
   }, []);
+
+  // Socket event listeners example
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const unsubscribe = subscribe('new_invitation', (data) => {
+      console.log('Real-time invitation received:', data);
+      // You can trigger a toast or update local state here
+    });
+
+    return () => unsubscribe();
+  }, [socket, isConnected, subscribe]);
 
   // Search with API when filters change significantly
   useEffect(() => {
