@@ -12,7 +12,7 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 // Replace with your actual socket server URL
-const SOCKET_URL = 'http://localhost:3001';
+const SOCKET_URL = 'https://projectbazaarsocketserver.onrender.com';
 
 export const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [socket, setSocket] = useState<Socket | null>(null);

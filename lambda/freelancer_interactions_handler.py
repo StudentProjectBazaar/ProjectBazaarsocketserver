@@ -23,6 +23,7 @@ import os
 import urllib.request
 from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
+from botocore.exceptions import ClientError
 from decimal import Decimal
 
 # Initialize DynamoDB
@@ -64,8 +65,8 @@ def response(status_code, body):
     }
 
 def notify_socket_server(user_id, event, data):
-    """Notify the socket server about an event for a specific user."""
-    socket_url = os.environ.get('SOCKET_SERVER_URL', 'http://localhost:3001') # Default for local testing
+    """Notify the socket server about an event for a specific user. 404 from server is non-fatal (e.g. Render cold start)."""
+    socket_url = (os.environ.get('SOCKET_SERVER_URL') or 'https://projectbazaarsocketserver.onrender.com').rstrip('/')
     try:
         payload = json.dumps({
             "userId": user_id,
@@ -97,8 +98,8 @@ def handle_send_message(body):
     receiver_id = body['receiverId']
     message = str(body['message']).strip()
     
-    if len(message) < 10 or len(message) > 5000:
-        return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "Message must be between 10 and 5000 characters"}})
+    if len(message) < 1 or len(message) > 5000:
+        return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "Message must be between 1 and 5000 characters"}})
 
     interaction_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat() + "Z"
@@ -270,6 +271,98 @@ def handle_get_freelancer_reviews(body):
         print(f"Error fetching reviews: {str(e)}")
         return response(500, {"success": False, "error": {"code": "DATABASE_ERROR", "message": "Failed to fetch reviews"}})
 
+# ---------- GET SENT INTERACTIONS (messages/invitations sent by user) ----------
+def handle_get_sent_interactions(body):
+    user_id = body.get('userId')
+    if not user_id:
+        return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "User ID required"}})
+    try:
+        try:
+            result = interactions_table.query(
+                IndexName='senderId-index',
+                KeyConditionExpression=Key('senderId').eq(user_id)
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ValidationException' and 'senderId-index' in str(e.response.get('Error', {}).get('Message', '')):
+                # Fallback when senderId-index GSI does not exist: scan by senderId
+                result = interactions_table.scan(
+                    FilterExpression=Attr('senderId').eq(user_id)
+                )
+                # Handle pagination for scan
+                items = result.get('Items', [])
+                while 'LastEvaluatedKey' in result:
+                    result = interactions_table.scan(
+                        FilterExpression=Attr('senderId').eq(user_id),
+                        ExclusiveStartKey=result['LastEvaluatedKey']
+                    )
+                    items.extend(result.get('Items', []))
+                result = {'Items': items}
+            else:
+                raise
+        interactions = result.get('Items', [])
+        interactions.sort(key=lambda x: x.get('createdAt', ''), reverse=True)
+        return response(200, {
+            "success": True,
+            "data": {
+                "interactions": interactions,
+                "count": len(interactions)
+            }
+        })
+    except Exception as e:
+        print(f"Error fetching sent interactions: {str(e)}")
+        return response(500, {"success": False, "error": {"code": "DATABASE_ERROR", "message": "Failed to fetch sent interactions"}})
+
+
+# ---------- GET CONVERSATION (all messages between two users) ----------
+def handle_get_conversation(body):
+    user_id = body.get('userId')
+    other_user_id = body.get('otherUserId')
+    if not user_id or not other_user_id:
+        return response(400, {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "userId and otherUserId required"}})
+    try:
+        # Messages received from other user (we are receiver) - uses receiverId-index which exists
+        received = interactions_table.query(
+            IndexName='receiverId-index',
+            KeyConditionExpression=Key('receiverId').eq(user_id),
+            FilterExpression=Attr('senderId').eq(other_user_id) & Attr('type').eq('message')
+        )
+        sent_items = []
+        try:
+            sent = interactions_table.query(
+                IndexName='senderId-index',
+                KeyConditionExpression=Key('senderId').eq(user_id),
+                FilterExpression=Attr('receiverId').eq(other_user_id) & Attr('type').eq('message')
+            )
+            sent_items = sent.get('Items', []) or []
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ValidationException' and 'senderId-index' in str(e.response.get('Error', {}).get('Message', '')):
+                # Fallback when senderId-index does not exist: scan for (senderId=user_id, receiverId=other_user_id, type=message)
+                result = interactions_table.scan(
+                    FilterExpression=Attr('senderId').eq(user_id) & Attr('receiverId').eq(other_user_id) & Attr('type').eq('message')
+                )
+                sent_items = result.get('Items', [])
+                while result.get('LastEvaluatedKey'):
+                    result = interactions_table.scan(
+                        FilterExpression=Attr('senderId').eq(user_id) & Attr('receiverId').eq(other_user_id) & Attr('type').eq('message'),
+                        ExclusiveStartKey=result['LastEvaluatedKey']
+                    )
+                    sent_items.extend(result.get('Items', []))
+            else:
+                raise
+        messages = (received.get('Items', []) or []) + sent_items
+        messages.sort(key=lambda x: x.get('createdAt', ''))
+        return response(200, {
+            "success": True,
+            "data": {
+                "messages": messages,
+                "count": len(messages)
+            }
+        })
+    except Exception as e:
+        print(f"Error fetching conversation: {str(e)}")
+        return response(500, {"success": False, "error": {"code": "DATABASE_ERROR", "message": "Failed to fetch conversation"}})
+
+
 # ---------- GET USER INTERACTIONS ----------
 def handle_get_user_interactions(body):
     user_id = body.get('userId')
@@ -357,6 +450,8 @@ def lambda_handler(event, context):
             'ADD_REVIEW': handle_add_review,
             'GET_FREELANCER_REVIEWS': handle_get_freelancer_reviews,
             'GET_USER_INTERACTIONS': handle_get_user_interactions,
+            'GET_SENT_INTERACTIONS': handle_get_sent_interactions,
+            'GET_CONVERSATION': handle_get_conversation,
             'UPDATE_INTERACTION_STATUS': handle_update_interaction_status
         }
         
