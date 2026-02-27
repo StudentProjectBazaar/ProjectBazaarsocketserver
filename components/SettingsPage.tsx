@@ -1173,6 +1173,45 @@ const SettingsPage: React.FC = () => {
         }
     };
 
+    const handleToggleUpdate = async (field: string, value: boolean) => {
+        // Update local state first for responsiveness
+        if (field === 'isFreelancer') setIsFreelancer(value);
+        if (field === 'emailNotifications') setEmailNotifications(value);
+        if (field === 'pushNotifications') setPushNotifications(value);
+
+        if (!userId) return;
+
+        try {
+            const response = await fetch(UPDATE_SETTINGS_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'updateSettings',
+                    userId,
+                    [field]: value
+                }),
+            });
+            const data = await response.json();
+            if (!data.success) {
+                // Revert state if failed
+                if (field === 'isFreelancer') setIsFreelancer(!value);
+                if (field === 'emailNotifications') setEmailNotifications(!value);
+                if (field === 'pushNotifications') setPushNotifications(!value);
+                setSaveError(data.message || 'Failed to update setting');
+            } else {
+                setSaveMessage('Setting updated successfully.');
+                setTimeout(() => setSaveMessage(null), 3000);
+            }
+        } catch (err) {
+            console.error(`Error updating ${field}:`, err);
+            // Revert state if failed
+            if (field === 'isFreelancer') setIsFreelancer(!value);
+            if (field === 'emailNotifications') setEmailNotifications(!value);
+            if (field === 'pushNotifications') setPushNotifications(!value);
+            setSaveError('Network error updating setting');
+        }
+    };
+
     const handleProfileSubmit = async (e?: React.FormEvent) => {
         console.log('Save button clicked!'); // Debug: confirm button works
         if (e) {
@@ -1580,8 +1619,8 @@ const SettingsPage: React.FC = () => {
                     </SectionCard>
                     <SectionCard title="Notifications">
                         <div className="space-y-4">
-                            <ToggleSwitch label="Email Notifications" description="Get emails about new projects and offers." enabled={emailNotifications} setEnabled={setEmailNotifications} />
-                            <ToggleSwitch label="Push Notifications" description="Receive push notifications on your device." enabled={pushNotifications} setEnabled={setPushNotifications} />
+                            <ToggleSwitch label="Email Notifications" description="Get emails about new projects and offers." enabled={emailNotifications} setEnabled={(val) => handleToggleUpdate('emailNotifications', val)} />
+                            <ToggleSwitch label="Push Notifications" description="Receive push notifications on your device." enabled={pushNotifications} setEnabled={(val) => handleToggleUpdate('pushNotifications', val)} />
                         </div>
                     </SectionCard>
 
@@ -1822,7 +1861,7 @@ const SettingsPage: React.FC = () => {
                                     label="Become a Freelancer"
                                     description="Offer your skills and projects to buyers. Add skills and projects below when enabled."
                                     enabled={isFreelancer}
-                                    setEnabled={(value) => setIsFreelancer(value)}
+                                    setEnabled={(value) => handleToggleUpdate('isFreelancer', value)}
                                 />
                             </div>
 
