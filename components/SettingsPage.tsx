@@ -287,8 +287,17 @@ const SettingsPage: React.FC = () => {
                     setLinkedinUrl(user.linkedinUrl || '');
                     setGithubUrl(user.githubUrl || '');
                     setProfileImg(user.profilePictureUrl || null);
-                    setLocation(user.location || '');
-                    setHourlyRate(user.hourlyRate || '');
+
+                    // Handle location as object or string
+                    if (typeof user.location === 'object' && user.location !== null) {
+                        const loc = user.location;
+                        const locStr = [loc.city, loc.country].filter(Boolean).join(', ');
+                        setLocation(locStr);
+                    } else {
+                        setLocation(user.location || '');
+                    }
+
+                    setHourlyRate(user.hourlyRate || user.hourly_rate || '');
                     setEmailNotifications(user.emailNotifications ?? true);
                     setPushNotifications(user.pushNotifications ?? false);
 
@@ -1244,6 +1253,26 @@ const SettingsPage: React.FC = () => {
                 setSaveMessage('Settings updated successfully.');
                 setPendingImageUrl(null);
                 setIsEditingProfile(false);
+
+                // Update local state with returned data to ensure sync
+                const updatedUser = data.data || data.user;
+                if (updatedUser) {
+                    if (updatedUser.fullName) setFullName(updatedUser.fullName);
+                    if (updatedUser.phoneNumber) setPhoneNumber(updatedUser.phoneNumber);
+                    if (updatedUser.linkedinUrl) setLinkedinUrl(updatedUser.linkedinUrl);
+                    if (updatedUser.githubUrl) setGithubUrl(updatedUser.githubUrl);
+                    if (updatedUser.hourlyRate) setHourlyRate(updatedUser.hourlyRate);
+
+                    if (updatedUser.location) {
+                        if (typeof updatedUser.location === 'object') {
+                            const loc = updatedUser.location;
+                            const locStr = [loc.city, loc.country].filter(Boolean).join(', ');
+                            setLocation(locStr);
+                        } else {
+                            setLocation(updatedUser.location);
+                        }
+                    }
+                }
             } else {
                 setSaveError(data?.error?.message || data?.message || 'Failed to update settings.');
             }

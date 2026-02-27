@@ -301,6 +301,22 @@ def handle_update_settings(body):
         "llmModels",
     ]
 
+    # Alias mapping for robustness
+    if "hours" in body and "hourlyRate" not in body:
+        body["hourlyRate"] = body["hours"]
+    if "hourly_rate" in body and "hourlyRate" not in body:
+        body["hourlyRate"] = body["hourly_rate"]
+        
+    # Handle location if sent as city/country instead of single string/object
+    if "city" in body or "country" in body:
+        if "location" not in body:
+            city = body.get("city", "")
+            country = body.get("country", "")
+            if city and country:
+                body["location"] = {"city": city, "country": country}
+            elif city or country:
+                body["location"] = city or country
+
     updates = {k: v for k, v in body.items() if k in allowed_fields}
     print("Updates to apply:", json.dumps(updates))
 

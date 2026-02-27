@@ -139,10 +139,25 @@ def format_freelancer(user, include_stats=True):
         skills = [s.strip() for s in skills.split(',') if s.strip()]
     
     # Get location info
-    location = {
-        'country': user.get('country', 'India'),
-        'city': user.get('city', '')
-    }
+    location_data = user.get('location')
+    if isinstance(location_data, dict):
+        location = {
+            'country': location_data.get('country', user.get('country', 'India')),
+            'city': location_data.get('city', user.get('city', ''))
+        }
+    elif isinstance(location_data, str) and location_data.strip():
+        # If location is a string, we try to split or just use it as is
+        # For simplicity and browse page compatibility, we'll put it in 'city' or 'country'
+        parts = [p.strip() for p in location_data.split(',')]
+        if len(parts) >= 2:
+            location = {'city': parts[0], 'country': parts[1]}
+        else:
+            location = {'city': location_data, 'country': user.get('country', 'India')}
+    else:
+        location = {
+            'country': user.get('country', 'India'),
+            'city': user.get('city', '')
+        }
     
     # Calculate success rate based on completed projects
     stats = {}
@@ -172,7 +187,7 @@ def format_freelancer(user, include_stats=True):
         'rating': round(review_stats['averageRating'], 1) if review_stats['count'] > 0 else 0,
         'reviewsCount': review_stats['count'],
         'successRate': round(success_rate),
-        'hourlyRate': user.get('hourlyRate', 20),
+        'hourlyRate': user.get('hourlyRate', user.get('hourly_rate', 20)),
         'currency': user.get('currency', 'USD'),
         'location': location,
         'skills': skills[:10],  # Limit to 10 skills
